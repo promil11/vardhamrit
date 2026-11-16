@@ -784,27 +784,29 @@ export default function OrdersScreen() {
 
         {/* Footer with Price and Primary Actions */}
         <View style={styles.orderFooter}>
-          <View>
-            <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalAmount}>₹{item.total}</Text>
-          </View>
+          <View style={styles.orderFooterTop}>
+            <View>
+              <Text style={styles.totalLabel}>Total Amount</Text>
+              <Text style={styles.totalAmount}>₹{item.total}</Text>
+            </View>
 
-          <View style={styles.actionButtons}>
             {/* Help Button */}
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => handleHelp(item.id)}
               style={styles.helpBtn}
             >
-              <Icon name="sparkles" size={12} color={theme.colors.textSecondary} />
+              <Icon name="sparkles" size={13} color={theme.colors.textSecondary} />
               <Text style={styles.helpBtnText}>Help</Text>
             </TouchableOpacity>
+          </View>
 
+          <View style={styles.actionButtonsRow}>
             {/* Single Rate Order Button or Reviewed Badge for Delivered Orders */}
             {item.status === 'DELIVERED' ? (
               item.hasReviewed ? (
                 <View style={styles.reviewedBadge}>
-                  <Icon name="badge-check" size={13} color="#059669" />
+                  <Icon name="badge-check" size={14} color="#059669" />
                   <Text style={styles.reviewedBadgeText}>Order Rated</Text>
                 </View>
               ) : (
@@ -818,7 +820,7 @@ export default function OrdersScreen() {
                   }}
                   style={styles.rateOrderBtn}
                 >
-                  <Icon name="star" size={12} color="#D97706" fill="#D97706" />
+                  <Icon name="star" size={13} color="#D97706" fill="#D97706" />
                   <Text style={styles.rateOrderBtnText}>Rate Order</Text>
                 </TouchableOpacity>
               )
@@ -842,7 +844,7 @@ export default function OrdersScreen() {
               >
                 <Icon
                   name={isDispatched ? 'zap' : isPlaced ? 'clock' : 'package'}
-                  size={13}
+                  size={14}
                   color="#FFFFFF"
                 />
                 <Text style={styles.trackOrderText}>
@@ -855,7 +857,7 @@ export default function OrdersScreen() {
                 onPress={() => handleOpenReorder(item)}
                 style={styles.reorderBtn}
               >
-                <Icon name="refresh" size={12} color={theme.colors.primary} />
+                <Icon name="refresh" size={13} color={theme.colors.primary} />
                 <Text style={styles.reorderBtnText}>Order Again</Text>
               </TouchableOpacity>
             ) : (
@@ -864,7 +866,7 @@ export default function OrdersScreen() {
                 onPress={() => handleOpenReorder(item)}
                 style={styles.reorderBtn}
               >
-                <Icon name="coffee" size={13} color={theme.colors.primary} />
+                <Icon name="coffee" size={14} color={theme.colors.primary} />
                 <Text style={styles.reorderBtnText}>Reorder Cup</Text>
               </TouchableOpacity>
             )}
@@ -2082,34 +2084,38 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   rateOrderBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    gap: 6,
     backgroundColor: '#FEF3C7',
     borderWidth: 1.2,
     borderColor: '#FDE68A',
     borderRadius: 8,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   rateOrderBtnText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: theme.typography.weights.extraBold,
     color: '#B45309',
   },
   reviewedBadge: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    gap: 6,
     backgroundColor: '#ECFDF5',
     borderWidth: 1.2,
     borderColor: '#A7F3D0',
     borderRadius: 8,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   reviewedBadgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: theme.typography.weights.extraBold,
     color: '#065F46',
   },
@@ -2140,50 +2146,59 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   orderFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
     paddingTop: 10,
-    marginTop: 4,
+    marginTop: 6,
+    gap: 10,
+  },
+  orderFooterTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   totalLabel: {
-    fontSize: 9.5,
+    fontSize: 10,
     color: theme.colors.textSecondary,
+    fontWeight: theme.typography.weights.medium,
   },
   totalAmount: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: theme.typography.weights.extraBold,
     color: theme.colors.primary,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
+    marginTop: 1,
   },
   helpBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
+    gap: 5,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   helpBtnText: {
-    fontSize: 11,
+    fontSize: 11.5,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textSecondary,
   },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+  },
   trackOrderBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    justifyContent: 'center',
+    gap: 6,
     backgroundColor: theme.colors.primary,
     borderRadius: 8,
     paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingVertical: 8,
     shadowColor: theme.colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -2192,19 +2207,21 @@ const styles = StyleSheet.create({
   },
   trackOrderText: {
     color: '#FFFFFF',
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: theme.typography.weights.extraBold,
   },
   reorderBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1.2,
-    borderColor: '#E2E8F0',
-    borderRadius: 9,
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 8,
     shadowColor: theme.colors.primary,
     shadowOffset: { width: 0, height: 1.5 },
     shadowOpacity: 0.08,
@@ -2213,7 +2230,7 @@ const styles = StyleSheet.create({
   },
   reorderBtnText: {
     color: theme.colors.textPrimary,
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: theme.typography.weights.extraBold,
     letterSpacing: 0.2,
   },
