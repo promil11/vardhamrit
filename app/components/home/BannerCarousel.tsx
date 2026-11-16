@@ -5,7 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   Image,
   ViewStyle,
 } from 'react-native';
@@ -13,9 +13,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { Icon } from '../common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const BANNER_WIDTH = SCREEN_WIDTH - theme.spacing.base * 2;
 
 export interface BannerItem {
   id: string;
@@ -42,27 +39,49 @@ export const BannerCarousel: React.FC<BannerCarouselProps> = ({
   onBannerPress,
   style,
 }) => {
+  const { width: windowWidth } = useWindowDimensions();
+  const BANNER_GAP = 14;
+  const bannerWidth = Math.min(windowWidth - 44, 480);
+  const snapInterval = bannerWidth + BANNER_GAP;
+
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const isDraggingRef = useRef(false);
 
-  // Auto-scroll every 4.5 seconds
+  // Auto-scroll every 4 seconds
   useEffect(() => {
     if (banners.length <= 1) return;
 
     const timer = setInterval(() => {
+      if (isDraggingRef.current) return;
       setActiveIndex((prev) => {
         const next = (prev + 1) % banners.length;
-        flatListRef.current?.scrollToIndex({ index: next, animated: true });
+        try {
+          flatListRef.current?.scrollToOffset({
+            offset: next * snapInterval,
+            animated: true,
+          });
+        } catch {
+          // ignore
+        }
         return next;
       });
-    }, 4500);
+    }, 4000);
 
     return () => clearInterval(timer);
-  }, [banners.length]);
+  }, [banners.length, snapInterval]);
 
   const handleMomentumScrollEnd = (event: any) => {
-    const slide = Math.round(event.nativeEvent.contentOffset.x / BANNER_WIDTH);
-    setActiveIndex(slide);
+    isDraggingRef.current = false;
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const slide = Math.round(offsetX / snapInterval);
+    if (slide >= 0 && slide < banners.length) {
+      setActiveIndex(slide);
+    }
+  };
+
+  const handleScrollBeginDrag = () => {
+    isDraggingRef.current = true;
   };
 
   const renderBanner = ({ item }: { item: BannerItem }) => {
@@ -82,7 +101,7 @@ export const BannerCarousel: React.FC<BannerCarouselProps> = ({
       <TouchableOpacity
         activeOpacity={0.92}
         onPress={() => onBannerPress?.(item)}
-        style={styles.bannerTouchable}
+        style={[styles.bannerTouchable, { width: bannerWidth, marginRight: BANNER_GAP }]}
       >
         <LinearGradient
           colors={gradientColors as any}
@@ -135,12 +154,18 @@ export const BannerCarousel: React.FC<BannerCarouselProps> = ({
         renderItem={renderBanner}
         keyExtractor={(item) => item.id}
         horizontal
-        pagingEnabled
         showsHorizontalScrollIndicator={false}
+        onScrollBeginDrag={handleScrollBeginDrag}
         onMomentumScrollEnd={handleMomentumScrollEnd}
         contentContainerStyle={styles.flatListContent}
-        snapToInterval={BANNER_WIDTH}
+        snapToInterval={snapInterval}
+        snapToAlignment="start"
         decelerationRate="fast"
+        getItemLayout={(_, index) => ({
+          length: snapInterval,
+          offset: snapInterval * index,
+          index,
+        })}
       />
 
       {/* Dots Indicator */}
@@ -169,7 +194,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.base,
   },
   bannerTouchable: {
-    width: BANNER_WIDTH,
     borderRadius: theme.radius.banner,
     overflow: 'hidden',
     ...theme.shadows.card,
