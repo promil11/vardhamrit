@@ -383,41 +383,41 @@ export default function ProductDetailScreen() {
             <View style={styles.infoChipsGrid}>
               <View style={styles.infoChip}>
                 <View style={styles.infoChipIconWrapper}>
-                  <Icon name="sprout" size={18} color={theme.colors.primary} />
+                  <Icon name="sprout" size={16} color={theme.colors.primary} />
                 </View>
-                <View>
-                  <Text style={styles.infoChipTitle}>100% Fresh Harvest</Text>
-                  <Text style={styles.infoChipSub}>Packed within 48h</Text>
-                </View>
-              </View>
-
-              <View style={styles.infoChip}>
-                <View style={styles.infoChipIconWrapper}>
-                  <Icon name="flame" size={18} color={theme.colors.accentGoldDark} />
-                </View>
-                <View>
-                  <Text style={styles.infoChipTitle}>Strong Kadak Aroma</Text>
-                  <Text style={styles.infoChipSub}>Amber rich liquor</Text>
+                <View style={styles.infoChipTextContainer}>
+                  <Text style={styles.infoChipTitle} numberOfLines={2}>100% Fresh Harvest</Text>
+                  <Text style={styles.infoChipSub} numberOfLines={1}>Packed within 48h</Text>
                 </View>
               </View>
 
               <View style={styles.infoChip}>
                 <View style={styles.infoChipIconWrapper}>
-                  <Icon name="zap" size={18} color={theme.colors.accentGoldDark} />
+                  <Icon name="flame" size={16} color={theme.colors.accentGoldDark} />
                 </View>
-                <View>
-                  <Text style={styles.infoChipTitle}>48 hrs Fast Delivery</Text>
-                  <Text style={styles.infoChipSub}>Direct to doorstep</Text>
+                <View style={styles.infoChipTextContainer}>
+                  <Text style={styles.infoChipTitle} numberOfLines={2}>Strong Kadak Aroma</Text>
+                  <Text style={styles.infoChipSub} numberOfLines={1}>Amber rich liquor</Text>
                 </View>
               </View>
 
               <View style={styles.infoChip}>
                 <View style={styles.infoChipIconWrapper}>
-                  <Icon name="leaf" size={18} color={theme.colors.primary} />
+                  <Icon name="zap" size={16} color={theme.colors.accentGoldDark} />
                 </View>
-                <View>
-                  <Text style={styles.infoChipTitle}>Zero Artificial Color</Text>
-                  <Text style={styles.infoChipSub}>Pure organic leaves</Text>
+                <View style={styles.infoChipTextContainer}>
+                  <Text style={styles.infoChipTitle} numberOfLines={2}>48 hrs Fast Delivery</Text>
+                  <Text style={styles.infoChipSub} numberOfLines={1}>Direct to doorstep</Text>
+                </View>
+              </View>
+
+              <View style={styles.infoChip}>
+                <View style={styles.infoChipIconWrapper}>
+                  <Icon name="leaf" size={16} color={theme.colors.primary} />
+                </View>
+                <View style={styles.infoChipTextContainer}>
+                  <Text style={styles.infoChipTitle} numberOfLines={2}>Zero Artificial Color</Text>
+                  <Text style={styles.infoChipSub} numberOfLines={1}>Pure organic leaves</Text>
                 </View>
               </View>
             </View>
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(0, 0, 0, 0.08)',
   },
@@ -898,37 +898,49 @@ const styles = StyleSheet.create({
   infoChipsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.md,
+    justifyContent: 'space-between',
     marginTop: theme.spacing.md,
   },
   infoChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '47%',
+    width: '48%',
+    marginBottom: 10,
     backgroundColor: theme.colors.surfaceSecondary,
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.radius.sm,
-    padding: theme.spacing.sm,
-    gap: theme.spacing.xs,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    gap: 8,
+    overflow: 'hidden',
   },
   infoChipIconWrapper: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: theme.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
+  },
+  infoChipTextContainer: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
+    justifyContent: 'center',
   },
   infoChipTitle: {
-    fontSize: theme.typography.scale.xs - 1,
+    fontSize: 11,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
+    lineHeight: 14,
   },
   infoChipSub: {
-    fontSize: theme.typography.scale.xs - 3,
+    fontSize: 9.5,
     color: theme.colors.textSecondary,
-    marginTop: 1,
+    marginTop: 2,
+    lineHeight: 12,
   },
   accordionHeader: {
     flexDirection: 'row',
