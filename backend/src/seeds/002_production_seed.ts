@@ -13,7 +13,7 @@ async function seedDatabase() {
     port: Number(process.env.DB_PORT) || 3306,
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || 'root',
-    database: 'vardhamrit',
+    database: process.env.DB_NAME || 'vardhamrit',
     multipleStatements: true,
   });
 
