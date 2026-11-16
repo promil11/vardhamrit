@@ -8,6 +8,8 @@
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS coin_transactions, notifications, push_campaigns, deals, reviews, payments, order_status_history, order_items, orders, coupon_usages, coupons, cart_items, wishlists, banners, product_badges, product_images, product_variants, products, category_hero_metadata, categories, addresses, users;
+
 -- ----------------------------------------------------------------------------
 -- 1. USERS TABLE (Accounts, Loyalty Coins, Preferences, RBAC)
 -- ----------------------------------------------------------------------------
@@ -68,6 +70,7 @@ CREATE TABLE IF NOT EXISTS categories (
   slug VARCHAR(100) NOT NULL UNIQUE,
   name VARCHAR(150) NOT NULL,
   tagline VARCHAR(255) NULL,
+  image_url VARCHAR(500) NULL,
   description TEXT NULL,
   icon_name VARCHAR(50) NOT NULL DEFAULT 'coffee',
   icon_color VARCHAR(30) NOT NULL DEFAULT '#0F5132',
