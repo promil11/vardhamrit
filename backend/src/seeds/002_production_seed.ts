@@ -8,6 +8,12 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 async function seedDatabase() {
   console.log('🌱 Starting Vardhamrit 100% Data Migration & Seeding (4 Chai Flavours)...');
 
+  const useSsl =
+    process.env.DB_SSL === 'true' ||
+    (Boolean(process.env.DB_HOST) &&
+      process.env.DB_HOST !== 'localhost' &&
+      process.env.DB_HOST !== '127.0.0.1');
+
   const connection = await mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     port: Number(process.env.DB_PORT) || 3306,
@@ -15,6 +21,7 @@ async function seedDatabase() {
     password: process.env.DB_PASSWORD || 'root',
     database: process.env.DB_NAME || 'vardhamrit',
     multipleStatements: true,
+    ssl: useSsl ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined,
   });
 
   try {

@@ -4,6 +4,12 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
+const useSsl =
+  process.env.DB_SSL === 'true' ||
+  (Boolean(process.env.DB_HOST) &&
+    process.env.DB_HOST !== 'localhost' &&
+    process.env.DB_HOST !== '127.0.0.1');
+
 export const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   port: Number(process.env.DB_PORT) || 3306,
@@ -17,6 +23,7 @@ export const pool = mysql.createPool({
   keepAliveInitialDelay: 0,
   decimalNumbers: true,
   multipleStatements: true,
+  ssl: useSsl ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined,
 });
 
 export async function testConnection(): Promise<boolean> {
