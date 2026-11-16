@@ -1,0 +1,31 @@
+{
+  "name": "vardhamrit-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vardhamrit Chai Patti - Production Ready E-Commerce Platform",
+  "workspaces": [
+    "backend",
+    "admin",
+    "app"
+  ],
+  "scripts": {
+    "backend:dev": "npm --workspace=backend run dev",
+    "backend:build": "npm --workspace=backend run build",
+    "backend:migrate": "npm --workspace=backend run migrate",
+    "backend:seed": "npm --workspace=backend run seed",
+    "admin:dev": "npm --workspace=admin run dev",
+    "admin:build": "npm --workspace=admin run build",
+    "app:start": "npm --workspace=app run start"
+  },
+  "keywords": [
+    "chai",
+    "tea",
+    "ecommerce",
+    "react-native",
+    "expo",
+    "express",
+    "mysql"
+  ],
+  "author": "Vardhamrit Engineering Team",
+  "license": "ISC"
+}

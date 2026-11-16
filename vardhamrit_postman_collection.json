@@ -1,0 +1,265 @@
+{
+  "info": {
+    "name": "Vardhamrit Chai API",
+    "_postman_id": "c1f727d8-1123-4567-89ab-cdef01234567",
+    "description": "Production-Ready REST API for Vardhamrit Chai Patti E-Commerce Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "customerToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Customer Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"customer@vardhamrit.com\",\n  \"password\": \"Customer@123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"admin@vardhamrit.com\",\n  \"password\": \"Admin@123\",\n  \"expectedRole\": \"admin\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Customer Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Priya Patel\",\n  \"email\": \"priya@example.com\",\n  \"phone\": \"+919876500000\",\n  \"password\": \"Secret@123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get Products (Paginated & Filtered)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/products?sort=rating&page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["products"], "query": [{ "key": "sort", "value": "rating" }] }
+          }
+        },
+        {
+          "name": "Get Product Detail",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/products/1", "host": ["{{baseUrl}}"], "path": ["products", "1"] }
+          }
+        },
+        {
+          "name": "Get Product Reviews",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/products/1/reviews", "host": ["{{baseUrl}}"], "path": ["products", "1", "reviews"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/cart", "host": ["{{baseUrl}}"], "path": ["cart"] }
+          }
+        },
+        {
+          "name": "Add to Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variantId\": 1,\n  \"quantity\": 2\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/cart", "host": ["{{baseUrl}}"], "path": ["cart"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Coupons",
+      "item": [
+        {
+          "name": "Validate Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"CHAI10\",\n  \"paymentMethod\": \"ALL\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/coupons/validate", "host": ["{{baseUrl}}"], "path": ["coupons", "validate"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Place Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressId\": 1,\n  \"paymentMethod\": \"ONLINE\",\n  \"couponCode\": \"CHAI10\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "Get My Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "Download Invoice PDF",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/orders/1/invoice", "host": ["{{baseUrl}}"], "path": ["orders", "1", "invoice"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Razorpay Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/payments/create-order", "host": ["{{baseUrl}}"], "path": ["payments", "create-order"] }
+          }
+        },
+        {
+          "name": "Verify Payment Signature",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1,\n  \"razorpayOrderId\": \"order_mock_1\",\n  \"razorpayPaymentId\": \"pay_mock_1\",\n  \"razorpaySignature\": \"mock_sig_1\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/payments/verify", "host": ["{{baseUrl}}"], "path": ["payments", "verify"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Operations",
+      "item": [
+        {
+          "name": "Get Dashboard Analytics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/dashboard", "host": ["{{baseUrl}}"], "path": ["admin", "dashboard"] }
+          }
+        },
+        {
+          "name": "Approve Order",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/orders/1/approve", "host": ["{{baseUrl}}"], "path": ["admin", "orders", "1", "approve"] }
+          }
+        },
+        {
+          "name": "Dispatch Order",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courierName\": \"BlueDart Express\",\n  \"trackingNumber\": \"BD8829102\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/orders/1/dispatch", "host": ["{{baseUrl}}"], "path": ["admin", "orders", "1", "dispatch"] }
+          }
+        },
+        {
+          "name": "Export Orders to CSV",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/orders/export/csv", "host": ["{{baseUrl}}"], "path": ["admin", "orders", "export", "csv"] }
+          }
+        }
+      ]
+    }
+  ]
+}

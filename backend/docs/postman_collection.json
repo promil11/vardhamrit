@@ -1,0 +1,258 @@
+{
+  "info": {
+    "name": "Vardhamrit Chai E-Commerce API v1",
+    "_postman_id": "vardhamrit-api-v1-postman-collection",
+    "description": "Production-grade, scalable REST API for Vardhamrit Chai E-Commerce (1M+ Users Architecture)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Customer Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"customer@vardhamrit.com\",\n  \"password\": \"Customer@123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"admin@vardhamrit.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Register New Customer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Vikram Sen\",\n  \"email\": \"vikram@example.com\",\n  \"phone\": \"+919811122233\",\n  \"password\": \"Secret@123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Categories",
+      "item": [
+        {
+          "name": "List All Categories (Redis Cached)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/categories"
+          }
+        },
+        {
+          "name": "Get Category by Slug + Hero Notes",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/categories/kadak"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Content & Marketing",
+      "item": [
+        {
+          "name": "Hero Carousel Banners",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/content/banners"
+          }
+        },
+        {
+          "name": "Active Flash Deal Promotion",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/content/promotions/flash-deal"
+          }
+        },
+        {
+          "name": "Brewing Master Guides",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/content/brewing-guides"
+          }
+        },
+        {
+          "name": "Trust Value Propositions",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/content/trust-props"
+          }
+        },
+        {
+          "name": "Trending Searches",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/content/trending-searches"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Products Catalog",
+      "item": [
+        {
+          "name": "List Products (Search & Filter)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/products?category=kadak&page=1&limit=10&sort=popular",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "category", "value": "kadak" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "sort", "value": "popular" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product Detail by ID/Slug",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/products/1"
+          }
+        },
+        {
+          "name": "Product Reviews",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/products/1/reviews"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Customer Orders",
+      "item": [
+        {
+          "name": "List User Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/orders"
+          }
+        },
+        {
+          "name": "Get Single Order with Timeline & Courier",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/orders/1"
+          }
+        },
+        {
+          "name": "Place New Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressId\": 1,\n  \"paymentMethod\": \"ONLINE\",\n  \"couponCode\": \"CHAI20\"\n}"
+            },
+            "url": "{{baseUrl}}/orders"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. User Loyalty & Profile",
+      "item": [
+        {
+          "name": "User Profile & Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/user/profile"
+          }
+        },
+        {
+          "name": "Vardhamrit Tea Coins History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/user/coins"
+          }
+        },
+        {
+          "name": "Get User Wishlist",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/wishlist"
+          }
+        },
+        {
+          "name": "Toggle Product Wishlist",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/wishlist/1/toggle"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Coupons & Discounts",
+      "item": [
+        {
+          "name": "List Active Coupons",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/coupons"
+          }
+        },
+        {
+          "name": "Validate Coupon Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"CHAI20\",\n  \"paymentMethod\": \"ONLINE\",\n  \"subtotal\": 500\n}"
+            },
+            "url": "{{baseUrl}}/coupons/validate"
+          }
+        }
+      ]
+    }
+  ]
+}
