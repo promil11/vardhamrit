@@ -158,6 +158,7 @@ function findDistDir(folder: string): string | null {
 
 const adminDist = findDistDir('admin');
 const appDist = findDistDir('app');
+console.log(`📦 Frontends detected: Admin: ${adminDist ? 'FOUND' : 'NOT FOUND'} (${adminDist}), App: ${appDist ? 'FOUND' : 'NOT FOUND'} (${appDist})`);
 
 // 1. Admin UI & Admin API Handling
 app.use('/admin', (req, res, next) => {

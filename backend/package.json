@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon --watch src -e ts --exec ts-node src/index.ts",
-    "build": "tsc",
-    "build:all": "tsc && npm --prefix ../admin run build && npm --prefix ../app run export:web",
+    "build": "tsc && npm run build:frontends",
+    "build:frontends": "node -e \"const fs=require('fs'); if(!fs.existsSync('../app/dist') || !fs.existsSync('../admin/dist')){ const {execSync}=require('child_process'); console.log('Building frontends for Render...'); execSync('cd .. && npm install --include=dev && npm --workspace=admin run build && npm --workspace=app run export:web', {stdio:'inherit'}); }\"",
     "start": "node dist/index.js",
     "migrate": "ts-node src/migrations/runMigrations.ts",
     "seed": "ts-node src/seeds/002_production_seed.ts",
