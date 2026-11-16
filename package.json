@@ -9,6 +9,8 @@
     "app"
   ],
   "scripts": {
+    "build": "npm --workspace=admin run build && npm --workspace=app run export:web && npm --workspace=backend run build",
+    "start": "node backend/dist/index.js",
     "backend:dev": "npm --workspace=backend run dev",
     "backend:build": "npm --workspace=backend run build",
     "backend:migrate": "npm --workspace=backend run migrate",

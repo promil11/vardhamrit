@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Bell, X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { API_BASE_URL } from '../services/api';
+import { API_BASE_URL, SOCKET_URL } from '../services/api';
 
 interface AlertNotification {
   id: string;
@@ -46,7 +46,7 @@ export const RealTimeAlerts: React.FC = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const socket: Socket = io(API_BASE_URL, {
+    const socket: Socket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
     });
 

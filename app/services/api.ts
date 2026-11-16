@@ -2,7 +2,12 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { Platform } from 'react-native';
 import { storage } from './storage';
 
-const DEFAULT_DEV_HOST = Platform.OS === 'web' ? 'http://localhost:5000' : 'http://192.168.2.208:5000';
+const DEFAULT_DEV_HOST =
+  Platform.OS === 'web'
+    ? typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+      ? ''
+      : 'http://localhost:5000'
+    : 'http://192.168.2.208:5000';
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_DEV_HOST;
 
 export const api = axios.create({

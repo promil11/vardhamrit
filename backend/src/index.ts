@@ -1,6 +1,7 @@
 import express from 'express';
 import http from 'http';
 import path from 'path';
+import fs from 'fs';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -50,6 +51,7 @@ io.on('connection', (socket) => {
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: false,
   })
 );
 app.use(
@@ -140,7 +142,71 @@ app.use('/reviews', reviewRoutes);
 app.use('/wishlist', wishlistRoutes);
 app.use('/user', userRoutes);
 app.use('/notifications', notificationRoutes);
-app.use('/admin', adminRoutes);
+// Helper to locate static builds for Admin and Visitor App
+function findDistDir(folder: string): string | null {
+  const possiblePaths = [
+    path.resolve(__dirname, `../../${folder}/dist`),
+    path.resolve(__dirname, `../${folder}/dist`),
+    path.resolve(process.cwd(), `${folder}/dist`),
+    path.resolve(process.cwd(), `../${folder}/dist`),
+  ];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+const adminDist = findDistDir('admin');
+const appDist = findDistDir('app');
+
+// 1. Admin UI & Admin API Handling
+app.use('/admin', (req, res, next) => {
+  // If it's an API request with an authorization header, JSON accept, or mutation method
+  const isApi =
+    Boolean(req.headers.authorization) ||
+    Boolean(req.headers.accept?.includes('application/json')) ||
+    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
+
+  if (isApi) {
+    return adminRoutes(req, res, next);
+  }
+  next();
+});
+
+if (adminDist) {
+  app.use('/admin', express.static(adminDist));
+  app.get(['/admin', '/admin/*'], (_req, res) => {
+    res.sendFile(path.join(adminDist, 'index.html'));
+  });
+} else {
+  app.use('/admin', adminRoutes);
+}
+
+// 2. Visitor Storefront UI (Catch-all for all customer routes)
+if (appDist) {
+  app.use(express.static(appDist));
+  app.get('*', (req, res, next) => {
+    if (
+      req.path.startsWith('/api') ||
+      req.path.startsWith('/health') ||
+      req.path.startsWith('/uploads') ||
+      req.path.startsWith('/invoices') ||
+      req.path.startsWith('/socket.io') ||
+      req.path.startsWith('/admin')
+    ) {
+      return next();
+    }
+    res.sendFile(path.join(appDist, 'index.html'));
+  });
+} else {
+  app.get('/', (_req, res) => {
+    res.json({
+      message: '🍵 Vardhamrit Chai E-Commerce API is running!',
+      health: '/health',
+      docs: '/api/v1',
+    });
+  });
+}
 
 // Error Handling Middleware
 app.use(errorHandler);

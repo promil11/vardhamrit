@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon --watch src -e ts --exec ts-node src/index.ts",
     "build": "tsc",
+    "build:all": "tsc && npm --prefix ../admin run build && npm --prefix ../app run export:web",
     "start": "node dist/index.js",
     "migrate": "ts-node src/migrations/runMigrations.ts",
     "seed": "ts-node src/seeds/002_production_seed.ts",
