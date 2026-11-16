@@ -17,7 +17,19 @@ async function runMigrations() {
     `);
 
     // 2. Read all .sql files in migrations dir
-    const migrationsDir = __dirname;
+    const possibleDirs = [
+      __dirname,
+      path.join(__dirname, '../../src/migrations'),
+      path.join(process.cwd(), 'src/migrations'),
+      path.join(process.cwd(), 'backend/src/migrations'),
+    ];
+    let migrationsDir = __dirname;
+    for (const d of possibleDirs) {
+      if (fs.existsSync(d) && fs.readdirSync(d).some((f) => f.endsWith('.sql'))) {
+        migrationsDir = d;
+        break;
+      }
+    }
     const files = fs
       .readdirSync(migrationsDir)
       .filter((file) => file.endsWith('.sql'))
