@@ -469,51 +469,6 @@ export default function OrdersScreen() {
 
     return (
       <View style={styles.paginationCard}>
-        {/* Top Info Row */}
-        <View style={styles.paginationInfoRow}>
-          <View style={styles.paginationSummary}>
-            <Text style={styles.paginationInfoText}>
-              Showing <Text style={styles.paginationInfoBold}>{startIndex + 1}–{endIndex}</Text> of <Text style={styles.paginationInfoBold}>{totalFilteredCount}</Text> orders
-            </Text>
-            <View style={styles.pageBadge}>
-              <Text style={styles.pageBadgeText}>Page {currentPage} of {totalPages}</Text>
-            </View>
-          </View>
-
-          {/* Per Page Selector */}
-          <View style={styles.perPageContainer}>
-            <Text style={styles.perPageLabel}>Per page:</Text>
-            {[4, 8, 12].map((count) => {
-              const isSelected = itemsPerPage === count;
-              return (
-                <TouchableOpacity
-                  key={count}
-                  onPress={() => {
-                    if (itemsPerPage !== count) {
-                      setItemsPerPage(count);
-                      setCurrentPage(1);
-                    }
-                  }}
-                  style={[
-                    styles.perPagePill,
-                    isSelected && styles.perPagePillActive,
-                  ]}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.perPagePillText,
-                      isSelected && styles.perPagePillTextActive,
-                    ]}
-                  >
-                    {count}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
         {/* Bottom Navigation Buttons */}
         {totalPages > 1 && (
           <View style={styles.paginationButtonsRow}>
@@ -1696,6 +1651,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   paginationInfoRow: {
+    display: "flex",
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1703,8 +1659,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   paginationSummary: {
+    display: "flex",
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: "space-between",
     gap: 8,
   },
   paginationInfoText: {
