@@ -408,7 +408,7 @@ export function GokwikUpiModal({
                   >
                     <View style={styles.appCardInfo}>
                       <Text style={styles.appCardTitle}>Google Pay</Text>
-                      <Text style={styles.appCardSub}>Instant 1-Tap UPI approval</Text>
+                      <Text style={styles.appCardSub}>Instant UPI</Text>
                     </View>
                     <View style={styles.appPayPill}>
                       <Text style={styles.appPayPillText}>PAY NOW</Text>

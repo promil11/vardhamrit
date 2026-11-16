@@ -435,14 +435,7 @@ export default function CheckoutScreen() {
                       </Text>
                     </View>
                   ) : (
-                    <View style={styles.distanceBadgeRow}>
-                      <Icon name="map-pin" size={12} color="#059669" />
-                      <Text style={styles.distanceBadgeText}>
-                        {distanceInfo.distanceKm <= 0.5
-                          ? `Within 500m • Base Delivery ₹30 & Handling ₹5`
-                          : `${distanceInfo.distanceKm} km away • Delivery ₹${deliveryFee} & Handling ₹${handlingFee}`}
-                      </Text>
-                    </View>
+                    <></>
                   )}
                 </View>
               ) : (

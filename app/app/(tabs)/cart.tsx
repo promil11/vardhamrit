@@ -320,7 +320,7 @@ export default function CartScreen() {
                       >
                         <Icon
                           name={distanceInfo.isServiceable ? 'map-pin' : 'alert-triangle'}
-                          size={11}
+                          size={13}
                           color={distanceInfo.isServiceable ? '#047857' : '#DC2626'}
                         />
                         <Text
@@ -536,7 +536,6 @@ export default function CartScreen() {
                       ? 'DELIVER TO CURRENT LOCATION'
                       : 'DELIVERY ADDRESS'}
                 </Text>
-                <Text style={styles.changeLink}>{addresses.length > 0 ? 'CHANGE' : 'ADD'}</Text>
               </View>
               <Text style={styles.bottomAddrLine} numberOfLines={1}>
                 {selectedAddress
@@ -554,7 +553,7 @@ export default function CartScreen() {
                   Alert.alert(
                     'Delivery Unavailable',
                     distanceInfo.message ||
-                      `This address is ${distanceInfo.distanceKm} km away. We only deliver within ${distanceInfo.maxDistanceKm || 10} km.`
+                    `This address is ${distanceInfo.distanceKm} km away. We only deliver within ${distanceInfo.maxDistanceKm || 10} km.`
                   );
                   return;
                 }
@@ -589,7 +588,6 @@ export default function CartScreen() {
               >
                 <View>
                   <Text style={styles.proceedPrice}>₹{currentGrandTotal.toFixed(0)}</Text>
-                  <Text style={styles.proceedSub}>TOTAL</Text>
                 </View>
                 <View style={styles.proceedCta}>
                   <Text style={styles.proceedBtnText}>Proceed to Pay</Text>
