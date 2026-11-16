@@ -22,11 +22,19 @@ export const productParamSchema = z.object({
 
 const formatImageUrl = (url?: string | null): string => {
   if (!url) return 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&q=80&w=800';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+
+  const baseUrl = process.env.API_BASE_URL || 'https://vardhamrit.onrender.com';
+
+  // If URL has hardcoded localhost:5000 or 127.0.0.1, replace it with the live baseUrl
+  if (url.includes('localhost:5000') || url.includes('127.0.0.1:5000')) {
+    return url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5000/, baseUrl);
+  }
+
   if (url.startsWith('/uploads')) {
-    const baseUrl = process.env.API_BASE_URL || 'http://localhost:5000';
     return `${baseUrl}${url}`;
   }
+
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
   return url;
 };
 
