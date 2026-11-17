@@ -962,38 +962,38 @@ export default function HomeScreen() {
               <View style={styles.guaranteeSection}>
                 <LinearGradient
                   colors={theme.colors.surfaceGradient as any}
-                  style={styles.guaranteeCard}
+                  style={[styles.guaranteeCard, isTablet && styles.guaranteeCardTablet]}
                 >
-                  <View style={styles.guaranteeHeader}>
-                    <View style={styles.guaranteeIconCircle}>
-                      <Icon name="mountain" size={20} color={theme.colors.primary} />
+                  <View style={[styles.guaranteeHeader, isTablet && { marginBottom: 16 }]}>
+                    <View style={[styles.guaranteeIconCircle, isTablet && styles.guaranteeIconCircleTablet]}>
+                      <Icon name="mountain" size={isTablet ? 26 : 20} color={theme.colors.primary} />
                     </View>
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, alignItems: isTablet ? 'center' : 'flex-start' }}>
                       <View style={styles.guaranteeTitleRow}>
-                        <Text style={styles.guaranteeTitle}>Direct Garden Guarantee</Text>
-                        <Icon name="badge-check" size={15} color="#15803D" />
+                        <Text style={[styles.guaranteeTitle, isTablet && { fontSize: 17 }]}>Direct Garden Guarantee</Text>
+                        <Icon name="badge-check" size={isTablet ? 18 : 15} color="#15803D" />
                       </View>
-                      <Text style={styles.guaranteeSubtitle}>100% Single Origin Upper Assam</Text>
+                      <Text style={[styles.guaranteeSubtitle, isTablet && { fontSize: 13.5 }]}>100% Single Origin Upper Assam</Text>
                     </View>
                   </View>
 
                   {/* 4 Stat Pills */}
-                  <View style={styles.statGrid}>
+                  <View style={[styles.statGrid, isTablet && styles.statGridTablet]}>
                     <View style={styles.statItem}>
-                      <Text style={styles.statNumber}>48h</Text>
-                      <Text style={styles.statLabel}>Garden to Vacuum Pack</Text>
+                      <Text style={[styles.statNumber, isTablet && { fontSize: 18 }]}>48h</Text>
+                      <Text style={[styles.statLabel, isTablet && { fontSize: 12 }]}>Garden to Vacuum Pack</Text>
                     </View>
                     <View style={styles.statItem}>
-                      <Text style={styles.statNumber}>0%</Text>
-                      <Text style={styles.statLabel}>Colors or Dust Additives</Text>
+                      <Text style={[styles.statNumber, isTablet && { fontSize: 18 }]}>0%</Text>
+                      <Text style={[styles.statLabel, isTablet && { fontSize: 12 }]}>Colors or Dust Additives</Text>
                     </View>
                     <View style={styles.statItem}>
-                      <Text style={styles.statNumber}>700m+</Text>
-                      <Text style={styles.statLabel}>High Altitude Estate</Text>
+                      <Text style={[styles.statNumber, isTablet && { fontSize: 18 }]}>700m+</Text>
+                      <Text style={[styles.statLabel, isTablet && { fontSize: 12 }]}>High Altitude Estate</Text>
                     </View>
                     <View style={styles.statItem}>
-                      <Text style={styles.statNumber}>4.9 ★</Text>
-                      <Text style={styles.statLabel}>24,000+ Verified Buyers</Text>
+                      <Text style={[styles.statNumber, isTablet && { fontSize: 18 }]}>4.9 ★</Text>
+                      <Text style={[styles.statLabel, isTablet && { fontSize: 12 }]}>24,000+ Verified Buyers</Text>
                     </View>
                   </View>
                 </LinearGradient>
@@ -1001,16 +1001,16 @@ export default function HomeScreen() {
 
               {/* 12. Social Proof Community Marquee Strip */}
               <View style={styles.socialProofStrip}>
-                <View style={styles.socialProofCard}>
+                <View style={[styles.socialProofCard, isTablet && styles.socialProofCardTablet]}>
                   <View style={styles.starsRow}>
                     {[1, 2, 3, 4, 5].map((s) => (
-                      <Icon key={s} name="star" size={13} color="#F59E0B" fill="#F59E0B" />
+                      <Icon key={s} name="star" size={isTablet ? 16 : 13} color="#F59E0B" fill="#F59E0B" />
                     ))}
                   </View>
-                  <Text style={styles.socialProofText}>
+                  <Text style={[styles.socialProofText, isTablet && { fontSize: 15, lineHeight: 22 }]}>
                     "The thickest, most brisk chai I've tasted in 20 years. Fresh garden leaves make all the difference!"
                   </Text>
-                  <Text style={styles.socialProofAuthor}>
+                  <Text style={[styles.socialProofAuthor, isTablet && { fontSize: 13 }]}>
                     — Rajesh K., Pune • Verified Tea Sommelier Review
                   </Text>
                 </View>
@@ -1464,6 +1464,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  guaranteeCardTablet: {
+    padding: 20,
+    borderRadius: 22,
+    gap: 16,
+  },
   guaranteeLeft: {
     alignItems: 'center',
   },
@@ -1476,6 +1481,11 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  guaranteeIconCircleTablet: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
   },
   guaranteeCenter: {
     flex: 1,
@@ -1786,6 +1796,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
+  statGridTablet: {
+    padding: 16,
+    borderRadius: 18,
+  },
   statItem: {
     alignItems: 'center',
     flex: 1,
@@ -1817,6 +1831,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 5,
     elevation: 1,
+  },
+  socialProofCardTablet: {
+    padding: 20,
+    borderRadius: 20,
   },
   starsRow: {
     flexDirection: 'row',

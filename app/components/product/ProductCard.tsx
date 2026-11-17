@@ -150,15 +150,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Bottom of Image: Status Micro-Ribbon */}
           {product.isBestSeller ? (
             <View style={[styles.imageBottomBannerGold, isTablet && styles.imageBottomBannerTablet]}>
-              <Icon name="crown" size={isTablet ? 11 : 9} color="#B45309" />
-              <Text style={[styles.imageBottomBannerGoldText, isTablet && { fontSize: scaleFont(9.5) }]}>
+              <Icon name="crown" size={isTablet ? 12 : 9} color="#B45309" />
+              <Text style={[styles.imageBottomBannerGoldText, isTablet && { fontSize: 11 }]}>
                 BESTSELLER
               </Text>
             </View>
           ) : product.isFreshHarvest ? (
             <View style={[styles.imageBottomBannerGreen, isTablet && styles.imageBottomBannerTablet]}>
-              <Icon name="sprout" size={isTablet ? 11 : 9} color="#15803D" />
-              <Text style={[styles.imageBottomBannerGreenText, isTablet && { fontSize: scaleFont(9.5) }]}>
+              <Icon name="sprout" size={isTablet ? 12 : 9} color="#15803D" />
+              <Text style={[styles.imageBottomBannerGreenText, isTablet && { fontSize: 11 }]}>
                 FRESH 2026
               </Text>
             </View>
@@ -178,9 +178,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               styles.name,
               isList && styles.nameList,
               isTablet && {
-                fontSize: scaleFont(isList ? 15.5 : 14.5),
-                lineHeight: scaleFont(isList ? 21 : 19),
-                minHeight: isList ? 0 : scaleSize(38),
+                fontSize: isList ? 17 : 16,
+                lineHeight: isList ? 23 : 21,
+                minHeight: isList ? 0 : 42,
               },
             ]}
             numberOfLines={2}
@@ -191,7 +191,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Tagline / Tasting Notes */}
           {product.tagline ? (
             <Text
-              style={[styles.tagline, isTablet && { fontSize: scaleFont(11.5) }]}
+              style={[
+                styles.tagline,
+                isTablet && { fontSize: 13, lineHeight: 17 },
+              ]}
               numberOfLines={1}
             >
               {product.tagline}
@@ -201,12 +204,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Rating & Reviews */}
           <View style={styles.ratingRow}>
             <View style={[styles.ratingPill, isTablet && styles.ratingPillTablet]}>
-              <Icon name="star" size={isTablet ? 11.5 : 9.5} color="#D97706" />
-              <Text style={[styles.ratingText, isTablet && { fontSize: scaleFont(11.5) }]}>
+              <Icon name="star" size={isTablet ? 13 : 9.5} color="#D97706" />
+              <Text style={[styles.ratingText, isTablet && { fontSize: 13 }]}>
                 {product.rating.toFixed(1)}
               </Text>
             </View>
-            <Text style={[styles.reviewCountText, isTablet && { fontSize: scaleFont(11) }]}>
+            <Text style={[styles.reviewCountText, isTablet && { fontSize: 12.5 }]}>
               ({product.reviewCount})
             </Text>
           </View>
@@ -219,7 +222,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           >
             <View>
               <Text
-                style={[styles.variantCapsuleText, isTablet && { fontSize: scaleFont(13.5) }]}
+                style={[styles.variantCapsuleText, isTablet && { fontSize: 14 }]}
               >
                 {selectedVariant.label}
               </Text>
@@ -228,13 +231,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               {product.variants.length > 1 ? (
                 <View style={styles.variantDropdownArrow}>
                   <Text
-                    style={[styles.variantMultiCount, isTablet && { fontSize: scaleFont(13.5) }]}
+                    style={[styles.variantMultiCount, isTablet && { fontSize: 13.5 }]}
                   >
                     {product.variants.length} sizes
                   </Text>
                   <Icon
                     name="chevron-down"
-                    size={isTablet ? 12 : 10}
+                    size={isTablet ? 13 : 10}
                     color={theme.colors.textSecondary}
                   />
                 </View>
@@ -246,17 +249,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <View style={styles.footerRow}>
             <View style={styles.priceColumn}>
               <View style={styles.priceRow}>
-                <Text style={[styles.sellingPrice, isTablet && { fontSize: scaleFont(18.5) }]}>
+                <Text style={[styles.sellingPrice, isTablet && { fontSize: 20 }]}>
                   ₹{selectedVariant.price}
                 </Text>
                 {selectedVariant.mrp > selectedVariant.price ? (
-                  <Text style={[styles.mrpPrice, isTablet && { fontSize: scaleFont(13) }]}>
+                  <Text style={[styles.mrpPrice, isTablet && { fontSize: 14 }]}>
                     ₹{selectedVariant.mrp}
                   </Text>
                 ) : null}
               </View>
               {savings > 0 ? (
-                <Text style={[styles.savingsLabel, isTablet && { fontSize: scaleFont(10.5) }]}>
+                <Text style={[styles.savingsLabel, isTablet && { fontSize: 12 }]}>
                   Save ₹{savings}
                 </Text>
               ) : null}

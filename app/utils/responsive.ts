@@ -37,13 +37,13 @@ export function useResponsive(): ResponsiveValues {
   const isDesktop = width >= BREAKPOINTS.DESKTOP;
 
   // Scale factor: strictly 1 on standard phones (< 600px)
-  const scale = isLargeTablet ? 1.32 : isTablet ? 1.2 : 1;
+  const scale = isLargeTablet ? 1.4 : isTablet ? 1.28 : 1;
 
   // Horizontal rail product card width
-  const productCardWidth = isLargeTablet ? 228 : isTablet ? 208 : 168;
+  const productCardWidth = isLargeTablet ? 236 : isTablet ? 214 : 168;
 
   // Product showcase image container height
-  const productImageHeight = isLargeTablet ? 186 : isTablet ? 168 : 136;
+  const productImageHeight = isLargeTablet ? 192 : isTablet ? 172 : 136;
 
   // Grid item percentage width: 2 cols on mobile, 3 cols on tablet, 4 cols on large tablet/desktop
   const gridItemWidth = isLargeTablet ? '23.5%' : isTablet ? '31.5%' : '48%';

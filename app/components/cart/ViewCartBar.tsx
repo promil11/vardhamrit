@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { useCartStore } from '../../store/useCartStore';
 import { Icon } from '../common/Icon';
+import { useResponsive } from '../../utils/responsive';
 
 interface ViewCartBarProps {
   bottomOffset?: number;
@@ -24,6 +25,7 @@ export const ViewCartBar: React.FC<ViewCartBarProps> = ({
 }) => {
   const router = useRouter();
   const { items, getTotalItemsCount, getSubtotal } = useCartStore();
+  const { isTablet } = useResponsive();
 
   const totalCount = getTotalItemsCount();
   const subtotal = getSubtotal();
@@ -98,43 +100,44 @@ export const ViewCartBar: React.FC<ViewCartBarProps> = ({
           colors={theme.colors.primaryGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={styles.gradientPill}
+          style={[styles.gradientPill, isTablet && styles.gradientPillTablet]}
         >
           {/* Left: Thumbnail Stack + Item Count & Subtotal */}
           <View style={styles.leftSection}>
-            <View style={styles.thumbnailStack}>
+            <View style={[styles.thumbnailStack, isTablet && { width: 44, height: 44 }]}>
               {previewImages.length > 0 ? (
                 previewImages.map((uri, idx) => (
                   <View
                     key={idx}
                     style={[
                       styles.thumbnailCircle,
-                      { left: idx * 16, zIndex: 10 - idx },
+                      isTablet && styles.thumbnailCircleTablet,
+                      { left: idx * (isTablet ? 18 : 16), zIndex: 10 - idx },
                     ]}
                   >
                     <Image source={{ uri }} style={styles.thumbImage} resizeMode="cover" />
                   </View>
                 ))
               ) : (
-                <View style={styles.bagIconFallback}>
-                  <Icon name="shopping-bag" size={18} color={theme.colors.textInverse} />
+                <View style={[styles.bagIconFallback, isTablet && { width: 38, height: 38, borderRadius: 19 }]}>
+                  <Icon name="shopping-bag" size={isTablet ? 22 : 18} color={theme.colors.textInverse} />
                 </View>
               )}
             </View>
 
-            <View style={[styles.textDetails, { marginLeft: Math.max(1, previewImages.length) * 16 + 8 }]}>
-              <Text style={styles.itemCountText}>
+            <View style={[styles.textDetails, { marginLeft: Math.max(1, previewImages.length) * (isTablet ? 18 : 16) + 10 }]}>
+              <Text style={[styles.itemCountText, isTablet && { fontSize: 11 }]}>
                 {totalCount} {totalCount === 1 ? 'ITEM' : 'ITEMS'}
               </Text>
-              <Text style={styles.subtotalText}>₹{subtotal.toFixed(0)}</Text>
+              <Text style={[styles.subtotalText, isTablet && { fontSize: 17 }]}>₹{subtotal.toFixed(0)}</Text>
             </View>
           </View>
 
           {/* Right: View Cart Action */}
           <View style={styles.rightSection}>
-            <Text style={styles.viewCartText}>View Cart</Text>
-            <View style={styles.arrowCircle}>
-              <Icon name="arrow-right" size={14} color={theme.colors.textInverse} />
+            <Text style={[styles.viewCartText, isTablet && { fontSize: 16 }]}>View Cart</Text>
+            <View style={[styles.arrowCircle, isTablet && { width: 30, height: 30, borderRadius: 15 }]}>
+              <Icon name="arrow-right" size={isTablet ? 16 : 14} color={theme.colors.textInverse} />
             </View>
           </View>
         </LinearGradient>
@@ -166,6 +169,10 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     height: theme.layout.viewCartBarHeight,
   },
+  gradientPillTablet: {
+    height: 60,
+    paddingHorizontal: theme.spacing.lg,
+  },
   leftSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -185,6 +192,11 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.surface,
     overflow: 'hidden',
     backgroundColor: theme.colors.tintKadak,
+  },
+  thumbnailCircleTablet: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
   },
   thumbImage: {
     width: '100%',
