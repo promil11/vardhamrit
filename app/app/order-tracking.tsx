@@ -17,6 +17,7 @@ import { EmptyState } from '../components/common/EmptyState';
 import { OrderTrackingSkeleton } from '../components/common/Skeleton';
 import { fetchUserOrders } from '../services/orderClientService';
 import { socket } from '../services/socketService';
+import { useResponsive } from '../utils/responsive';
 
 interface Step {
   id: number;
@@ -201,6 +202,7 @@ const FALLBACK_TRACKING_ORDERS: Record<string, TrackedOrder> = {
 
 export default function OrderTrackingScreen() {
   const router = useRouter();
+  const { isTablet } = useResponsive();
   const params = useLocalSearchParams<{
     orderId?: string;
     orderIds?: string;
@@ -609,18 +611,18 @@ export default function OrderTrackingScreen() {
 
       <View style={styles.container}>
         {/* 1. TOP NAVIGATION NAVBAR */}
-        <View style={styles.topNav}>
+        <View style={[styles.topNav, isTablet && { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16 }]}>
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => router.replace('/(tabs)/orders')}
-            style={styles.backButton}
+            style={[styles.backButton, isTablet && { paddingVertical: 8, paddingHorizontal: 16 }]}
           >
-            <Icon name="arrow-left" size={16} color={theme.colors.primary} />
-            <Text style={styles.backText}>Orders</Text>
+            <Icon name="arrow-left" size={isTablet ? 18 : 16} color={theme.colors.primary} />
+            <Text style={[styles.backText, isTablet && { fontSize: 13.5 }]}>Orders</Text>
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>
+            <Text style={[styles.headerTitle, isTablet && { fontSize: 20 }]}>
               {isMultiple
                 ? `${allOnTheWayOrders.length} Active Deliveries`
                 : allOnTheWayOrders.length > 0
@@ -628,14 +630,14 @@ export default function OrderTrackingScreen() {
                   : 'Order Tracking'}
             </Text>
             <View style={styles.headerSubtitleRow}>
-              <Icon name="zap" size={11} color={theme.colors.accentGoldDark} />
-              <Text style={styles.headerSubtitle}>Live 48 hrs Express Tracking</Text>
+              <Icon name="zap" size={isTablet ? 13 : 11} color={theme.colors.accentGoldDark} />
+              <Text style={[styles.headerSubtitle, isTablet && { fontSize: 13.5 }]}>Live 48 hrs Express Tracking</Text>
             </View>
           </View>
 
-          <View style={styles.livePill}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>LIVE</Text>
+          <View style={[styles.livePill, isTablet && { paddingHorizontal: 12, paddingVertical: 5 }]}>
+            <View style={[styles.liveDot, isTablet && { width: 8, height: 8, borderRadius: 4 }]} />
+            <Text style={[styles.liveText, isTablet && { fontSize: 12 }]}>LIVE</Text>
           </View>
         </View>
 
@@ -654,7 +656,7 @@ export default function OrderTrackingScreen() {
         ) : (
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, isTablet && { paddingHorizontal: 24, paddingVertical: 18 }]}
           >
             {/* 2. HERO CALLOUT BANNER */}
             {(() => {
@@ -715,7 +717,7 @@ export default function OrderTrackingScreen() {
                   }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={styles.heroBanner}
+                  style={[styles.heroBanner, isTablet && { padding: 20, borderRadius: 20 }]}
                 >
                   <View style={{ flex: 1 }}>
                     <View style={styles.heroBadgeRow}>
@@ -724,6 +726,7 @@ export default function OrderTrackingScreen() {
                           styles.heroPulseCircle,
                           isOrderPlaced && { backgroundColor: '#F59E0B' },
                           isOrderConfirmed && { backgroundColor: '#38BDF8' },
+                          isTablet && { width: 8, height: 8, borderRadius: 4 },
                         ]}
                       />
                       <Text
@@ -731,19 +734,20 @@ export default function OrderTrackingScreen() {
                           styles.heroBadgeText,
                           isOrderPlaced && { color: '#FDE68A' },
                           isOrderConfirmed && { color: '#BAE6FD' },
+                          isTablet && { fontSize: 12 },
                         ]}
                       >
                         {bannerBadge}
                       </Text>
                     </View>
-                    <Text style={styles.heroTitle}>{bannerTitle}</Text>
-                    <Text style={styles.heroSub}>{bannerSub}</Text>
+                    <Text style={[styles.heroTitle, isTablet && { fontSize: 20 }]}>{bannerTitle}</Text>
+                    <Text style={[styles.heroSub, isTablet && { fontSize: 14, lineHeight: 20 }]}>{bannerSub}</Text>
                   </View>
 
-                  <View style={styles.heroIconCircle}>
+                  <View style={[styles.heroIconCircle, isTablet && { width: 56, height: 56, borderRadius: 28 }]}>
                     <Icon
                       name={bannerIcon as any}
-                      size={24}
+                      size={isTablet ? 28 : 24}
                       color={isOrderPlaced ? '#FDE68A' : isOrderConfirmed ? '#BAE6FD' : '#FDE68A'}
                     />
                   </View>
@@ -806,19 +810,20 @@ export default function OrderTrackingScreen() {
             {/* 4. BRIEF STATUS CARDS FOR THE 2 ON-THE-WAY ORDERS */}
             {displayedOrders.map((order, orderIdx) => {
               return (
-                <View key={order.id} style={styles.briefCard}>
+                <View key={order.id} style={[styles.briefCard, isTablet && { padding: 18, borderRadius: 18 }]}>
                   {/* Brief Card Header */}
-                  <View style={styles.briefCardHeader}>
+                  <View style={[styles.briefCardHeader, isTablet && { paddingBottom: 14 }]}>
                     <View style={styles.briefHeaderLeftCol}>
                       <View style={styles.briefOrderIdRow}>
-                        <Text style={styles.briefOrderId}>#{order.id}</Text>
+                        <Text style={[styles.briefOrderId, isTablet && { fontSize: 17 }]}>#{order.id}</Text>
                       </View>
-                      <Text style={styles.briefOrderDate}>Placed {order.date}</Text>
+                      <Text style={[styles.briefOrderDate, isTablet && { fontSize: 13, marginTop: 3 }]}>Placed {order.date}</Text>
                     </View>
 
                     <View
                       style={[
                         styles.etaBadge,
+                        isTablet && { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 },
                         order.status === 'CONFIRMED' && {
                           backgroundColor: '#EFF6FF',
                           borderColor: '#BFDBFE',
@@ -841,7 +846,7 @@ export default function OrderTrackingScreen() {
                               ? 'x'
                               : 'clock'
                         }
-                        size={11}
+                        size={isTablet ? 14 : 11}
                         color={
                           order.status === 'CONFIRMED'
                             ? '#1D4ED8'
@@ -855,6 +860,7 @@ export default function OrderTrackingScreen() {
                       <Text
                         style={[
                           styles.etaBadgeText,
+                          isTablet && { fontSize: 13 },
                           order.status === 'CONFIRMED' && { color: '#1D4ED8' },
                           order.status === 'DELIVERED' && { color: '#065F46' },
                           order.status === 'CANCELLED' && { color: '#DC2626' },
@@ -867,32 +873,32 @@ export default function OrderTrackingScreen() {
                   </View>
 
                   {/* Items Brief Preview */}
-                  <View style={styles.itemsBriefContainer}>
+                  <View style={[styles.itemsBriefContainer, isTablet && { gap: 12 }]}>
                     {order.items.map((item) => (
-                      <View key={item.id} style={styles.itemBriefRow}>
+                      <View key={item.id} style={[styles.itemBriefRow, isTablet && { gap: 12 }]}>
                         <Image
                           source={{ uri: item.imageUrl }}
-                          style={styles.itemBriefThumb}
+                          style={[styles.itemBriefThumb, isTablet && { width: 50, height: 50, borderRadius: 10 }]}
                         />
                         <View style={{ flex: 1 }}>
-                          <Text style={styles.itemBriefName} numberOfLines={1}>
+                          <Text style={[styles.itemBriefName, isTablet && { fontSize: 15 }]} numberOfLines={1}>
                             {item.name}
                           </Text>
-                          <Text style={styles.itemBriefVariant}>
+                          <Text style={[styles.itemBriefVariant, isTablet && { fontSize: 13, marginTop: 2 }]}>
                             {item.variant} • Qty: {item.qty}
                           </Text>
                         </View>
-                        <Text style={styles.itemBriefPrice}>
+                        <Text style={[styles.itemBriefPrice, isTablet && { fontSize: 15.5 }]}>
                           ₹{item.price * item.qty}
                         </Text>
                       </View>
                     ))}
 
-                    <View style={styles.orderSummaryRow}>
-                      <Text style={styles.summaryLabel}>
-                        Total: <Text style={styles.summaryTotal}>₹{order.total}</Text>
+                    <View style={[styles.orderSummaryRow, isTablet && { paddingTop: 10 }]}>
+                      <Text style={[styles.summaryLabel, isTablet && { fontSize: 14 }]}>
+                        Total: <Text style={[styles.summaryTotal, isTablet && { fontSize: 16 }]}>₹{order.total}</Text>
                       </Text>
-                      <Text style={styles.summaryMethod}>
+                      <Text style={[styles.summaryMethod, isTablet && { fontSize: 13 }]}>
                         {order.paymentMethod}
                         {order.paymentStatus === 'PAID' ? ' • Paid' : ' • Unpaid (COD)'}
                       </Text>
@@ -900,9 +906,9 @@ export default function OrderTrackingScreen() {
                   </View>
 
                   {/* Delivery Address Brief */}
-                  <View style={styles.addressBriefRow}>
-                    <Icon name="map-pin" size={14} color={theme.colors.primary} />
-                    <Text style={styles.addressBriefText} numberOfLines={1}>
+                  <View style={[styles.addressBriefRow, isTablet && { padding: 12, borderRadius: 10 }]}>
+                    <Icon name="map-pin" size={isTablet ? 16 : 14} color={theme.colors.primary} />
+                    <Text style={[styles.addressBriefText, isTablet && { fontSize: 13.5 }]} numberOfLines={1}>
                       {order.deliveryAddress}
                     </Text>
                   </View>

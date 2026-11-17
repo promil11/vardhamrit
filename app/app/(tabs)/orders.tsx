@@ -470,10 +470,10 @@ export default function OrdersScreen() {
     if (totalFilteredCount === 0) return null;
 
     return (
-      <View style={styles.paginationCard}>
+      <View style={[styles.paginationCard, isTablet && { padding: 18, borderRadius: 18 }]}>
         {/* Bottom Navigation Buttons */}
         {totalPages > 1 && (
-          <View style={styles.paginationButtonsRow}>
+          <View style={[styles.paginationButtonsRow, isTablet && { paddingTop: 12 }]}>
             {/* Prev Button */}
             <TouchableOpacity
               activeOpacity={0.7}
@@ -481,17 +481,19 @@ export default function OrdersScreen() {
               disabled={currentPage === 1}
               style={[
                 styles.pageNavBtn,
+                isTablet && { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10 },
                 currentPage === 1 && styles.pageNavBtnDisabled,
               ]}
             >
               <Icon
                 name="chevron-left"
-                size={16}
+                size={isTablet ? 18 : 16}
                 color={currentPage === 1 ? '#9CA3AF' : theme.colors.primary}
               />
               <Text
                 style={[
                   styles.pageNavBtnText,
+                  isTablet && { fontSize: 14.5 },
                   currentPage === 1 && styles.pageNavBtnTextDisabled,
                 ]}
               >
@@ -500,11 +502,11 @@ export default function OrdersScreen() {
             </TouchableOpacity>
 
             {/* Page Number Buttons */}
-            <View style={styles.pageNumbersList}>
+            <View style={[styles.pageNumbersList, isTablet && { gap: 8 }]}>
               {getPageNumbers().map((p, idx) => {
                 if (typeof p === 'string') {
                   return (
-                    <Text key={`ellipsis-${idx}`} style={styles.pageEllipsis}>
+                    <Text key={`ellipsis-${idx}`} style={[styles.pageEllipsis, isTablet && { fontSize: 13 }]}>
                       •••
                     </Text>
                   );
@@ -517,6 +519,7 @@ export default function OrdersScreen() {
                     onPress={() => handlePageChange(p)}
                     style={[
                       styles.pageNumberBtn,
+                      isTablet && { minWidth: 38, height: 38, borderRadius: 10 },
                       isActive && styles.pageNumberBtnActive,
                     ]}
                   >
@@ -527,10 +530,10 @@ export default function OrdersScreen() {
                         end={{ x: 1, y: 1 }}
                         style={styles.pageNumberGradient}
                       >
-                        <Text style={styles.pageNumberTextActive}>{p}</Text>
+                        <Text style={[styles.pageNumberTextActive, isTablet && { fontSize: 14.5 }]}>{p}</Text>
                       </LinearGradient>
                     ) : (
-                      <Text style={styles.pageNumberText}>{p}</Text>
+                      <Text style={[styles.pageNumberText, isTablet && { fontSize: 14.5 }]}>{p}</Text>
                     )}
                   </TouchableOpacity>
                 );
@@ -544,12 +547,14 @@ export default function OrdersScreen() {
               disabled={currentPage === totalPages}
               style={[
                 styles.pageNavBtn,
+                isTablet && { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10 },
                 currentPage === totalPages && styles.pageNavBtnDisabled,
               ]}
             >
               <Text
                 style={[
                   styles.pageNavBtnText,
+                  isTablet && { fontSize: 14.5 },
                   currentPage === totalPages && styles.pageNavBtnTextDisabled,
                 ]}
               >
@@ -557,7 +562,7 @@ export default function OrdersScreen() {
               </Text>
               <Icon
                 name="chevron-right"
-                size={16}
+                size={isTablet ? 18 : 16}
                 color={currentPage === totalPages ? '#9CA3AF' : theme.colors.primary}
               />
             </TouchableOpacity>
@@ -578,81 +583,81 @@ export default function OrdersScreen() {
     const isDelivered = item.status === 'DELIVERED';
 
     return (
-      <View style={[styles.orderCard, isDispatched && styles.orderCardActive, isCancelled && styles.orderCardCancelled]}>
+      <View style={[styles.orderCard, isTablet && { padding: 18, borderRadius: 18 }, isDispatched && styles.orderCardActive, isCancelled && styles.orderCardCancelled]}>
         {/* Card Accent Top Bar for Active Orders */}
         {isDispatched ? (
           <LinearGradient
             colors={theme.colors.primaryGradient as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.activeTopStrip}
+            style={[styles.activeTopStrip, isTablet && { marginHorizontal: -18, marginTop: -18, paddingVertical: 8, paddingHorizontal: 18 }]}
           >
             <View style={styles.pulseContainer}>
               <View style={styles.radarPulse} />
               <View style={styles.radarDot} />
             </View>
-            <Text style={styles.activeTopStripText}>
+            <Text style={[styles.activeTopStripText, isTablet && { fontSize: 12.5 }]}>
               LIVE DELIVERY • {item.eta.toUpperCase()}
             </Text>
           </LinearGradient>
         ) : null}
 
         {/* Header: Order ID, Date & Status Chip */}
-        <View style={styles.orderHeader}>
+        <View style={[styles.orderHeader, isTablet && { paddingBottom: 14 }]}>
           <View>
             <View style={styles.orderIdRow}>
-              <Text style={styles.orderId}>#{item.id}</Text>
+              <Text style={[styles.orderId, isTablet && { fontSize: 17 }]}>#{item.id}</Text>
               <TouchableOpacity
                 onPress={() => {
                   Alert.alert('Copied!', `Order ID #${item.id} copied to clipboard.`);
                 }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Icon name="copy" size={12} color="#9CA3AF" />
+                <Icon name="copy" size={isTablet ? 15 : 12} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.orderDate}>{item.date}</Text>
+            <Text style={[styles.orderDate, isTablet && { fontSize: 13.5, marginTop: 4 }]}>{item.date}</Text>
           </View>
 
           {isCancelled ? (
-            <View style={[styles.statusBadge, styles.statusBadgeCancelled]}>
-              <Icon name="x" size={12} color="#DC2626" />
-              <Text style={[styles.statusBadgeText, styles.statusTextCancelled]}>
+            <View style={[styles.statusBadge, styles.statusBadgeCancelled, isTablet && { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 }]}>
+              <Icon name="x" size={isTablet ? 15 : 12} color="#DC2626" />
+              <Text style={[styles.statusBadgeText, styles.statusTextCancelled, isTablet && { fontSize: 13 }]}>
                 Cancelled
               </Text>
             </View>
           ) : isPlaced ? (
-            <View style={[styles.statusBadge, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
-              <Icon name="clock" size={12} color="#D97706" />
-              <Text style={[styles.statusBadgeText, { color: '#92400E' }]}>
+            <View style={[styles.statusBadge, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }, isTablet && { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 }]}>
+              <Icon name="clock" size={isTablet ? 15 : 12} color="#D97706" />
+              <Text style={[styles.statusBadgeText, { color: '#92400E' }, isTablet && { fontSize: 13 }]}>
                 {item.statusLabel}
               </Text>
             </View>
           ) : isDispatched ? (
-            <View style={[styles.statusBadge, styles.statusBadgeDispatched]}>
-              <Icon name="truck" size={12} color="#B45309" />
-              <Text style={[styles.statusBadgeText, styles.statusTextDispatched]}>
+            <View style={[styles.statusBadge, styles.statusBadgeDispatched, isTablet && { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 }]}>
+              <Icon name="truck" size={isTablet ? 15 : 12} color="#B45309" />
+              <Text style={[styles.statusBadgeText, styles.statusTextDispatched, isTablet && { fontSize: 13 }]}>
                 {item.statusLabel}
               </Text>
             </View>
           ) : isPacked ? (
-            <View style={[styles.statusBadge, styles.statusBadgePacked]}>
-              <Icon name="package" size={12} color="#2563EB" />
-              <Text style={[styles.statusBadgeText, styles.statusTextPacked]}>
+            <View style={[styles.statusBadge, styles.statusBadgePacked, isTablet && { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 }]}>
+              <Icon name="package" size={isTablet ? 15 : 12} color="#2563EB" />
+              <Text style={[styles.statusBadgeText, styles.statusTextPacked, isTablet && { fontSize: 13 }]}>
                 {item.statusLabel}
               </Text>
             </View>
           ) : isDelivered ? (
-            <View style={[styles.statusBadge, styles.statusBadgeDelivered]}>
-              <Icon name="badge-check" size={12} color="#15803D" />
-              <Text style={[styles.statusBadgeText, styles.statusTextDelivered]}>
+            <View style={[styles.statusBadge, styles.statusBadgeDelivered, isTablet && { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 }]}>
+              <Icon name="badge-check" size={isTablet ? 15 : 12} color="#15803D" />
+              <Text style={[styles.statusBadgeText, styles.statusTextDelivered, isTablet && { fontSize: 13 }]}>
                 {item.statusLabel}
               </Text>
             </View>
           ) : (
-            <View style={[styles.statusBadge, styles.statusBadgeConfirmed]}>
-              <Icon name="badge-check" size={12} color="#059669" />
-              <Text style={[styles.statusBadgeText, styles.statusTextConfirmed]}>
+            <View style={[styles.statusBadge, styles.statusBadgeConfirmed, isTablet && { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 }]}>
+              <Icon name="badge-check" size={isTablet ? 15 : 12} color="#059669" />
+              <Text style={[styles.statusBadgeText, styles.statusTextConfirmed, isTablet && { fontSize: 13 }]}>
                 {item.statusLabel}
               </Text>
             </View>
@@ -661,16 +666,16 @@ export default function OrdersScreen() {
 
         {/* Cancellation Notice if Cancelled */}
         {isCancelled && (
-          <View style={styles.cancellationBanner}>
-            <View style={styles.cancellationIconWrap}>
-              <Icon name="alert-triangle" size={12} color="#DC2626" />
+          <View style={[styles.cancellationBanner, isTablet && { paddingHorizontal: 16, paddingVertical: 12 }]}>
+            <View style={[styles.cancellationIconWrap, isTablet && { width: 28, height: 28, borderRadius: 14 }]}>
+              <Icon name="alert-triangle" size={isTablet ? 16 : 12} color="#DC2626" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.cancellationTitle}>Order Cancelled by Estate</Text>
+              <Text style={[styles.cancellationTitle, isTablet && { fontSize: 14 }]}>Order Cancelled by Estate</Text>
               {item.rejectionReason ? (
-                <Text style={styles.cancellationReason}>Reason: {item.rejectionReason}</Text>
+                <Text style={[styles.cancellationReason, isTablet && { fontSize: 13, lineHeight: 18 }]}>Reason: {item.rejectionReason}</Text>
               ) : (
-                <Text style={styles.cancellationReason}>Stock unavailable or harvest batch delayed.</Text>
+                <Text style={[styles.cancellationReason, isTablet && { fontSize: 13, lineHeight: 18 }]}>Stock unavailable or harvest batch delayed.</Text>
               )}
             </View>
           </View>
@@ -678,57 +683,57 @@ export default function OrdersScreen() {
 
         {/* Active Order Mini Stepper */}
         {isDispatched ? (
-          <View style={styles.liveStepperContainer}>
+          <View style={[styles.liveStepperContainer, isTablet && { padding: 14, marginVertical: 14 }]}>
             <View style={styles.stepperBarTrack}>
               <View style={[styles.stepperBarFill, { width: '75%' }]} />
             </View>
             <View style={styles.stepperStepsRow}>
-              <Text style={styles.stepperStepDone}>Placed</Text>
-              <Text style={styles.stepperStepDone}>Packed</Text>
-              <Text style={styles.stepperStepActive}>On The Way</Text>
-              <Text style={styles.stepperStepPending}>Doorstep</Text>
+              <Text style={[styles.stepperStepDone, isTablet && { fontSize: 12.5 }]}>Placed</Text>
+              <Text style={[styles.stepperStepDone, isTablet && { fontSize: 12.5 }]}>Packed</Text>
+              <Text style={[styles.stepperStepActive, isTablet && { fontSize: 12.5 }]}>On The Way</Text>
+              <Text style={[styles.stepperStepPending, isTablet && { fontSize: 12.5 }]}>Doorstep</Text>
             </View>
           </View>
         ) : null}
 
         {/* Items List with Thumbnails */}
-        <View style={styles.itemsList}>
+        <View style={[styles.itemsList, isTablet && { paddingVertical: 12, gap: 14 }]}>
           {item.items.map((it, idx) => (
-            <View key={idx} style={styles.itemRow}>
+            <View key={idx} style={[styles.itemRow, isTablet && { gap: 14 }]}>
               <Image
                 source={{ uri: getFullImageUrl(it.imageUrl) }}
-                style={styles.itemThumbnail}
+                style={[styles.itemThumbnail, isTablet && { width: 56, height: 56, borderRadius: 12 }]}
                 resizeMode="contain"
               />
 
               <View style={styles.itemInfoCol}>
-                <Text style={styles.itemName} numberOfLines={1}>
+                <Text style={[styles.itemName, isTablet && { fontSize: 15.5 }]} numberOfLines={1}>
                   {it.name}
                 </Text>
-                <View style={styles.itemSubRow}>
-                  <Text style={styles.itemVariantText}>{it.variant}</Text>
-                  <Text style={styles.itemQtyText}>Qty: {it.qty}</Text>
+                <View style={[styles.itemSubRow, isTablet && { marginTop: 4, gap: 12 }]}>
+                  <Text style={[styles.itemVariantText, isTablet && { fontSize: 13 }]}>{it.variant}</Text>
+                  <Text style={[styles.itemQtyText, isTablet && { fontSize: 13 }]}>Qty: {it.qty}</Text>
                 </View>
               </View>
 
               <View style={styles.itemPriceCol}>
-                <Text style={styles.itemPrice}>₹{it.price * it.qty}</Text>
+                <Text style={[styles.itemPrice, isTablet && { fontSize: 16 }]}>₹{it.price * it.qty}</Text>
               </View>
             </View>
           ))}
         </View>
 
         {/* Destination & Payment Summary */}
-        <View style={styles.orderMetaBar}>
-          <View style={styles.metaAddressRow}>
-            <Icon name="map-pin" size={11} color={theme.colors.textSecondary} />
-            <Text style={styles.metaAddressText} numberOfLines={1}>
+        <View style={[styles.orderMetaBar, isTablet && { padding: 12, marginVertical: 10, gap: 6 }]}>
+          <View style={[styles.metaAddressRow, isTablet && { gap: 8 }]}>
+            <Icon name="map-pin" size={isTablet ? 14 : 11} color={theme.colors.textSecondary} />
+            <Text style={[styles.metaAddressText, isTablet && { fontSize: 13 }]} numberOfLines={1}>
               {item.deliveryAddress}
             </Text>
           </View>
-          <View style={styles.metaPaymentRow}>
-            <Icon name="tag" size={11} color={theme.colors.textSecondary} />
-            <Text style={styles.metaPaymentText}>
+          <View style={[styles.metaPaymentRow, isTablet && { gap: 8 }]}>
+            <Icon name="tag" size={isTablet ? 14 : 11} color={theme.colors.textSecondary} />
+            <Text style={[styles.metaPaymentText, isTablet && { fontSize: 13 }]}>
               {item.paymentMethod}
               {item.paymentStatus === 'PAID'
                 ? ' • Paid'
@@ -740,31 +745,31 @@ export default function OrdersScreen() {
         </View>
 
         {/* Footer with Price and Primary Actions */}
-        <View style={styles.orderFooter}>
+        <View style={[styles.orderFooter, isTablet && { paddingTop: 14, marginTop: 10, gap: 14 }]}>
           <View style={styles.orderFooterTop}>
             <View>
-              <Text style={styles.totalLabel}>Total Amount</Text>
-              <Text style={styles.totalAmount}>₹{item.total}</Text>
+              <Text style={[styles.totalLabel, isTablet && { fontSize: 13 }]}>Total Amount</Text>
+              <Text style={[styles.totalAmount, isTablet && { fontSize: 20 }]}>₹{item.total}</Text>
             </View>
 
             {/* Help Button */}
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => handleHelp(item.id)}
-              style={styles.helpBtn}
+              style={[styles.helpBtn, isTablet && { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10 }]}
             >
-              <Icon name="sparkles" size={13} color={theme.colors.textSecondary} />
-              <Text style={styles.helpBtnText}>Help</Text>
+              <Icon name="sparkles" size={isTablet ? 16 : 13} color={theme.colors.textSecondary} />
+              <Text style={[styles.helpBtnText, isTablet && { fontSize: 14 }]}>Help</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.actionButtonsRow}>
+          <View style={[styles.actionButtonsRow, isTablet && { gap: 14 }]}>
             {/* Single Rate Order Button or Reviewed Badge for Delivered Orders */}
             {item.status === 'DELIVERED' ? (
               item.hasReviewed ? (
-                <View style={styles.reviewedBadge}>
-                  <Icon name="badge-check" size={14} color="#059669" />
-                  <Text style={styles.reviewedBadgeText}>Order Rated</Text>
+                <View style={[styles.reviewedBadge, isTablet && { paddingVertical: 11, borderRadius: 10 }]}>
+                  <Icon name="badge-check" size={isTablet ? 18 : 14} color="#059669" />
+                  <Text style={[styles.reviewedBadgeText, isTablet && { fontSize: 14.5 }]}>Order Rated</Text>
                 </View>
               ) : (
                 <TouchableOpacity
@@ -775,10 +780,10 @@ export default function OrdersScreen() {
                     setReviewItemName(`Order #${item.id}${names ? ` • ${names}` : ''}`);
                     setReviewModalVisible(true);
                   }}
-                  style={styles.rateOrderBtn}
+                  style={[styles.rateOrderBtn, isTablet && { paddingVertical: 11, borderRadius: 10 }]}
                 >
-                  <Icon name="star" size={13} color="#D97706" fill="#D97706" />
-                  <Text style={styles.rateOrderBtnText}>Rate Order</Text>
+                  <Icon name="star" size={isTablet ? 16 : 13} color="#D97706" fill="#D97706" />
+                  <Text style={[styles.rateOrderBtnText, isTablet && { fontSize: 14.5 }]}>Rate Order</Text>
                 </TouchableOpacity>
               )
             ) : null}
@@ -795,16 +800,17 @@ export default function OrdersScreen() {
                 }
                 style={[
                   styles.trackOrderBtn,
+                  isTablet && { paddingVertical: 11, borderRadius: 10 },
                   isPlaced && { backgroundColor: '#D97706' },
                   (isConfirmed || isPacked) && { backgroundColor: '#2563EB' },
                 ]}
               >
                 <Icon
                   name={isDispatched ? 'zap' : isPlaced ? 'clock' : 'package'}
-                  size={14}
+                  size={isTablet ? 17 : 14}
                   color="#FFFFFF"
                 />
-                <Text style={styles.trackOrderText}>
+                <Text style={[styles.trackOrderText, isTablet && { fontSize: 14.5 }]}>
                   {isDispatched ? 'Track Live' : isPlaced ? 'Track Status' : 'Track Order'}
                 </Text>
               </TouchableOpacity>
@@ -812,19 +818,19 @@ export default function OrdersScreen() {
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => handleOpenReorder(item)}
-                style={styles.reorderBtn}
+                style={[styles.reorderBtn, isTablet && { paddingVertical: 11, borderRadius: 10 }]}
               >
-                <Icon name="refresh" size={13} color={theme.colors.primary} />
-                <Text style={styles.reorderBtnText}>Order Again</Text>
+                <Icon name="refresh" size={isTablet ? 16 : 13} color={theme.colors.primary} />
+                <Text style={[styles.reorderBtnText, isTablet && { fontSize: 14.5 }]}>Order Again</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => handleOpenReorder(item)}
-                style={styles.reorderBtn}
+                style={[styles.reorderBtn, isTablet && { paddingVertical: 11, borderRadius: 10 }]}
               >
-                <Icon name="coffee" size={14} color={theme.colors.primary} />
-                <Text style={styles.reorderBtnText}>Reorder Cup</Text>
+                <Icon name="coffee" size={isTablet ? 17 : 14} color={theme.colors.primary} />
+                <Text style={[styles.reorderBtnText, isTablet && { fontSize: 14.5 }]}>Reorder Cup</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -885,22 +891,22 @@ export default function OrdersScreen() {
         };
 
         return (
-          <View style={styles.activeNoticeSection}>
+          <View style={[styles.activeNoticeSection, isTablet && { paddingHorizontal: 24, paddingTop: 16 }]}>
             <LinearGradient
               colors={['#FFFBEB', '#FEF3C7']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.activeNoticeCard}
+              style={[styles.activeNoticeCard, isTablet && { padding: 16, borderRadius: 16 }]}
             >
-              <View style={styles.activeNoticeIconCircle}>
-                <Icon name="truck" size={16} color="#B45309" />
+              <View style={[styles.activeNoticeIconCircle, isTablet && { width: 44, height: 44, borderRadius: 22 }]}>
+                <Icon name="truck" size={isTablet ? 20 : 16} color="#B45309" />
               </View>
 
               <View style={{ flex: 1 }}>
-                <Text style={styles.activeNoticeTitle} numberOfLines={1}>
+                <Text style={[styles.activeNoticeTitle, isTablet && { fontSize: 15.5 }]} numberOfLines={1}>
                   {bannerTitle}
                 </Text>
-                <Text style={styles.activeNoticeSubtitle} numberOfLines={1}>
+                <Text style={[styles.activeNoticeSubtitle, isTablet && { fontSize: 13.5, marginTop: 3 }]} numberOfLines={1}>
                   {bannerSubtitle}
                 </Text>
               </View>
@@ -908,10 +914,10 @@ export default function OrdersScreen() {
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={handleTrackPress}
-                style={styles.activeNoticePill}
+                style={[styles.activeNoticePill, isTablet && { paddingHorizontal: 14, paddingVertical: 7 }]}
               >
-                <Text style={styles.activeNoticePillText}>Track</Text>
-                <Icon name="chevron-right" size={11} color="#B45309" />
+                <Text style={[styles.activeNoticePillText, isTablet && { fontSize: 13.5 }]}>Track</Text>
+                <Icon name="chevron-right" size={isTablet ? 14 : 11} color="#B45309" />
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -919,12 +925,12 @@ export default function OrdersScreen() {
       })() : null}
 
       {/* 3. SEARCH & FILTER TABS */}
-      <View style={styles.filterSection}>
+      <View style={[styles.filterSection, isTablet && { paddingHorizontal: 24, paddingTop: 16 }]}>
         {/* Search input */}
-        <View style={styles.searchBar}>
-          <Icon name="search" size={13} color="#9CA3AF" />
+        <View style={[styles.searchBar, isTablet && { height: 46, paddingHorizontal: 16, borderRadius: 14 }]}>
+          <Icon name="search" size={isTablet ? 17 : 13} color="#9CA3AF" />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, isTablet && { fontSize: 15 }]}
             placeholder="Search by Order ID or tea name..."
             placeholderTextColor="#9CA3AF"
             value={searchQuery}
@@ -933,21 +939,22 @@ export default function OrdersScreen() {
           />
           {searchQuery.length > 0 ? (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Icon name="x" size={13} color="#9CA3AF" />
+              <Icon name="x" size={isTablet ? 17 : 13} color="#9CA3AF" />
             </TouchableOpacity>
           ) : null}
         </View>
 
         {/* Tab switcher */}
-        <View style={styles.tabTrack}>
+        <View style={[styles.tabTrack, isTablet && { gap: 12 }]}>
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => setActiveTab('all')}
-            style={[styles.tabChip, activeTab === 'all' && styles.tabChipActive]}
+            style={[styles.tabChip, isTablet && { paddingHorizontal: 16, paddingVertical: 9 }, activeTab === 'all' && styles.tabChipActive]}
           >
             <Text
               style={[
                 styles.tabChipText,
+                isTablet && { fontSize: 14 },
                 activeTab === 'all' && styles.tabChipTextActive,
               ]}
             >
@@ -960,18 +967,21 @@ export default function OrdersScreen() {
             onPress={() => setActiveTab('active')}
             style={[
               styles.tabChip,
+              isTablet && { paddingHorizontal: 16, paddingVertical: 9 },
               activeTab === 'active' && styles.tabChipActive,
             ]}
           >
             <View
               style={[
                 styles.tabDot,
+                isTablet && { width: 8, height: 8, borderRadius: 4 },
                 activeTab === 'active' && styles.tabDotActive,
               ]}
             />
             <Text
               style={[
                 styles.tabChipText,
+                isTablet && { fontSize: 14 },
                 activeTab === 'active' && styles.tabChipTextActive,
               ]}
             >
@@ -984,12 +994,14 @@ export default function OrdersScreen() {
             onPress={() => setActiveTab('delivered')}
             style={[
               styles.tabChip,
+              isTablet && { paddingHorizontal: 16, paddingVertical: 9 },
               activeTab === 'delivered' && styles.tabChipActive,
             ]}
           >
             <Text
               style={[
                 styles.tabChipText,
+                isTablet && { fontSize: 14 },
                 activeTab === 'delivered' && styles.tabChipTextActive,
               ]}
             >
@@ -1003,12 +1015,14 @@ export default function OrdersScreen() {
               onPress={() => setActiveTab('cancelled')}
               style={[
                 styles.tabChip,
+                isTablet && { paddingHorizontal: 16, paddingVertical: 9 },
                 activeTab === 'cancelled' && styles.tabChipActive,
               ]}
             >
               <Text
                 style={[
                   styles.tabChipText,
+                  isTablet && { fontSize: 14 },
                   activeTab === 'cancelled' && styles.tabChipTextActive,
                 ]}
               >
@@ -1020,21 +1034,21 @@ export default function OrdersScreen() {
 
         {/* Compact pagination summary bar at the top */}
         {totalFilteredCount > 0 && (
-          <View style={styles.topPaginationBar}>
-            <Text style={styles.topPaginationText}>
-              Showing <Text style={styles.topPaginationBold}>{startIndex + 1}–{endIndex}</Text> of <Text style={styles.topPaginationBold}>{totalFilteredCount}</Text> orders
+          <View style={[styles.topPaginationBar, isTablet && { paddingTop: 12, marginTop: 4 }]}>
+            <Text style={[styles.topPaginationText, isTablet && { fontSize: 13.5 }]}>
+              Showing <Text style={[styles.topPaginationBold, isTablet && { fontSize: 13.5 }]}>{startIndex + 1}–{endIndex}</Text> of <Text style={[styles.topPaginationBold, isTablet && { fontSize: 13.5 }]}>{totalFilteredCount}</Text> orders
             </Text>
             {totalPages > 1 && (
-              <View style={styles.topPageNavQuick}>
+              <View style={[styles.topPageNavQuick, isTablet && { paddingVertical: 5, paddingHorizontal: 12 }]}>
                 <TouchableOpacity
                   disabled={currentPage === 1}
                   onPress={() => handlePageChange(currentPage - 1)}
                   style={[styles.topPageNavArrow, currentPage === 1 && { opacity: 0.35 }]}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Icon name="chevron-left" size={13} color={theme.colors.primary} />
+                  <Icon name="chevron-left" size={isTablet ? 16 : 13} color={theme.colors.primary} />
                 </TouchableOpacity>
-                <Text style={styles.topPageNavStatus}>
+                <Text style={[styles.topPageNavStatus, isTablet && { fontSize: 13 }]}>
                   Page {currentPage} of {totalPages}
                 </Text>
                 <TouchableOpacity
@@ -1043,7 +1057,7 @@ export default function OrdersScreen() {
                   style={[styles.topPageNavArrow, currentPage === totalPages && { opacity: 0.35 }]}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Icon name="chevron-right" size={13} color={theme.colors.primary} />
+                  <Icon name="chevron-right" size={isTablet ? 16 : 13} color={theme.colors.primary} />
                 </TouchableOpacity>
               </View>
             )}
@@ -1095,30 +1109,30 @@ export default function OrdersScreen() {
       {/* 5. VERIFIED REVIEW MODAL */}
       <Modal visible={reviewModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, isTablet && { padding: 24, borderRadius: 24, maxWidth: 540, alignSelf: 'center', width: '100%' }]}>
             <View style={styles.modalHeader}>
               <View style={styles.modalTitleRow}>
-                <Icon name="star" size={18} color="#D97706" fill="#D97706" />
-                <Text style={styles.modalTitle}>Rate Your Order</Text>
+                <Icon name="star" size={isTablet ? 22 : 18} color="#D97706" fill="#D97706" />
+                <Text style={[styles.modalTitle, isTablet && { fontSize: 20 }]}>Rate Your Order</Text>
               </View>
               <TouchableOpacity onPress={() => setReviewModalVisible(false)}>
-                <Icon name="x" size={18} color={theme.colors.textSecondary} />
+                <Icon name="x" size={isTablet ? 22 : 18} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.modalItemTitle}>{reviewItemName}</Text>
+            <Text style={[styles.modalItemTitle, isTablet && { fontSize: 14.5, marginVertical: 10 }]}>{reviewItemName}</Text>
 
             {/* 5-Star Row */}
-            <View style={styles.starPickerRow}>
+            <View style={[styles.starPickerRow, isTablet && { gap: 12, marginVertical: 16 }]}>
               {[1, 2, 3, 4, 5].map((s) => (
                 <TouchableOpacity
                   key={s}
                   onPress={() => setRating(s)}
-                  style={{ padding: 6 }}
+                  style={{ padding: isTablet ? 8 : 6 }}
                 >
                   <Icon
                     name="star"
-                    size={32}
+                    size={isTablet ? 38 : 32}
                     color={s <= rating ? '#D97706' : '#E5E7EB'}
                     fill={s <= rating ? '#D97706' : 'transparent'}
                   />
@@ -1127,8 +1141,8 @@ export default function OrdersScreen() {
             </View>
 
             {/* Brew Quality Tags */}
-            <Text style={styles.tagsHeading}>How was your delivery & tea experience?</Text>
-            <View style={styles.tagGrid}>
+            <Text style={[styles.tagsHeading, isTablet && { fontSize: 14, marginBottom: 10 }]}>How was your delivery & tea experience?</Text>
+            <View style={[styles.tagGrid, isTablet && { gap: 8, marginBottom: 16 }]}>
               {reviewTags.map((tag) => {
                 const isSelected = selectedTag === tag;
                 return (
@@ -1137,12 +1151,14 @@ export default function OrdersScreen() {
                     onPress={() => setSelectedTag(tag)}
                     style={[
                       styles.reviewTagChip,
+                      isTablet && { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
                       isSelected && styles.reviewTagChipActive,
                     ]}
                   >
                     <Text
                       style={[
                         styles.reviewTagText,
+                        isTablet && { fontSize: 13 },
                         isSelected && styles.reviewTagTextActive,
                       ]}
                     >
@@ -1154,7 +1170,7 @@ export default function OrdersScreen() {
             </View>
 
             <TextInput
-              style={styles.reviewInput}
+              style={[styles.reviewInput, isTablet && { fontSize: 14.5, height: 96, padding: 14, borderRadius: 14 }]}
               placeholder="Tell other chai lovers how this batch brewed: aroma, color, boiling notes..."
               placeholderTextColor="#9CA3AF"
               value={reviewText}
@@ -1208,9 +1224,9 @@ export default function OrdersScreen() {
                 }
                 setReviewText('');
               }}
-              style={styles.submitReviewBtn}
+              style={[styles.submitReviewBtn, isTablet && { paddingVertical: 14, borderRadius: 14 }]}
             >
-              <Text style={styles.submitReviewText}>Submit Verified Review</Text>
+              <Text style={[styles.submitReviewText, isTablet && { fontSize: 15.5 }]}>Submit Verified Review</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1230,33 +1246,33 @@ export default function OrdersScreen() {
             onPress={() => setReorderModalVisible(false)}
           />
 
-          <View style={styles.reorderModalSheet}>
+          <View style={[styles.reorderModalSheet, isTablet && { paddingHorizontal: 28, paddingTop: 18, borderRadius: 32, maxWidth: 600 }]}>
             {/* Grab handle */}
             <View style={styles.reorderHandleBar} />
 
             {/* Header */}
-            <View style={styles.reorderHeader}>
+            <View style={[styles.reorderHeader, isTablet && { marginBottom: 20 }]}>
               <View style={styles.reorderTitleWrap}>
-                <View style={styles.reorderCupIconWrap}>
-                  <Icon name="coffee" size={22} color="#0A3622" />
+                <View style={[styles.reorderCupIconWrap, isTablet && { width: 54, height: 54, borderRadius: 27 }]}>
+                  <Icon name="coffee" size={isTablet ? 26 : 22} color="#0A3622" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <View style={styles.reorderTagBadge}>
-                    <Text style={styles.reorderTagText}>FAST REORDER</Text>
+                  <View style={[styles.reorderTagBadge, isTablet && { paddingHorizontal: 9, paddingVertical: 3 }]}>
+                    <Text style={[styles.reorderTagText, isTablet && { fontSize: 11.5 }]}>FAST REORDER</Text>
                   </View>
-                  <Text style={styles.reorderMainTitle}>Reorder Your Cup</Text>
-                  <Text style={styles.reorderSubTitle}>
+                  <Text style={[styles.reorderMainTitle, isTablet && { fontSize: 21 }]}>Reorder Your Cup</Text>
+                  <Text style={[styles.reorderSubTitle, isTablet && { fontSize: 14 }]}>
                     Order #{selectedReorderOrder?.id} • {selectedReorderOrder?.items.length || 0} item{(selectedReorderOrder?.items.length || 0) > 1 ? 's' : ''}
                   </Text>
                 </View>
               </View>
 
               <TouchableOpacity
-                style={styles.reorderCloseBtn}
+                style={[styles.reorderCloseBtn, isTablet && { width: 38, height: 38, borderRadius: 19 }]}
                 onPress={() => setReorderModalVisible(false)}
                 activeOpacity={0.7}
               >
-                <Icon name="x" size={18} color="#64748B" />
+                <Icon name="x" size={isTablet ? 20 : 18} color="#64748B" />
               </TouchableOpacity>
             </View>
 
@@ -1264,6 +1280,7 @@ export default function OrdersScreen() {
             <View
               style={[
                 styles.currentCartBanner,
+                isTablet && { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 14 },
                 currentCartItems.length > 0
                   ? styles.currentCartBannerActive
                   : styles.currentCartBannerEmpty,
@@ -1271,13 +1288,14 @@ export default function OrdersScreen() {
             >
               <Icon
                 name={currentCartItems.length > 0 ? 'shopping-bag' : 'check'}
-                size={16}
+                size={isTablet ? 19 : 16}
                 color={currentCartItems.length > 0 ? '#B45309' : '#15803D'}
               />
               <View style={{ flex: 1 }}>
                 <Text
                   style={[
                     styles.currentCartBannerText,
+                    isTablet && { fontSize: 14.5 },
                     currentCartItems.length > 0 ? { color: '#92400E' } : { color: '#166534' },
                   ]}
                 >
@@ -1289,29 +1307,29 @@ export default function OrdersScreen() {
             </View>
 
             {/* Items List Preview */}
-            <View style={styles.reorderItemsBox}>
-              <Text style={styles.reorderItemsHeaderTitle}>ORDER ITEMS TO ADD</Text>
+            <View style={[styles.reorderItemsBox, isTablet && { padding: 16, borderRadius: 16 }]}>
+              <Text style={[styles.reorderItemsHeaderTitle, isTablet && { fontSize: 12 }]}>ORDER ITEMS TO ADD</Text>
               <FlatList
                 data={selectedReorderOrder?.items || []}
                 keyExtractor={(it) => String(it.id)}
                 scrollEnabled={(selectedReorderOrder?.items?.length || 0) > 2}
-                style={{ maxHeight: 150 }}
+                style={{ maxHeight: isTablet ? 190 : 150 }}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item: it }) => (
-                  <View style={styles.reorderItemRow}>
+                  <View style={[styles.reorderItemRow, isTablet && { paddingVertical: 8 }]}>
                     <Image
                       source={{ uri: getFullImageUrl(it.imageUrl) }}
-                      style={styles.reorderItemThumb}
+                      style={[styles.reorderItemThumb, isTablet && { width: 44, height: 44, borderRadius: 10 }]}
                     />
                     <View style={{ flex: 1, marginLeft: 10 }}>
-                      <Text style={styles.reorderItemName} numberOfLines={1}>
+                      <Text style={[styles.reorderItemName, isTablet && { fontSize: 14.5 }]} numberOfLines={1}>
                         {it.name}
                       </Text>
-                      <Text style={styles.reorderItemVariant}>
+                      <Text style={[styles.reorderItemVariant, isTablet && { fontSize: 12.5 }]}>
                         {it.variant} • Qty: {it.qty}
                       </Text>
                     </View>
-                    <Text style={styles.reorderItemPrice}>
+                    <Text style={[styles.reorderItemPrice, isTablet && { fontSize: 15 }]}>
                       ₹{(it.price * it.qty).toFixed(0)}
                     </Text>
                   </View>
@@ -1320,51 +1338,51 @@ export default function OrdersScreen() {
             </View>
 
             {/* Reorder Choices */}
-            <View style={styles.reorderOptionsContainer}>
+            <View style={[styles.reorderOptionsContainer, isTablet && { gap: 14 }]}>
               {/* Option 1: Append in Cart */}
               <TouchableOpacity
                 activeOpacity={0.88}
                 onPress={handleAppendReorder}
-                style={styles.reorderActionCardAppend}
+                style={[styles.reorderActionCardAppend, isTablet && { padding: 16, borderRadius: 18 }]}
               >
-                <View style={styles.reorderActionIconWrapAppend}>
-                  <Icon name="layers" size={20} color={theme.colors.primary} />
+                <View style={[styles.reorderActionIconWrapAppend, isTablet && { width: 50, height: 50, borderRadius: 25 }]}>
+                  <Icon name="layers" size={isTablet ? 22 : 20} color={theme.colors.primary} />
                 </View>
                 <View style={{ flex: 1, paddingRight: 6 }}>
                   <View style={styles.actionHeaderRow}>
-                    <Text style={styles.reorderActionTitleAppend}>Append in Cart</Text>
+                    <Text style={[styles.reorderActionTitleAppend, isTablet && { fontSize: 16.5 }]}>Append in Cart</Text>
                     <View style={styles.appendBadge}>
-                      <Text style={styles.appendBadgeText}>Keep + Add</Text>
+                      <Text style={[styles.appendBadgeText, isTablet && { fontSize: 11.5 }]}>Keep + Add</Text>
                     </View>
                   </View>
-                  <Text style={styles.reorderActionDesc}>
+                  <Text style={[styles.reorderActionDesc, isTablet && { fontSize: 13.5, lineHeight: 18 }]}>
                     Add items alongside your existing cart items without losing anything.
                   </Text>
                 </View>
-                <Icon name="chevron-right" size={18} color={theme.colors.primary} />
+                <Icon name="chevron-right" size={isTablet ? 20 : 18} color={theme.colors.primary} />
               </TouchableOpacity>
 
               {/* Option 2: Replace with Cart */}
               <TouchableOpacity
                 activeOpacity={0.88}
                 onPress={handleReplaceReorder}
-                style={styles.reorderActionCardReplace}
+                style={[styles.reorderActionCardReplace, isTablet && { padding: 16, borderRadius: 18 }]}
               >
-                <View style={styles.reorderActionIconWrapReplace}>
-                  <Icon name="refresh" size={20} color="#B45309" />
+                <View style={[styles.reorderActionIconWrapReplace, isTablet && { width: 50, height: 50, borderRadius: 25 }]}>
+                  <Icon name="refresh" size={isTablet ? 22 : 20} color="#B45309" />
                 </View>
                 <View style={{ flex: 1, paddingRight: 6 }}>
                   <View style={styles.actionHeaderRow}>
-                    <Text style={styles.reorderActionTitleReplace}>Replace with Cart</Text>
+                    <Text style={[styles.reorderActionTitleReplace, isTablet && { fontSize: 16.5 }]}>Replace with Cart</Text>
                     <View style={styles.replaceBadge}>
-                      <Text style={styles.replaceBadgeText}>Fresh Start</Text>
+                      <Text style={[styles.replaceBadgeText, isTablet && { fontSize: 11.5 }]}>Fresh Start</Text>
                     </View>
                   </View>
-                  <Text style={styles.reorderActionDesc}>
+                  <Text style={[styles.reorderActionDesc, isTablet && { fontSize: 13.5, lineHeight: 18 }]}>
                     Clear existing cart and replace entirely with these order items.
                   </Text>
                 </View>
-                <Icon name="chevron-right" size={18} color="#B45309" />
+                <Icon name="chevron-right" size={isTablet ? 20 : 18} color="#B45309" />
               </TouchableOpacity>
             </View>
 
@@ -1372,9 +1390,9 @@ export default function OrdersScreen() {
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => setReorderModalVisible(false)}
-              style={styles.reorderCancelBtn}
+              style={[styles.reorderCancelBtn, isTablet && { paddingVertical: 14 }]}
             >
-              <Text style={styles.reorderCancelText}>Cancel</Text>
+              <Text style={[styles.reorderCancelText, isTablet && { fontSize: 15 }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1383,16 +1401,16 @@ export default function OrdersScreen() {
       {/* 7. FLOATING TOAST NOTIFICATION */}
       {toastMessage && (
         <View style={styles.toastContainer}>
-          <View style={styles.toastCard}>
-            <Icon name="check" size={18} color="#FFFFFF" />
-            <Text style={styles.toastText} numberOfLines={1}>
+          <View style={[styles.toastCard, isTablet && { paddingHorizontal: 20, paddingVertical: 14, borderRadius: 16, maxWidth: 540 }]}>
+            <Icon name="check" size={isTablet ? 22 : 18} color="#FFFFFF" />
+            <Text style={[styles.toastText, isTablet && { fontSize: 14.5 }]} numberOfLines={1}>
               {toastMessage}
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/(tabs)/cart')}
-              style={styles.toastCartBtn}
+              style={[styles.toastCartBtn, isTablet && { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 10 }]}
             >
-              <Text style={styles.toastCartBtnText}>View Cart</Text>
+              <Text style={[styles.toastCartBtnText, isTablet && { fontSize: 13 }]}>View Cart</Text>
             </TouchableOpacity>
           </View>
         </View>

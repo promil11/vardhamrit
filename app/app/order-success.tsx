@@ -19,9 +19,11 @@ import { useAuth } from '../store/authContext';
 import { fetchUserCoins, claimScratchCardReward } from '../services/userClientService';
 import { ScratchCardModal } from '../components/checkout/ScratchCardModal';
 import { useScratchCardStore } from '../store/useScratchCardStore';
+import { useResponsive } from '../utils/responsive';
 
 export default function OrderSuccessScreen() {
   const router = useRouter();
+  const { isTablet } = useResponsive();
   const { setCoinsBalance } = useAuth();
   const {
     orderId = 'VRD-582914',
@@ -125,15 +127,15 @@ export default function OrderSuccessScreen() {
             <Icon name="badge-check" size={54} color={theme.colors.success} />
           </Animated.View>
 
-          <Text style={styles.title}>Order Placed Successfully!</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, isTablet && { fontSize: 24 }]}>Order Placed Successfully!</Text>
+          <Text style={[styles.subtitle, isTablet && { fontSize: 14.5, lineHeight: 22 }]}>
             Your order has been received and is waiting for confirmation from our tea estate admin.
           </Text>
 
           {/* Estimated Delivery Time Pill */}
-          <View style={styles.timerPill}>
-            <Icon name="clock" size={14} color={theme.colors.accentGoldDark} />
-            <Text style={styles.timerText}>Awaiting Order Confirmation</Text>
+          <View style={[styles.timerPill, isTablet && { paddingHorizontal: 16, paddingVertical: 8 }]}>
+            <Icon name="clock" size={isTablet ? 17 : 14} color={theme.colors.accentGoldDark} />
+            <Text style={[styles.timerText, isTablet && { fontSize: 13.5 }]}>Awaiting Order Confirmation</Text>
           </View>
 
           {/* ZEPTO / BLINKIT STYLE SCRATCH CARD REWARD TEASER BANNER */}
@@ -150,18 +152,19 @@ export default function OrderSuccessScreen() {
               }
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.scratchTeaserCard}
+              style={[styles.scratchTeaserCard, isTablet && { padding: 18, borderRadius: 18 }]}
             >
               <View
                 style={[
                   styles.scratchTeaserIconBox,
                   rewardClaimed && { backgroundColor: '#A7F3D0', borderColor: '#34D399' },
+                  isTablet && { width: 50, height: 50, borderRadius: 14 },
                 ]}
               >
                 {rewardClaimed ? (
-                  <TeaCoinIcon size={26} />
+                  <TeaCoinIcon size={isTablet ? 30 : 26} />
                 ) : (
-                  <Icon name="gift" size={24} color="#B45309" />
+                  <Icon name="gift" size={isTablet ? 28 : 24} color="#B45309" />
                 )}
               </View>
 
@@ -171,6 +174,7 @@ export default function OrderSuccessScreen() {
                     style={[
                       styles.scratchTeaserTitle,
                       rewardClaimed && { color: '#065F46' },
+                      isTablet && { fontSize: 15.5 },
                     ]}
                   >
                     {rewardClaimed
@@ -181,12 +185,14 @@ export default function OrderSuccessScreen() {
                     style={[
                       styles.scratchTeaserPill,
                       rewardClaimed && { backgroundColor: '#A7F3D0' },
+                      isTablet && { paddingHorizontal: 10, paddingVertical: 4 },
                     ]}
                   >
                     <Text
                       style={[
                         styles.scratchTeaserPillText,
                         rewardClaimed && { color: '#047857' },
+                        isTablet && { fontSize: 11 },
                       ]}
                     >
                       {rewardClaimed ? 'CLAIMED ✓' : 'TAP TO SCRATCH'}
@@ -197,40 +203,40 @@ export default function OrderSuccessScreen() {
 
               <Icon
                 name="chevron-right"
-                size={16}
+                size={isTablet ? 19 : 16}
                 color={rewardClaimed ? '#059669' : '#D97706'}
               />
             </LinearGradient>
           </TouchableOpacity>
 
           {/* Order Details Badge */}
-          <Animated.View style={[styles.detailsBox, { opacity: badgeAnim }]}>
+          <Animated.View style={[styles.detailsBox, { opacity: badgeAnim }, isTablet && { padding: 20, borderRadius: 18 }]}>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Order Reference</Text>
-              <Text style={styles.orderIdText}>#{orderId}</Text>
+              <Text style={[styles.detailLabel, isTablet && { fontSize: 14 }]}>Order Reference</Text>
+              <Text style={[styles.orderIdText, isTablet && { fontSize: 15 }]}>#{orderId}</Text>
             </View>
 
             <View style={styles.divider} />
 
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>
+              <Text style={[styles.detailLabel, isTablet && { fontSize: 14 }]}>
                 {paymentMethod === 'COD' ? 'Pay on Delivery' : 'Amount Paid'}
               </Text>
-              <Text style={styles.amountText}>₹{total}</Text>
+              <Text style={[styles.amountText, isTablet && { fontSize: 16 }]}>₹{total}</Text>
             </View>
 
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Payment Method</Text>
-              <Text style={styles.paymentMethodText}>
+              <Text style={[styles.detailLabel, isTablet && { fontSize: 14 }]}>Payment Method</Text>
+              <Text style={[styles.paymentMethodText, isTablet && { fontSize: 14.5 }]}>
                 {paymentMethod === 'COD' ? 'Cash on Delivery (Unpaid)' : paymentMethod}
               </Text>
             </View>
           </Animated.View>
 
           {/* Packing Notification Banner */}
-          <View style={styles.noticeBox}>
-            <Icon name="coffee" size={20} color={theme.colors.primary} />
-            <Text style={styles.noticeText}>
+          <View style={[styles.noticeBox, isTablet && { padding: 18, borderRadius: 16 }]}>
+            <Icon name="coffee" size={isTablet ? 24 : 20} color={theme.colors.primary} />
+            <Text style={[styles.noticeText, isTablet && { fontSize: 13.5, lineHeight: 19 }]}>
               Our tea masters will review & confirm your order. Once confirmed, fresh chai packaging begins.
             </Text>
           </View>
@@ -251,9 +257,9 @@ export default function OrderSuccessScreen() {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => router.replace('/(tabs)')}
-            style={styles.continueBtn}
+            style={[styles.continueBtn, isTablet && { paddingVertical: 14 }]}
           >
-            <Text style={styles.continueText}>Continue Shopping</Text>
+            <Text style={[styles.continueText, isTablet && { fontSize: 15 }]}>Continue Shopping</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
