@@ -757,18 +757,20 @@ export default function OrderTrackingScreen() {
 
             {/* 3. MULTI-ORDER SELECTOR TABS (IF MORE THAN 1 ORDER) */}
             {isMultiple && (
-              <View style={styles.orderSwitcherRow}>
+              <View style={[styles.orderSwitcherRow, isTablet && { gap: 12, marginBottom: 16 }]}>
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => setActiveFilterTab('all')}
                   style={[
                     styles.switcherTab,
+                    isTablet && { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10 },
                     activeFilterTab === 'all' && styles.switcherTabActive,
                   ]}
                 >
                   <Text
                     style={[
                       styles.switcherTabText,
+                      isTablet && { fontSize: 14 },
                       activeFilterTab === 'all' && styles.switcherTabTextActive,
                     ]}
                   >
@@ -785,17 +787,19 @@ export default function OrderTrackingScreen() {
                       onPress={() => setActiveFilterTab(o.id)}
                       style={[
                         styles.switcherTab,
+                        isTablet && { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10 },
                         isActive && styles.switcherTabActive,
                       ]}
                     >
                       <Icon
                         name="truck"
-                        size={12}
+                        size={isTablet ? 15 : 12}
                         color={isActive ? '#FFFFFF' : '#B45309'}
                       />
                       <Text
                         style={[
                           styles.switcherTabText,
+                          isTablet && { fontSize: 14 },
                           isActive && styles.switcherTabTextActive,
                         ]}
                       >
@@ -915,22 +919,22 @@ export default function OrderTrackingScreen() {
 
                   {/* Courier / Rider Card OR Status Notice Card */}
                   {order.status === 'DISPATCHED' ? (
-                    <View style={styles.riderBox}>
-                      <View style={styles.riderAvatar}>
-                        <Icon name="user" size={20} color={theme.colors.primary} />
+                    <View style={[styles.riderBox, isTablet && { padding: 14, borderRadius: 14 }]}>
+                      <View style={[styles.riderAvatar, isTablet && { width: 48, height: 48, borderRadius: 24 }]}>
+                        <Icon name="user" size={isTablet ? 24 : 20} color={theme.colors.primary} />
                       </View>
-                      <View style={{ flex: 1, marginLeft: 10 }}>
+                      <View style={{ flex: 1, marginLeft: 12 }}>
                         <View style={styles.riderNameLine}>
-                          <Text style={styles.riderNameText}>
+                          <Text style={[styles.riderNameText, isTablet && { fontSize: 15.5 }]}>
                             {order.rider.name}
                           </Text>
-                          <View style={styles.otpPill}>
-                            <Text style={styles.otpPillText}>
+                          <View style={[styles.otpPill, isTablet && { paddingHorizontal: 9, paddingVertical: 3 }]}>
+                            <Text style={[styles.otpPillText, isTablet && { fontSize: 12.5 }]}>
                               OTP: {order.rider.otp}
                             </Text>
                           </View>
                         </View>
-                        <Text style={styles.riderFleetText}>
+                        <Text style={[styles.riderFleetText, isTablet && { fontSize: 13, marginTop: 3 }]}>
                           {order.rider.fleet} • {order.rider.rating}
                         </Text>
                       </View>
@@ -940,49 +944,49 @@ export default function OrderTrackingScreen() {
                         onPress={() =>
                           handleCallRider(order.rider.name, order.rider.phone)
                         }
-                        style={styles.callRiderButton}
+                        style={[styles.callRiderButton, isTablet && { width: 44, height: 44, borderRadius: 22 }]}
                       >
-                        <Icon name="phone" size={16} color="#FFFFFF" />
+                        <Icon name="phone" size={isTablet ? 20 : 16} color="#FFFFFF" />
                       </TouchableOpacity>
                     </View>
                   ) : order.status === 'PLACED' ? (
-                    <View style={styles.statusNoticeBox}>
-                      <View style={[styles.statusNoticeIconWrap, { backgroundColor: '#FEF3C7' }]}>
-                        <Icon name="clock" size={18} color="#D97706" />
+                    <View style={[styles.statusNoticeBox, isTablet && { padding: 16, borderRadius: 14 }]}>
+                      <View style={[styles.statusNoticeIconWrap, { backgroundColor: '#FEF3C7' }, isTablet && { width: 44, height: 44, borderRadius: 22 }]}>
+                        <Icon name="clock" size={isTablet ? 22 : 18} color="#D97706" />
                       </View>
                       <View style={{ flex: 1, marginLeft: 12 }}>
-                        <Text style={[styles.statusNoticeTitle, { color: '#92400E' }]}>
+                        <Text style={[styles.statusNoticeTitle, { color: '#92400E' }, isTablet && { fontSize: 15.5 }]}>
                           Waiting for Order Confirmation
                         </Text>
-                        <Text style={styles.statusNoticeSub}>
+                        <Text style={[styles.statusNoticeSub, isTablet && { fontSize: 13, lineHeight: 18 }]}>
                           Our tea masters will verify your order. Once confirmed, packaging begins and an express delivery partner will be assigned.
                         </Text>
                       </View>
                     </View>
                   ) : order.status === 'CONFIRMED' || order.status === 'PACKED' ? (
-                    <View style={styles.statusNoticeBox}>
-                      <View style={[styles.statusNoticeIconWrap, { backgroundColor: '#EFF6FF' }]}>
-                        <Icon name="package" size={18} color="#2563EB" />
+                    <View style={[styles.statusNoticeBox, isTablet && { padding: 16, borderRadius: 14 }]}>
+                      <View style={[styles.statusNoticeIconWrap, { backgroundColor: '#EFF6FF' }, isTablet && { width: 44, height: 44, borderRadius: 22 }]}>
+                        <Icon name="package" size={isTablet ? 22 : 18} color="#2563EB" />
                       </View>
                       <View style={{ flex: 1, marginLeft: 12 }}>
-                        <Text style={[styles.statusNoticeTitle, { color: '#1D4ED8' }]}>
+                        <Text style={[styles.statusNoticeTitle, { color: '#1D4ED8' }, isTablet && { fontSize: 15.5 }]}>
                           Order Confirmed & Preparing
                         </Text>
-                        <Text style={styles.statusNoticeSub}>
+                        <Text style={[styles.statusNoticeSub, isTablet && { fontSize: 13, lineHeight: 18 }]}>
                           Your tea has been verified by the estate and is being aroma-sealed for dispatch. Express rider will be assigned shortly.
                         </Text>
                       </View>
                     </View>
                   ) : order.status === 'DELIVERED' ? (
-                    <View style={styles.statusNoticeBox}>
-                      <View style={[styles.statusNoticeIconWrap, { backgroundColor: '#ECFDF5' }]}>
-                        <Icon name="badge-check" size={18} color="#059669" />
+                    <View style={[styles.statusNoticeBox, isTablet && { padding: 16, borderRadius: 14 }]}>
+                      <View style={[styles.statusNoticeIconWrap, { backgroundColor: '#ECFDF5' }, isTablet && { width: 44, height: 44, borderRadius: 22 }]}>
+                        <Icon name="badge-check" size={isTablet ? 22 : 18} color="#059669" />
                       </View>
                       <View style={{ flex: 1, marginLeft: 12 }}>
-                        <Text style={[styles.statusNoticeTitle, { color: '#065F46' }]}>
+                        <Text style={[styles.statusNoticeTitle, { color: '#065F46' }, isTablet && { fontSize: 15.5 }]}>
                           Delivered to Doorstep
                         </Text>
-                        <Text style={styles.statusNoticeSub}>
+                        <Text style={[styles.statusNoticeSub, isTablet && { fontSize: 13, lineHeight: 18 }]}>
                           Your artisanal tea has been safely delivered. Thank you for drinking Vardhamrit!
                         </Text>
                       </View>
@@ -990,8 +994,8 @@ export default function OrderTrackingScreen() {
                   ) : null}
 
                   {/* 4-Step Connected Journey Timeline */}
-                  <View style={styles.journeyTimelineBox}>
-                    <Text style={styles.journeyHeading}>
+                  <View style={[styles.journeyTimelineBox, isTablet && { padding: 18, borderRadius: 16 }]}>
+                    <Text style={[styles.journeyHeading, isTablet && { fontSize: 13.5, marginBottom: 16 }]}>
                       DELIVERY JOURNEY ({order.steps.filter((s) => s.completed).length}/4 COMPLETE)
                     </Text>
 
@@ -1004,6 +1008,7 @@ export default function OrderTrackingScreen() {
                               <View
                                 style={[
                                   styles.flowNodeCircle,
+                                  isTablet && { width: 26, height: 26, borderRadius: 13 },
                                   st.completed && styles.flowNodeCompleted,
                                   st.current && styles.flowNodeCurrent,
                                 ]}
@@ -1011,12 +1016,12 @@ export default function OrderTrackingScreen() {
                                 {st.completed ? (
                                   <Icon
                                     name="check"
-                                    size={11}
+                                    size={isTablet ? 14 : 11}
                                     color="#FFFFFF"
                                     strokeWidth={3}
                                   />
                                 ) : (
-                                  <View style={styles.flowDotInactive} />
+                                  <View style={[styles.flowDotInactive, isTablet && { width: 8, height: 8, borderRadius: 4 }]} />
                                 )}
                               </View>
                               {!isLast && (
@@ -1034,14 +1039,15 @@ export default function OrderTrackingScreen() {
                                 <Text
                                   style={[
                                     styles.flowStepTitle,
+                                    isTablet && { fontSize: 15 },
                                     st.current && styles.flowStepTitleCurrent,
                                   ]}
                                 >
                                   {st.title}
                                 </Text>
-                                <Text style={styles.flowStepTime}>{st.time}</Text>
+                                <Text style={[styles.flowStepTime, isTablet && { fontSize: 13 }]}>{st.time}</Text>
                               </View>
-                              <Text style={styles.flowStepSub}>{st.subtitle}</Text>
+                              <Text style={[styles.flowStepSub, isTablet && { fontSize: 13, marginTop: 3 }]}>{st.subtitle}</Text>
                             </View>
                           </View>
                         );
@@ -1062,27 +1068,27 @@ export default function OrderTrackingScreen() {
                   [{ text: 'Close' }, { text: 'Live Chat', onPress: () => { } }]
                 )
               }
-              style={styles.helpCard}
+              style={[styles.helpCard, isTablet && { padding: 18, borderRadius: 16 }]}
             >
-              <View style={styles.helpIconCircle}>
-                <Icon name="message-square" size={18} color={theme.colors.primary} />
+              <View style={[styles.helpIconCircle, isTablet && { width: 44, height: 44, borderRadius: 22 }]}>
+                <Icon name="message-square" size={isTablet ? 22 : 18} color={theme.colors.primary} />
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.helpTitle}>Need help with these deliveries?</Text>
-                <Text style={styles.helpSub}>
+                <Text style={[styles.helpTitle, isTablet && { fontSize: 15.5 }]}>Need help with these deliveries?</Text>
+                <Text style={[styles.helpSub, isTablet && { fontSize: 13 }]}>
                   Connect directly with our 24/7 Tea Concierge team
                 </Text>
               </View>
-              <Icon name="chevron-right" size={16} color="#9CA3AF" />
+              <Icon name="chevron-right" size={isTablet ? 18 : 16} color="#9CA3AF" />
             </TouchableOpacity>
 
             {/* 6. BACK TO ALL ORDERS BUTTON */}
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => router.replace('/(tabs)/orders')}
-              style={styles.returnOrdersBtn}
+              style={[styles.returnOrdersBtn, isTablet && { paddingVertical: 14, borderRadius: 14 }]}
             >
-              <Text style={styles.returnOrdersBtnText}>
+              <Text style={[styles.returnOrdersBtnText, isTablet && { fontSize: 15 }]}>
                 View All Orders History
               </Text>
             </TouchableOpacity>
