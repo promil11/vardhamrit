@@ -598,23 +598,23 @@ export default function CategoriesScreen() {
             style={styles.heroCard}
           >
             <View style={styles.heroTopRow}>
-              <View style={styles.heroBadgeCapsule}>
-                <Icon name="sparkles" size={9} color="#FFFFFF" />
-                <Text style={styles.heroBadgeText}>{currentHero.badge}</Text>
+              <View style={[styles.heroBadgeCapsule, isTablet && { paddingHorizontal: 10, paddingVertical: 4 }]}>
+                <Icon name="sparkles" size={isTablet ? 12 : 9} color="#FFFFFF" />
+                <Text style={[styles.heroBadgeText, isTablet && { fontSize: 11 }]}>{currentHero.badge}</Text>
               </View>
-              <Text style={styles.heroOriginText}>{currentHero.origin}</Text>
+              <Text style={[styles.heroOriginText, isTablet && { fontSize: 12.5 }]}>{currentHero.origin}</Text>
             </View>
 
             <View style={styles.heroContentRow}>
               <View style={styles.heroTextCol}>
-                <Text style={styles.heroTitle}>{currentHero.title}</Text>
-                <Text style={styles.heroSubtitle}>{currentHero.subtitle}</Text>
+                <Text style={[styles.heroTitle, isTablet && { fontSize: 20 }]}>{currentHero.title}</Text>
+                <Text style={[styles.heroSubtitle, isTablet && { fontSize: 13.5, lineHeight: 18 }]}>{currentHero.subtitle}</Text>
 
                 {/* Tasting notes chips */}
                 <View style={styles.heroNotesTrack}>
                   {(currentHero.notes as string[]).map((note: string, index: number) => (
-                    <View key={index} style={styles.heroNoteChip}>
-                      <Text style={styles.heroNoteChipText}>{note}</Text>
+                    <View key={index} style={[styles.heroNoteChip, isTablet && { paddingHorizontal: 10, paddingVertical: 4 }]}>
+                      <Text style={[styles.heroNoteChipText, isTablet && { fontSize: 12 }]}>{note}</Text>
                     </View>
                   ))}
                 </View>
