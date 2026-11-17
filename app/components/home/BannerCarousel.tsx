@@ -109,15 +109,22 @@ export const BannerCarousel: React.FC<BannerCarouselProps> = ({
           end={{ x: 1, y: 1 }}
           style={styles.bannerGradient}
         >
+          {/* Decorative Ambient Aura Shapes */}
+          <View style={styles.ambientCircleBackdrop} pointerEvents="none" />
+          <View style={styles.ambientArcBackdrop} pointerEvents="none" />
+
           {/* Left Text Block */}
           <View style={styles.textContainer}>
             {badgeText ? (
               <View style={styles.bannerBadge}>
+                <Icon name="sparkles" size={10} color="#FDE68A" />
                 <Text style={styles.bannerBadgeText}>{badgeText}</Text>
               </View>
             ) : null}
 
-            <Text style={styles.tagline}>{tagline}</Text>
+            <Text style={styles.tagline} numberOfLines={1}>
+              {tagline}
+            </Text>
             <Text style={styles.headline} numberOfLines={2}>
               {headline}
             </Text>
@@ -128,16 +135,20 @@ export const BannerCarousel: React.FC<BannerCarouselProps> = ({
             <View style={styles.shopNowRow}>
               <View style={styles.shopNowPill}>
                 <Text style={styles.shopNowText}>Shop Blend</Text>
-                <Icon name="arrow-right" size={10} color="#FFFFFF" />
+                <Icon name="arrow-right" size={11} color="#0A3622" />
               </View>
             </View>
           </View>
 
-          {/* Right Product Hero Image */}
-          <View style={styles.imageWrapper}>
+          {/* Right Product Hero Presentation */}
+          <View style={styles.productContainer}>
+            {/* Ambient circular glow aura */}
+            <View style={styles.productGlowAura} pointerEvents="none" />
+            {/* Soft grounded shadow base */}
+            <View style={styles.productShadowBase} pointerEvents="none" />
             <Image
               source={{ uri: imageUrl }}
-              style={styles.bannerImage}
+              style={styles.bannerProductImage}
               resizeMode="contain"
             />
           </View>
@@ -194,108 +205,166 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.base,
   },
   bannerTouchable: {
-    borderRadius: theme.radius.banner,
+    borderRadius: 22,
     overflow: 'hidden',
-    ...theme.shadows.card,
+    backgroundColor: '#062817',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    elevation: 4,
   },
   bannerGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
-    borderRadius: theme.radius.banner,
-    height: 156,
+    paddingLeft: 18,
+    paddingRight: 14,
+    paddingVertical: 14,
+    borderRadius: 22,
+    height: 168,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  ambientCircleBackdrop: {
+    position: 'absolute',
+    top: -40,
+    right: -20,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  ambientArcBackdrop: {
+    position: 'absolute',
+    bottom: -60,
+    left: -40,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(0, 0, 0, 0.12)',
   },
   textContainer: {
     flex: 1,
-    paddingRight: theme.spacing.sm,
+    paddingRight: 10,
+    justifyContent: 'center',
+    zIndex: 2,
   },
   bannerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: theme.colors.accentBerry,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 2,
-    borderRadius: theme.radius.xs,
-    marginBottom: theme.spacing.xs,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    borderWidth: 1,
+    borderColor: 'rgba(253, 230, 138, 0.42)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    gap: 4,
+    marginBottom: 6,
   },
   bannerBadgeText: {
-    color: theme.colors.textInverse,
-    fontSize: theme.typography.scale.xs - 2,
-    fontWeight: theme.typography.weights.extraBold,
-    letterSpacing: 0.5,
-  },
-  tagline: {
-    fontSize: theme.typography.scale.xs - 1,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.accentGold,
-    letterSpacing: 1,
+    color: '#FDE68A',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
+  tagline: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.72)',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
   headline: {
-    fontSize: theme.typography.scale.md + 2,
-    fontWeight: theme.typography.weights.extraBold,
-    color: theme.colors.textInverse,
-    lineHeight: theme.typography.lineHeights.md + 2,
-    marginVertical: 4,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    lineHeight: 22,
+    letterSpacing: -0.2,
+    marginBottom: 3,
   },
   subheadline: {
-    fontSize: theme.typography.scale.xs,
+    fontSize: 11.5,
     color: 'rgba(255, 255, 255, 0.85)',
-    fontWeight: theme.typography.weights.medium,
+    fontWeight: '500',
+    lineHeight: 15,
   },
   shopNowRow: {
-    marginTop: 8,
+    marginTop: 10,
   },
   shopNowPill: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.45)',
-    paddingHorizontal: 9,
-    paddingVertical: 3.5,
-    borderRadius: theme.radius.pill,
-    gap: 4,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 5.5,
+    borderRadius: 20,
+    gap: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 3,
+    elevation: 2,
   },
   shopNowText: {
-    color: '#FFFFFF',
-    fontSize: 10.5,
-    fontWeight: theme.typography.weights.extraBold,
-    letterSpacing: 0.3,
+    color: '#0A3622',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
-  imageWrapper: {
-    width: 96,
-    height: 96,
-    borderRadius: theme.radius.card,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+  productContainer: {
+    width: 116,
+    height: 146,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    zIndex: 2,
   },
-  bannerImage: {
-    width: '100%',
-    height: '100%',
+  productGlowAura: {
+    position: 'absolute',
+    width: 106,
+    height: 106,
+    borderRadius: 53,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+  },
+  productShadowBase: {
+    position: 'absolute',
+    bottom: 8,
+    width: 76,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.28)',
+  },
+  bannerProductImage: {
+    width: 110,
+    height: 136,
   },
   dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: theme.spacing.xs,
-    marginTop: theme.spacing.sm,
+    gap: 6,
+    marginTop: 10,
   },
   dot: {
-    height: 5,
-    borderRadius: 3,
+    height: 4,
+    borderRadius: 2,
   },
   dotActive: {
-    width: 20,
+    width: 22,
     backgroundColor: theme.colors.primary,
   },
   dotInactive: {
     width: 6,
-    backgroundColor: theme.colors.borderStrong,
+    backgroundColor: '#D1D5DB',
   },
 });
 
