@@ -21,6 +21,7 @@ build/
 # Uploads and temporary files
 backend/uploads/*
 !backend/uploads/products/
+!backend/uploads/categories/
 !backend/uploads/.gitkeep
 backend/invoices/*
 !backend/invoices/.gitkeep

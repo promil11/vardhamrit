@@ -21,12 +21,12 @@ export interface CategoryItem {
 }
 
 export const CATEGORY_IMAGE_FALLBACKS: Record<string, string> = {
-  all: getFullImageUrl('/uploads/products/vardhamrit_4flavour_lineup.png'),
-  normal: getFullImageUrl('/uploads/products/classic_200g.png'),
-  kadak: getFullImageUrl('/uploads/products/classic_200g.png'),
-  masala: getFullImageUrl('/uploads/products/masala_200g.png'),
-  keser: getFullImageUrl('/uploads/products/kesar_200g.png'),
-  chocolate: getFullImageUrl('/uploads/products/chocolate_200g.png'),
+  all: getFullImageUrl('/uploads/categories/all_teas.jpg'),
+  normal: getFullImageUrl('/uploads/categories/normal_chai.jpg'),
+  kadak: getFullImageUrl('/uploads/categories/normal_chai.jpg'),
+  masala: getFullImageUrl('/uploads/categories/masala_chai.jpg'),
+  keser: getFullImageUrl('/uploads/categories/kesar_chai.jpg'),
+  chocolate: getFullImageUrl('/uploads/categories/chocolate_chai.jpg'),
 };
 
 interface CategoryTileProps {
