@@ -68,6 +68,7 @@ import {
   LucideProps,
 } from 'lucide-react-native';
 import { theme } from '../../theme';
+import { useResponsive } from '../../utils/responsive';
 
 export type IconName =
   | 'zap'
@@ -154,8 +155,11 @@ export const Icon: React.FC<IconProps> = ({
   strokeWidth = 2,
   ...props
 }) => {
+  const { isTablet } = useResponsive();
+  const scaledSize = isTablet ? Math.round(size * 1.2) : size;
+
   const commonProps = {
-    size,
+    size: scaledSize,
     color,
     strokeWidth,
     ...(fill ? { fill } : {}),
