@@ -560,34 +560,36 @@ export default function CategoriesScreen() {
             />
           }
         >
-        {/* 2. HORIZONTAL CATEGORY SCROLL RAIL */}
-        <View style={styles.categorySection}>
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionTitleWithDot}>
-              <View style={styles.pulsingIndicator} />
-              <Text style={styles.sectionMiniTitle}>CHOOSE BLEND CATEGORY</Text>
+        {/* 2. HORIZONTAL CATEGORY SCROLL RAIL (Hidden on big screens / tablets) */}
+        {!isTablet && (
+          <View style={styles.categorySection}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionTitleWithDot}>
+                <View style={styles.pulsingIndicator} />
+                <Text style={styles.sectionMiniTitle}>CHOOSE BLEND CATEGORY</Text>
+              </View>
+              <Text style={styles.sectionCountText}>
+                {categoriesList.length} Collections
+              </Text>
             </View>
-            <Text style={styles.sectionCountText}>
-              {categoriesList.length} Collections
-            </Text>
-          </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryScrollTrack}
-          >
-            {categoriesList.map((cat) => (
-              <CategoryTile
-                key={cat.id}
-                item={cat}
-                isSelected={filterState.categoryId === cat.id}
-                onPress={handleCategorySelect}
-                style={styles.categoryRailItem}
-              />
-            ))}
-          </ScrollView>
-        </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryScrollTrack}
+            >
+              {categoriesList.map((cat) => (
+                <CategoryTile
+                  key={cat.id}
+                  item={cat}
+                  isSelected={filterState.categoryId === cat.id}
+                  onPress={handleCategorySelect}
+                  style={styles.categoryRailItem}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* 3. DYNAMIC AMBIENT CATEGORY HERO BANNER (Fixed Stable Royal Theme Background) */}
         <View style={styles.heroSection}>
