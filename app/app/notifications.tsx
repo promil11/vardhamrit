@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { theme } from '../theme';
-import { Icon } from '../components/common/Icon';
+import { Icon, IconName } from '../components/common/Icon';
 import { useNotificationStore, NotificationItem } from '../store/useNotificationStore';
 import { useAuth } from '../store/authContext';
 
@@ -25,15 +25,15 @@ type FilterType = 'all' | 'deals' | 'chai' | 'orders' | 'rewards';
 interface FilterTab {
   id: FilterType;
   label: string;
-  emoji: string;
+  icon: IconName;
 }
 
 const FILTER_TABS: FilterTab[] = [
-  { id: 'all', label: 'All', emoji: '🔔' },
-  { id: 'deals', label: 'Flash Deals', emoji: '⚡' },
-  { id: 'chai', label: 'Chai Time', emoji: '☕' },
-  { id: 'orders', label: 'Orders', emoji: '📦' },
-  { id: 'rewards', label: 'Rewards', emoji: '🎁' },
+  { id: 'all', label: 'All', icon: 'bell' },
+  { id: 'deals', label: 'Flash Deals', icon: 'zap' },
+  { id: 'chai', label: 'Chai Time', icon: 'coffee' },
+  { id: 'orders', label: 'Orders', icon: 'package' },
+  { id: 'rewards', label: 'Rewards', icon: 'gift' },
 ];
 
 export default function NotificationsScreen() {
@@ -227,7 +227,11 @@ export default function NotificationsScreen() {
                 }}
                 style={[styles.filterPill, active && styles.filterPillActive]}
               >
-                <Text style={styles.filterEmoji}>{tab.emoji}</Text>
+                <Icon
+                  name={tab.icon}
+                  size={13}
+                  color={active ? theme.colors.primary : 'rgba(255, 255, 255, 0.95)'}
+                />
                 <Text style={[styles.filterLabel, active && styles.filterLabelActive]}>
                   {tab.label}
                 </Text>
@@ -403,27 +407,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
   },
   filterPillActive: {
     backgroundColor: '#FFFFFF',
     borderColor: '#FFFFFF',
-  },
-  filterEmoji: {
-    fontSize: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
   },
   filterLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: 'rgba(255, 255, 255, 0.92)',
   },
   filterLabelActive: {
     color: theme.colors.primary,
+    fontWeight: '800',
   },
   listContainer: {
     flex: 1,
