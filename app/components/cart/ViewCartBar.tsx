@@ -148,9 +148,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: theme.spacing.base,
     right: theme.spacing.base,
+    alignItems: 'center',
     zIndex: 999,
   },
   pillContainer: {
+    width: '100%',
+    maxWidth: 560,
     borderRadius: theme.radius.pill,
     ...theme.shadows.viewCartBar,
   },

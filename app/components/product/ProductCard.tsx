@@ -18,6 +18,7 @@ import { AddButton } from './AddButton';
 import { BottomSheetWrapper } from '../common/BottomSheetWrapper';
 import { Icon } from '../common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
+import { useResponsive } from '../../utils/responsive';
 
 interface ProductCardProps {
   product: Product;
@@ -79,19 +80,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   const isList = layout === 'list';
+  const { isTablet, scale, productCardWidth, productImageHeight, scaleFont, scaleSize } =
+    useResponsive();
 
   return (
     <>
       <TouchableOpacity
         activeOpacity={0.93}
         onPress={handleCardPress}
-        style={[styles.card, isList && styles.cardList, style]}
+        style={[
+          styles.card,
+          { width: isList ? '100%' : productCardWidth },
+          isTablet && styles.cardTablet,
+          isList && styles.cardList,
+          style,
+        ]}
       >
         {/* Image Showcase */}
         <View
           style={[
             styles.imageContainer,
-            isList && styles.imageContainerList,
+            { height: isList ? (isTablet ? 130 : 108) : productImageHeight },
+            isList && [styles.imageContainerList, isTablet && styles.imageContainerListTablet],
           ]}
         >
           <Image
@@ -113,10 +123,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               colors={['#DC2626', '#E11D48']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.discountBadge}
+              style={[styles.discountBadge, isTablet && styles.discountBadgeTablet]}
             >
-              <Icon name="flame" size={9} color="#FFFFFF" />
-              <Text style={styles.discountBadgeText}>{discount}% OFF</Text>
+              <Icon name="flame" size={isTablet ? 11 : 9} color="#FFFFFF" />
+              <Text style={[styles.discountBadgeText, isTablet && { fontSize: scaleFont(9.5) }]}>
+                {discount}% OFF
+              </Text>
             </LinearGradient>
           ) : null}
 
@@ -124,12 +136,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={toggleFavorite}
-            style={styles.favoriteButton}
+            style={[styles.favoriteButton, isTablet && styles.favoriteButtonTablet]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Icon
               name="heart"
-              size={13}
+              size={isTablet ? 16 : 13}
               color={isFavorite ? '#DC2626' : '#6B7280'}
               fill={isFavorite ? '#DC2626' : 'transparent'}
             />
@@ -137,14 +149,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Bottom of Image: Status Micro-Ribbon */}
           {product.isBestSeller ? (
-            <View style={styles.imageBottomBannerGold}>
-              <Icon name="crown" size={9} color="#B45309" />
-              <Text style={styles.imageBottomBannerGoldText}>BESTSELLER</Text>
+            <View style={[styles.imageBottomBannerGold, isTablet && styles.imageBottomBannerTablet]}>
+              <Icon name="crown" size={isTablet ? 11 : 9} color="#B45309" />
+              <Text style={[styles.imageBottomBannerGoldText, isTablet && { fontSize: scaleFont(9.5) }]}>
+                BESTSELLER
+              </Text>
             </View>
           ) : product.isFreshHarvest ? (
-            <View style={styles.imageBottomBannerGreen}>
-              <Icon name="sprout" size={9} color="#15803D" />
-              <Text style={styles.imageBottomBannerGreenText}>FRESH 2026</Text>
+            <View style={[styles.imageBottomBannerGreen, isTablet && styles.imageBottomBannerTablet]}>
+              <Icon name="sprout" size={isTablet ? 11 : 9} color="#15803D" />
+              <Text style={[styles.imageBottomBannerGreenText, isTablet && { fontSize: scaleFont(9.5) }]}>
+                FRESH 2026
+              </Text>
             </View>
           ) : null}
         </View>
@@ -158,7 +174,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         >
           {/* Product Name (Bold) */}
           <Text
-            style={[styles.name, isList && styles.nameList]}
+            style={[
+              styles.name,
+              isList && styles.nameList,
+              isTablet && {
+                fontSize: scaleFont(isList ? 15.5 : 14.5),
+                lineHeight: scaleFont(isList ? 21 : 19),
+                minHeight: isList ? 0 : scaleSize(38),
+              },
+            ]}
             numberOfLines={2}
           >
             {product.name}
@@ -166,38 +190,51 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Tagline / Tasting Notes */}
           {product.tagline ? (
-            <Text style={styles.tagline} numberOfLines={1}>
+            <Text
+              style={[styles.tagline, isTablet && { fontSize: scaleFont(11.5) }]}
+              numberOfLines={1}
+            >
               {product.tagline}
             </Text>
           ) : null}
 
           {/* Rating & Reviews */}
           <View style={styles.ratingRow}>
-            <View style={styles.ratingPill}>
-              <Icon name="star" size={9.5} color="#D97706" />
-              <Text style={styles.ratingText}>{product.rating.toFixed(1)}</Text>
+            <View style={[styles.ratingPill, isTablet && styles.ratingPillTablet]}>
+              <Icon name="star" size={isTablet ? 11.5 : 9.5} color="#D97706" />
+              <Text style={[styles.ratingText, isTablet && { fontSize: scaleFont(11.5) }]}>
+                {product.rating.toFixed(1)}
+              </Text>
             </View>
-            <Text style={styles.reviewCountText}>({product.reviewCount})</Text>
+            <Text style={[styles.reviewCountText, isTablet && { fontSize: scaleFont(11) }]}>
+              ({product.reviewCount})
+            </Text>
           </View>
 
           {/* Pack Size / Variant Selector Capsule */}
           <TouchableOpacity
             activeOpacity={0.75}
             onPress={() => setVariantSheetVisible(true)}
-            style={styles.variantCapsule}
+            style={[styles.variantCapsule, isTablet && styles.variantCapsuleTablet]}
           >
             <View>
-              <Text style={styles.variantCapsuleText}>{selectedVariant.label}</Text>
+              <Text
+                style={[styles.variantCapsuleText, isTablet && { fontSize: scaleFont(13.5) }]}
+              >
+                {selectedVariant.label}
+              </Text>
             </View>
             <View>
               {product.variants.length > 1 ? (
                 <View style={styles.variantDropdownArrow}>
-                  <Text style={styles.variantMultiCount}>
+                  <Text
+                    style={[styles.variantMultiCount, isTablet && { fontSize: scaleFont(13.5) }]}
+                  >
                     {product.variants.length} sizes
                   </Text>
                   <Icon
                     name="chevron-down"
-                    size={10}
+                    size={isTablet ? 12 : 10}
                     color={theme.colors.textSecondary}
                   />
                 </View>
@@ -209,18 +246,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <View style={styles.footerRow}>
             <View style={styles.priceColumn}>
               <View style={styles.priceRow}>
-                <Text style={styles.sellingPrice}>₹{selectedVariant.price}</Text>
+                <Text style={[styles.sellingPrice, isTablet && { fontSize: scaleFont(18.5) }]}>
+                  ₹{selectedVariant.price}
+                </Text>
                 {selectedVariant.mrp > selectedVariant.price ? (
-                  <Text style={styles.mrpPrice}>₹{selectedVariant.mrp}</Text>
+                  <Text style={[styles.mrpPrice, isTablet && { fontSize: scaleFont(13) }]}>
+                    ₹{selectedVariant.mrp}
+                  </Text>
                 ) : null}
               </View>
               {savings > 0 ? (
-                <Text style={styles.savingsLabel}>Save ₹{savings}</Text>
+                <Text style={[styles.savingsLabel, isTablet && { fontSize: scaleFont(10.5) }]}>
+                  Save ₹{savings}
+                </Text>
               ) : null}
             </View>
 
             {/* Tactile Add / Stepper Button */}
-            <AddButton product={product} variant={selectedVariant} size="sm" />
+            <AddButton
+              product={product}
+              variant={selectedVariant}
+              size={isTablet ? 'md' : 'sm'}
+            />
           </View>
         </View>
       </TouchableOpacity>
@@ -299,6 +346,10 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
+  cardTablet: {
+    padding: 12,
+    borderRadius: 22,
+  },
   cardList: {
     width: '100%',
     flexDirection: 'row',
@@ -322,6 +373,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginRight: 12,
   },
+  imageContainerListTablet: {
+    width: 130,
+    height: 130,
+    borderRadius: 18,
+    marginRight: 16,
+  },
   image: {
     width: '100%',
     height: '100%',
@@ -342,6 +399,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 3,
     elevation: 3,
+  },
+  discountBadgeTablet: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    gap: 4,
   },
   discountBadgeText: {
     color: '#FFFFFF',
@@ -366,6 +429,11 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  favoriteButtonTablet: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+  },
   imageBottomBannerGold: {
     position: 'absolute',
     bottom: 0,
@@ -377,6 +445,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 2,
     gap: 3,
+  },
+  imageBottomBannerTablet: {
+    paddingVertical: 3.5,
+    gap: 4,
   },
   imageBottomBannerGoldText: {
     fontSize: 8,
@@ -426,6 +498,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     gap: 4,
   },
+  variantCapsuleTablet: {
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
   variantCapsuleText: {
     fontSize: 12,
     fontWeight: theme.typography.weights.bold,
@@ -474,6 +552,12 @@ const styles = StyleSheet.create({
     paddingVertical: 1.5,
     borderRadius: 5,
     gap: 2.5,
+  },
+  ratingPillTablet: {
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    gap: 3.5,
   },
   ratingText: {
     fontSize: 10,

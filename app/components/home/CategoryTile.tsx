@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, Image } from 'reac
 import { theme } from '../../theme';
 import { Icon, IconName } from '../common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
+import { useResponsive } from '../../utils/responsive';
 
 export interface CategoryItem {
   id: string;
@@ -43,6 +44,7 @@ export const CategoryTile: React.FC<CategoryTileProps> = ({
   style,
 }) => {
   const [imageError, setImageError] = useState(false);
+  const { isTablet, scaleFont, scaleSize } = useResponsive();
 
   const rawUri =
     !imageError &&
@@ -56,11 +58,20 @@ export const CategoryTile: React.FC<CategoryTileProps> = ({
     <TouchableOpacity
       activeOpacity={0.84}
       onPress={() => onPress(item.id)}
-      style={[styles.container, style]}
+      style={[
+        styles.container,
+        isTablet && { width: scaleSize(76) },
+        style,
+      ]}
     >
       <View
         style={[
           styles.tileWrapper,
+          isTablet && {
+            width: scaleSize(64),
+            height: scaleSize(64),
+            borderRadius: scaleSize(20),
+          },
           isSelected ? styles.tileWrapperSelected : styles.tileWrapperUnselected,
         ]}
       >
@@ -75,7 +86,7 @@ export const CategoryTile: React.FC<CategoryTileProps> = ({
           <View style={styles.fallbackIconContainer}>
             <Icon
               name={item.iconName || 'coffee'}
-              size={24}
+              size={isTablet ? 28 : 24}
               color={theme.colors.primary}
               strokeWidth={2}
             />
@@ -85,14 +96,22 @@ export const CategoryTile: React.FC<CategoryTileProps> = ({
 
       {/* Category Name */}
       <Text
-        style={[styles.label, isSelected && styles.labelSelected]}
+        style={[
+          styles.label,
+          isTablet && {
+            fontSize: scaleFont(12.5),
+            lineHeight: scaleFont(16),
+            minHeight: scaleSize(32),
+          },
+          isSelected && styles.labelSelected,
+        ]}
         numberOfLines={2}
       >
         {item.label || item.name}
       </Text>
 
       {/* Active Underline Pill */}
-      {isSelected ? <View style={styles.activePill} /> : null}
+      {isSelected ? <View style={[styles.activePill, isTablet && { width: 26, height: 4 }]} /> : null}
     </TouchableOpacity>
   );
 };

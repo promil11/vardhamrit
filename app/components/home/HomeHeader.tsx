@@ -16,6 +16,7 @@ import { useWishlistStore } from '../../store/useWishlistStore';
 import { useAddressStore } from '../../store/useAddressStore';
 import { useNotificationStore } from '../../store/useNotificationStore';
 import { Icon } from '../common/Icon';
+import { useResponsive } from '../../utils/responsive';
 
 const PLACEHOLDERS = [
   "Search 'Normal Kadak chai'...",
@@ -38,6 +39,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
   onSearchChange,
 }) => {
   const router = useRouter();
+  const { isTablet, scaleFont } = useResponsive();
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const { wishlistIds, loadWishlist } = useWishlistStore();
   const { unreadCount, loadUnreadCount } = useNotificationStore();
@@ -89,8 +91,8 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
             style={styles.addressDropdown}
           >
             <View style={styles.deliverToRow}>
-              <Icon name="map-pin" size={12} color="rgba(255, 255, 255, 0.85)" />
-              <Text style={styles.deliverToLabel}>
+              <Icon name="map-pin" size={isTablet ? 14 : 12} color="rgba(255, 255, 255, 0.85)" />
+              <Text style={[styles.deliverToLabel, isTablet && { fontSize: scaleFont(11.5) }]}>
                 {isLocating
                   ? 'Detecting Location...'
                   : selectedAddress
@@ -99,7 +101,13 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
               </Text>
             </View>
             <View style={styles.addressTitleRow}>
-              <Text style={styles.addressText} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.addressText,
+                  isTablet && { fontSize: scaleFont(15) },
+                ]}
+                numberOfLines={1}
+              >
                 {isLocating
                   ? 'Fetching GPS location...'
                   : selectedAddress
@@ -108,7 +116,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
                       : `${selectedAddress.line1 || ''}${selectedAddress.line1 && selectedAddress.city ? ', ' : ''}${selectedAddress.city || ''}`.trim() || 'Current Location')
                     : 'Tap to set address'}
               </Text>
-              <Icon name="chevron-down" size={16} color={theme.colors.textInverse} />
+              <Icon name="chevron-down" size={isTablet ? 18 : 16} color={theme.colors.textInverse} />
             </View>
           </TouchableOpacity>
         </View>
@@ -120,8 +128,8 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
             onPress={() => router.push('/notifications')}
             style={styles.headerIconBtn}
           >
-            <View style={styles.headerIconCircle}>
-              <Icon name="bell" size={17} color={theme.colors.textInverse} />
+            <View style={[styles.headerIconCircle, isTablet && styles.headerIconCircleTablet]}>
+              <Icon name="bell" size={isTablet ? 20 : 17} color={theme.colors.textInverse} />
               {unreadCount > 0 ? (
                 <View style={[styles.headerBadgeDot, { backgroundColor: '#EF4444' }]}>
                   <Text style={styles.headerBadgeDotText}>
@@ -137,8 +145,8 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
             onPress={() => router.push('/wishlist')}
             style={styles.headerIconBtn}
           >
-            <View style={styles.headerIconCircle}>
-              <Icon name="heart" size={17} color={theme.colors.textInverse} />
+            <View style={[styles.headerIconCircle, isTablet && styles.headerIconCircleTablet]}>
+              <Icon name="heart" size={isTablet ? 20 : 17} color={theme.colors.textInverse} />
               {wishlistCount > 0 ? (
                 <View style={styles.headerBadgeDot}>
                   <Text style={styles.headerBadgeDotText}>
@@ -154,8 +162,8 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
             onPress={() => router.push('/(tabs)/profile')}
             style={styles.profileBtn}
           >
-            <View style={styles.profileAvatar}>
-              <Icon name="user" size={18} color={theme.colors.textInverse} />
+            <View style={[styles.profileAvatar, isTablet && styles.profileAvatarTablet]}>
+              <Icon name="user" size={isTablet ? 21 : 18} color={theme.colors.textInverse} />
             </View>
           </TouchableOpacity>
         </View>
@@ -163,10 +171,10 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
 
       {/* Rounded White Search Bar with Rotating Placeholder */}
       <View style={styles.searchSection}>
-        <View style={styles.searchBar}>
-          <Icon name="search" size={18} color={theme.colors.textSecondary} style={styles.searchIcon} />
+        <View style={[styles.searchBar, isTablet && styles.searchBarTablet]}>
+          <Icon name="search" size={isTablet ? 21 : 18} color={theme.colors.textSecondary} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, isTablet && { fontSize: scaleFont(14) }]}
             placeholder={PLACEHOLDERS[placeholderIndex]}
             placeholderTextColor={theme.colors.textHint}
             value={searchQuery}
@@ -324,6 +332,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
   },
+  headerIconCircleTablet: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
   headerBadgeDot: {
     position: 'absolute',
     top: -3,
@@ -359,6 +372,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  profileAvatarTablet: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
   searchSection: {
     marginTop: 2,
   },
@@ -378,6 +396,11 @@ const styles = StyleSheet.create({
       } as any)
       : {}),
     ...theme.shadows.subtle,
+  },
+  searchBarTablet: {
+    height: 52,
+    borderRadius: 26,
+    paddingHorizontal: 18,
   },
   searchIcon: {
     marginRight: theme.spacing.sm,

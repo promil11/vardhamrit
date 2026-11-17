@@ -21,6 +21,7 @@ import { ProductCard } from '../components/product/ProductCard';
 import { ViewCartBar } from '../components/cart/ViewCartBar';
 import { Icon } from '../components/common/Icon';
 import { WishlistSkeleton } from '../components/common/Skeleton';
+import { useResponsive } from '../utils/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -42,6 +43,7 @@ const FILTER_TABS: FilterTab[] = [
 
 export default function WishlistScreen() {
   const router = useRouter();
+  const { gridItemWidth } = useResponsive();
   const { wishlistIds, clearWishlist, loadWishlist } = useWishlistStore();
   const { addItem, items: cartItems } = useCartStore();
 
@@ -334,7 +336,7 @@ export default function WishlistScreen() {
                         key={product.id}
                         product={product}
                         layout="grid"
-                        style={styles.productGridCard}
+                        style={{ width: gridItemWidth as any }}
                       />
                     ))}
                   </View>

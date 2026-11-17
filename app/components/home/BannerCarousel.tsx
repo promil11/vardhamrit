@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { Icon } from '../common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
+import { useResponsive } from '../../utils/responsive';
 
 export interface BannerItem {
   id: string;
@@ -39,9 +40,13 @@ export const BannerCarousel: React.FC<BannerCarouselProps> = ({
   onBannerPress,
   style,
 }) => {
-  const { width: windowWidth } = useWindowDimensions();
-  const BANNER_GAP = 14;
-  const bannerWidth = Math.min(windowWidth - 44, 480);
+  const { width: windowWidth, isTablet, isLargeTablet, scaleFont } = useResponsive();
+  const BANNER_GAP = isTablet ? 18 : 14;
+  const bannerWidth = isLargeTablet
+    ? Math.min(windowWidth - 64, 760)
+    : isTablet
+    ? Math.min(windowWidth - 48, 620)
+    : Math.min(windowWidth - 44, 480);
   const snapInterval = bannerWidth + BANNER_GAP;
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -101,13 +106,16 @@ export const BannerCarousel: React.FC<BannerCarouselProps> = ({
       <TouchableOpacity
         activeOpacity={0.92}
         onPress={() => onBannerPress?.(item)}
-        style={[styles.bannerTouchable, { width: bannerWidth, marginRight: BANNER_GAP }]}
+        style={[
+          styles.bannerTouchable,
+          { width: bannerWidth, marginRight: BANNER_GAP },
+        ]}
       >
         <LinearGradient
           colors={gradientColors as any}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.bannerGradient}
+          style={[styles.bannerGradient, isTablet && styles.bannerGradientTablet]}
         >
           {/* Decorative Ambient Aura Shapes */}
           <View style={styles.ambientCircleBackdrop} pointerEvents="none" />
@@ -116,39 +124,98 @@ export const BannerCarousel: React.FC<BannerCarouselProps> = ({
           {/* Left Text Block */}
           <View style={styles.textContainer}>
             {badgeText ? (
-              <View style={styles.bannerBadge}>
-                <Icon name="sparkles" size={10} color="#FDE68A" />
-                <Text style={styles.bannerBadgeText}>{badgeText}</Text>
+              <View style={[styles.bannerBadge, isTablet && styles.bannerBadgeTablet]}>
+                <Icon name="sparkles" size={isTablet ? 12 : 10} color="#FDE68A" />
+                <Text
+                  style={[
+                    styles.bannerBadgeText,
+                    isTablet && { fontSize: scaleFont(11) },
+                  ]}
+                >
+                  {badgeText}
+                </Text>
               </View>
             ) : null}
 
-            <Text style={styles.tagline} numberOfLines={1}>
+            <Text
+              style={[styles.tagline, isTablet && { fontSize: scaleFont(11.5) }]}
+              numberOfLines={1}
+            >
               {tagline}
             </Text>
-            <Text style={styles.headline} numberOfLines={2}>
+            <Text
+              style={[
+                styles.headline,
+                isTablet && {
+                  fontSize: scaleFont(21),
+                  lineHeight: scaleFont(26),
+                },
+              ]}
+              numberOfLines={2}
+            >
               {headline}
             </Text>
-            <Text style={styles.subheadline} numberOfLines={1}>
+            <Text
+              style={[
+                styles.subheadline,
+                isTablet && {
+                  fontSize: scaleFont(13.5),
+                  lineHeight: scaleFont(18),
+                },
+              ]}
+              numberOfLines={1}
+            >
               {subheadline}
             </Text>
 
-            <View style={styles.shopNowRow}>
-              <View style={styles.shopNowPill}>
-                <Text style={styles.shopNowText}>Shop Blend</Text>
-                <Icon name="arrow-right" size={11} color="#0A3622" />
+            <View style={[styles.shopNowRow, isTablet && { marginTop: 14 }]}>
+              <View style={[styles.shopNowPill, isTablet && styles.shopNowPillTablet]}>
+                <Text
+                  style={[
+                    styles.shopNowText,
+                    isTablet && { fontSize: scaleFont(12.5) },
+                  ]}
+                >
+                  Shop Blend
+                </Text>
+                <Icon
+                  name="arrow-right"
+                  size={isTablet ? 13 : 11}
+                  color="#0A3622"
+                />
               </View>
             </View>
           </View>
 
           {/* Right Product Hero Presentation */}
-          <View style={styles.productContainer}>
+          <View
+            style={[
+              styles.productContainer,
+              isTablet && styles.productContainerTablet,
+            ]}
+          >
             {/* Ambient circular glow aura */}
-            <View style={styles.productGlowAura} pointerEvents="none" />
+            <View
+              style={[
+                styles.productGlowAura,
+                isTablet && styles.productGlowAuraTablet,
+              ]}
+              pointerEvents="none"
+            />
             {/* Soft grounded shadow base */}
-            <View style={styles.productShadowBase} pointerEvents="none" />
+            <View
+              style={[
+                styles.productShadowBase,
+                isTablet && styles.productShadowBaseTablet,
+              ]}
+              pointerEvents="none"
+            />
             <Image
               source={{ uri: imageUrl }}
-              style={styles.bannerProductImage}
+              style={[
+                styles.bannerProductImage,
+                isTablet && styles.bannerProductImageTablet,
+              ]}
               resizeMode="contain"
             />
           </View>
@@ -228,6 +295,12 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
   },
+  bannerGradientTablet: {
+    height: 206,
+    paddingLeft: 24,
+    paddingRight: 20,
+    paddingVertical: 18,
+  },
   ambientCircleBackdrop: {
     position: 'absolute',
     top: -40,
@@ -264,6 +337,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 4,
     marginBottom: 6,
+  },
+  bannerBadgeTablet: {
+    paddingHorizontal: 10,
+    paddingVertical: 4.5,
+    borderRadius: 14,
+    marginBottom: 8,
   },
   bannerBadgeText: {
     color: '#FDE68A',
@@ -312,6 +391,12 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
+  shopNowPillTablet: {
+    paddingHorizontal: 16,
+    paddingVertical: 7.5,
+    borderRadius: 24,
+    gap: 6,
+  },
   shopNowText: {
     color: '#0A3622',
     fontSize: 11,
@@ -326,6 +411,10 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 2,
   },
+  productContainerTablet: {
+    width: 146,
+    height: 180,
+  },
   productGlowAura: {
     position: 'absolute',
     width: 106,
@@ -335,6 +424,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.18)',
   },
+  productGlowAuraTablet: {
+    width: 136,
+    height: 136,
+    borderRadius: 68,
+  },
   productShadowBase: {
     position: 'absolute',
     bottom: 8,
@@ -343,9 +437,19 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: 'rgba(0, 0, 0, 0.28)',
   },
+  productShadowBaseTablet: {
+    width: 100,
+    height: 12,
+    borderRadius: 6,
+    bottom: 10,
+  },
   bannerProductImage: {
     width: 110,
     height: 136,
+  },
+  bannerProductImageTablet: {
+    width: 140,
+    height: 172,
   },
   dotsRow: {
     flexDirection: 'row',

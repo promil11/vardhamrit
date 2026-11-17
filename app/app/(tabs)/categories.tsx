@@ -26,6 +26,7 @@ import { Icon, IconName } from '../../components/common/Icon';
 import { EmptyState } from '../../components/common/EmptyState';
 import { CatalogSkeleton } from '../../components/common/Skeleton';
 import { getFullImageUrl } from '../../utils/imageUtils';
+import { useResponsive } from '../../utils/responsive';
 import {
   SideFilterDrawer,
   FilterState,
@@ -117,6 +118,7 @@ const CATEGORY_HERO_DATA: Record<string, CategoryHeroMeta> = {
 type ViewMode = 'grid' | 'list';
 
 export default function CategoriesScreen() {
+  const { isTablet, gridItemWidth, scaleFont } = useResponsive();
   const params = useLocalSearchParams<{ category?: string; discount?: string; filter?: string }>();
   const initialCategory = params.category ? String(params.category).toLowerCase().trim() : 'all';
   const initialDiscount = params.discount === 'true' || params.filter === 'discount';
@@ -778,7 +780,7 @@ export default function CategoriesScreen() {
                   key={product.id}
                   product={product}
                   layout="grid"
-                  style={styles.productCardGridItem}
+                  style={{ width: gridItemWidth as any }}
                 />
               ))}
             </View>

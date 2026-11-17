@@ -36,6 +36,7 @@ import { useCartStore } from '../../store/useCartStore';
 import { useAuth } from '../../store/authContext';
 import { fetchUserOrders } from '../../services/orderClientService';
 import { getFullImageUrl } from '../../utils/imageUtils';
+import { useResponsive } from '../../utils/responsive';
 
 const VALUE_PROPS = [
   { icon: 'zap' as const, title: '48 hrs Delivery', desc: 'Garden-fresh tea fast', color: '#D97706', bg: '#FEF3C7' },
@@ -78,6 +79,7 @@ function getCategoryFromBanner(banner: any): string {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { isTablet, isLargeTablet, gridItemWidth, scaleFont, scaleSize } = useResponsive();
   const { addItem } = useCartStore();
   const { user, isAuthenticated } = useAuth();
 
@@ -513,7 +515,7 @@ export default function HomeScreen() {
                     <ProductCard
                       key={product.id}
                       product={product}
-                      style={styles.searchGridItem}
+                      style={{ width: gridItemWidth as any }}
                     />
                   ))}
                 </View>
@@ -537,13 +539,32 @@ export default function HomeScreen() {
               <View style={styles.valuePropsSection}>
                 <View style={styles.valuePropsGrid}>
                   {VALUE_PROPS.map((prop) => (
-                    <View key={prop.title} style={styles.valuePropCard}>
+                    <View
+                      key={prop.title}
+                      style={[
+                        styles.valuePropCard,
+                        isTablet && { width: '23.5%', paddingVertical: 8 },
+                      ]}
+                    >
                       <View style={[styles.valuePropIconWrapper, { backgroundColor: prop.bg }]}>
-                        <Icon name={prop.icon} size={15} color={prop.color} />
+                        <Icon name={prop.icon} size={isTablet ? 18 : 15} color={prop.color} />
                       </View>
                       <View style={styles.valuePropTexts}>
-                        <Text style={styles.valuePropTitle}>{prop.title}</Text>
-                        <Text style={styles.valuePropDesc} numberOfLines={1}>
+                        <Text
+                          style={[
+                            styles.valuePropTitle,
+                            isTablet && { fontSize: scaleFont(12.5) },
+                          ]}
+                        >
+                          {prop.title}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.valuePropDesc,
+                            isTablet && { fontSize: scaleFont(10.5) },
+                          ]}
+                          numberOfLines={1}
+                        >
                           {prop.desc}
                         </Text>
                       </View>
@@ -627,7 +648,7 @@ export default function HomeScreen() {
                   ) : (
                     <View style={styles.filteredGrid}>
                       {filterMatchedProducts.map((p) => (
-                        <ProductCard key={p.id} product={p} style={styles.filteredGridItem} />
+                        <ProductCard key={p.id} product={p} style={{ width: gridItemWidth as any }} />
                       ))}
                     </View>
                   )}
