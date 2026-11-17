@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { Icon } from '../common/Icon';
+import { TeaCoinIcon } from '../common/TeaCoinIcon';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -447,12 +448,9 @@ export const ScratchCardModal: React.FC<ScratchCardModalProps> = ({
                     { transform: [{ translateY: coinBounceAnim }] },
                   ]}
                 >
-                  <LinearGradient
-                    colors={['#FDE68A', '#F59E0B', '#D97706']}
-                    style={styles.coinBadgeGradient}
-                  >
-                    <Text style={styles.coinEmoji}>🪙</Text>
-                  </LinearGradient>
+                  <View style={styles.coinBadgeContainer}>
+                    <TeaCoinIcon size={46} />
+                  </View>
                 </Animated.View>
 
                 <Text style={styles.rewardWonTitle}>YOU HAVE WON</Text>

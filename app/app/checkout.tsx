@@ -26,6 +26,7 @@ import { AddAddressModal } from '../components/checkout/AddAddressModal';
 import { GokwikUpiModal, GokwikSessionData } from '../components/checkout/GokwikUpiModal';
 import { CheckoutSkeleton } from '../components/common/Skeleton';
 import { Icon, IconName } from '../components/common/Icon';
+import { TeaCoinIcon } from '../components/common/TeaCoinIcon';
 
 export type PaymentMethodType = 'UPI' | 'CARDS' | 'NETBANKING' | 'COD';
 
@@ -510,7 +511,7 @@ export default function CheckoutScreen() {
               <View style={styles.coinsCardTopRow}>
                 <View style={styles.coinsCardLeft}>
                   <View style={styles.coinIconBadge}>
-                    <Text style={{ fontSize: 18 }}>🪙</Text>
+                    <TeaCoinIcon size={24} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../theme';
 import { GradientButton } from '../components/common/GradientButton';
 import { Icon } from '../components/common/Icon';
+import { TeaCoinIcon } from '../components/common/TeaCoinIcon';
 import { useAuth } from '../store/authContext';
 import { fetchUserCoins, claimScratchCardReward } from '../services/userClientService';
 import { ScratchCardModal } from '../components/checkout/ScratchCardModal';
@@ -157,7 +158,11 @@ export default function OrderSuccessScreen() {
                   rewardClaimed && { backgroundColor: '#A7F3D0', borderColor: '#34D399' },
                 ]}
               >
-                <Text style={{ fontSize: 24 }}>{rewardClaimed ? '🪙' : '🎁'}</Text>
+                {rewardClaimed ? (
+                  <TeaCoinIcon size={26} />
+                ) : (
+                  <Icon name="gift" size={24} color="#B45309" />
+                )}
               </View>
 
               <View style={{ flex: 1 }}>

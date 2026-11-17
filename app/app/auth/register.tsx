@@ -245,7 +245,7 @@ export default function RegisterScreen() {
           <View style={styles.perksRow}>
             <View style={[styles.perkChip, appliedInvite ? styles.perkChipActive : null]}>
               <Text style={styles.perkChipText}>
-                {appliedInvite ? '🪙 100 Bonus Coins' : '🎁 50 Free Coins'}
+                {appliedInvite ? '✨ 100 Bonus Coins' : '🎁 50 Free Coins'}
               </Text>
             </View>
             <View style={styles.perkChip}>
@@ -549,7 +549,7 @@ export default function RegisterScreen() {
                       Invited by <Text style={{ fontWeight: '700' }}>{appliedInvite.referrerName}</Text>
                     </Text>
                     <Text style={styles.appliedBonusHighlight}>
-                      🪙 50 Welcome + 50 Bonus = 100 Tea Coins (₹100)
+                      ✨ 50 Welcome + 50 Bonus = 100 Tea Coins (₹100)
                     </Text>
                   </View>
                 </View>

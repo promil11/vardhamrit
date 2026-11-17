@@ -1298,7 +1298,7 @@ export default function OrdersScreen() {
                 renderItem={({ item: it }) => (
                   <View style={styles.reorderItemRow}>
                     <Image
-                      source={{ uri: it.imageUrl }}
+                      source={{ uri: getFullImageUrl(it.imageUrl) }}
                       style={styles.reorderItemThumb}
                     />
                     <View style={{ flex: 1, marginLeft: 10 }}>

@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { theme } from '../theme';
 import { Icon } from '../components/common/Icon';
+import { TeaCoinIcon } from '../components/common/TeaCoinIcon';
 import { useAuth } from '../store/authContext';
 import { useScratchCardStore, ScratchCardItem } from '../store/useScratchCardStore';
 import { fetchUserOrders } from '../services/orderClientService';
@@ -94,7 +95,7 @@ export default function RewardsScreen() {
       setModalVisible(true);
     } else {
       Alert.alert(
-        'Reward Claimed! 🪙',
+        'Reward Claimed! ☕',
         `You won ${card.coinsEarned} Tea Coins (₹${card.coinsEarned}) on Order #${card.orderNumber}.\n\nThese coins have been credited to your wallet and can be used on your next checkout!`,
         [
           { text: 'Shop Teas', onPress: () => router.push('/(tabs)/categories') },
@@ -205,7 +206,7 @@ export default function RewardsScreen() {
                 </View>
 
                 <View style={styles.heroBalanceRow}>
-                  <Text style={styles.heroCoinEmoji}>🪙</Text>
+                  <TeaCoinIcon size={32} style={{ marginRight: 8 }} />
                   <Text style={styles.heroCoinsNumber}>
                     {coinsBalance > 0 ? coinsBalance : totalCoinsWon}
                   </Text>

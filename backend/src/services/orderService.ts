@@ -6,6 +6,18 @@ import { calculateOrderTotals, calculateTax, calculateDynamicDistanceFees } from
 import { processRefund } from './paymentService';
 import { io } from '../index';
 
+const formatImageUrl = (url?: string | null): string => {
+  if (!url) return 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&q=80&w=800';
+  const baseUrl = process.env.API_BASE_URL || 'https://vardhamrit.onrender.com';
+  if (url.includes('localhost:5000') || url.includes('127.0.0.1:5000')) {
+    return url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5000/, baseUrl);
+  }
+  if (url.startsWith('/uploads')) {
+    return `${baseUrl}${url}`;
+  }
+  return url;
+};
+
 export const VALID_ORDER_TRANSITIONS: Record<string, string[]> = {
   PLACED: ['APPROVED', 'CONFIRMED', 'PACKED', 'DISPATCHED', 'REJECTED', 'CANCELLED'],
   CONFIRMED: ['APPROVED', 'PACKED', 'DISPATCHED', 'REJECTED', 'CANCELLED'],
@@ -398,7 +410,10 @@ export async function getOrderById(orderId: number, userId?: number) {
      WHERE oi.order_id = ?`,
     [orderId]
   );
-  order.items = items;
+  order.items = (items || []).map((it: any) => ({
+    ...it,
+    product_image: formatImageUrl(it.product_image),
+  }));
 
   // Get status history
   const [history]: any = await pool.query(
@@ -453,7 +468,10 @@ export async function getUserOrders(userId: number, page = 1, limit = 10) {
       if (!itemsMap.has(item.order_id)) {
         itemsMap.set(item.order_id, []);
       }
-      itemsMap.get(item.order_id)!.push(item);
+      itemsMap.get(item.order_id)!.push({
+        ...item,
+        product_image: formatImageUrl(item.product_image),
+      });
     }
 
     // Check existing customer reviews

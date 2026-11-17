@@ -64,6 +64,7 @@ import {
   BellRing,
   QrCode,
   ScanQrCode,
+  Coins,
   LucideProps,
 } from 'lucide-react-native';
 import { theme } from '../../theme';
@@ -133,6 +134,8 @@ export type IconName =
   | 'bell-ring'
   | 'qr-code'
   | 'scan-qr'
+  | 'coins'
+  | 'coin'
   | 'copy';
 
 interface IconProps extends Omit<LucideProps, 'ref'> {
@@ -289,6 +292,9 @@ export const Icon: React.FC<IconProps> = ({
       return <QrCode {...commonProps} />;
     case 'scan-qr':
       return <ScanQrCode {...commonProps} />;
+    case 'coins':
+    case 'coin':
+      return <Coins {...commonProps} />;
     default:
       return <Coffee {...commonProps} />;
   }
