@@ -94,6 +94,11 @@ export const AddressBottomSheet: React.FC<AddressBottomSheetProps> = ({
     }
   }, [visible]);
 
+  const isGpsActive = Boolean(
+    selectedAddress &&
+    (selectedAddress.tag === 'Current Location' || String(selectedAddress.id).startsWith('gps-'))
+  );
+
   const displayAddresses =
     propAddresses !== undefined && propAddresses.length > 0
       ? propAddresses
@@ -139,7 +144,11 @@ export const AddressBottomSheet: React.FC<AddressBottomSheetProps> = ({
         {/* Quick GPS Location Row */}
         <TouchableOpacity
           activeOpacity={0.8}
-          style={[styles.gpsRow, isLocating && styles.gpsRowActive]}
+          style={[
+            styles.gpsRow,
+            (isLocating || isGpsActive) && styles.gpsRowActive,
+            isGpsActive && styles.gpsRowSelected,
+          ]}
           onPress={handleUseCurrentLocation}
           disabled={isLocating}
         >
@@ -153,19 +162,31 @@ export const AddressBottomSheet: React.FC<AddressBottomSheetProps> = ({
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Text style={styles.gpsTitle}>Use Current Location</Text>
-              <View style={styles.gpsFreeBadge}>
-                <Text style={styles.gpsFreeBadgeText}>GPS 100% FREE</Text>
-              </View>
+              {isGpsActive ? (
+                <View style={styles.gpsActiveBadge}>
+                  <Text style={styles.gpsActiveBadgeText}>ACTIVE</Text>
+                </View>
+              ) : (
+                <View style={styles.gpsFreeBadge}>
+                  <Text style={styles.gpsFreeBadgeText}>GPS 100% FREE</Text>
+                </View>
+              )}
             </View>
             <Text style={styles.gpsSub} numberOfLines={1}>
               {locatingStatus
                 ? locatingStatus
-                : selectedAddress && (selectedAddress.tag === 'Current Location' || String(selectedAddress.id).startsWith('gps-'))
+                : isGpsActive && selectedAddress
                   ? `${selectedAddress.line1}, ${selectedAddress.city} • Tap to refresh`
                   : 'Tap to auto-detect your location via GPS'}
             </Text>
           </View>
-          <Icon name="chevron-right" size={18} color={theme.colors.primary} />
+          {isGpsActive ? (
+            <View style={[styles.radioCircle, styles.radioCircleActive]}>
+              <View style={styles.radioDot} />
+            </View>
+          ) : (
+            <Icon name="chevron-right" size={18} color={theme.colors.primary} />
+          )}
         </TouchableOpacity>
 
         <View style={styles.divider} />
@@ -198,7 +219,7 @@ export const AddressBottomSheet: React.FC<AddressBottomSheetProps> = ({
             </View>
           ) : (
             displayAddresses.map((addr) => {
-              const isSelected = String(addr.id) === String(selectedAddressId);
+              const isSelected = !isGpsActive && String(addr.id) === String(selectedAddressId);
               return (
                 <TouchableOpacity
                   key={String(addr.id)}
@@ -301,6 +322,23 @@ const styles = StyleSheet.create({
   gpsRowActive: {
     borderColor: theme.colors.primary,
     backgroundColor: 'rgba(15, 81, 50, 0.08)',
+  },
+  gpsRowSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1.8,
+  },
+  gpsActiveBadge: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+  },
+  gpsActiveBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   gpsFreeBadge: {
     backgroundColor: '#DCFCE7',

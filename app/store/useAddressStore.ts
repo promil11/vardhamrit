@@ -63,7 +63,16 @@ export const useAddressStore = create<AddressState>((set, get) => ({
         targetAddress = addrList.find((a) => String(a.id) === String(preferredAddressId)) || null;
       }
 
-      // 2. If user has saved addresses in database
+      // 2. If user currently has an active GPS-detected location selected, KEEP IT!
+      if (
+        !targetAddress &&
+        currentSelected &&
+        (String(currentSelected.id).startsWith('gps-') || currentSelected.tag === 'Current Location')
+      ) {
+        targetAddress = currentSelected;
+      }
+
+      // 3. If user has saved addresses in database
       if (!targetAddress && addrList.length > 0) {
         if (currentSelected && addrList.some((a) => String(a.id) === String(currentSelected.id))) {
           targetAddress = currentSelected;
@@ -72,7 +81,11 @@ export const useAddressStore = create<AddressState>((set, get) => ({
           if (storedJson) {
             try {
               const parsed = JSON.parse(storedJson);
-              targetAddress = addrList.find((a) => String(a.id) === String(parsed.id)) || null;
+              if (parsed && (String(parsed.id).startsWith('gps-') || parsed.tag === 'Current Location')) {
+                targetAddress = parsed;
+              } else {
+                targetAddress = addrList.find((a) => String(a.id) === String(parsed.id)) || null;
+              }
             } catch {}
           }
         }
@@ -82,17 +95,17 @@ export const useAddressStore = create<AddressState>((set, get) => ({
         }
       }
 
-      // 3. If user has NO saved addresses in database (brand new account or no addresses added)
+      // 4. If user has NO saved addresses in database (brand new account or no addresses added)
       if (!targetAddress && addrList.length === 0) {
         // Only keep an address if it is an authentic GPS-detected address from this device
-        if (currentSelected && String(currentSelected.id).startsWith('gps-')) {
+        if (currentSelected && (String(currentSelected.id).startsWith('gps-') || currentSelected.tag === 'Current Location')) {
           targetAddress = currentSelected;
         } else {
           const storedJson = storage.getItemSync(SELECTED_ADDRESS_KEY);
           if (storedJson) {
             try {
               const parsed = JSON.parse(storedJson);
-              if (parsed && String(parsed.id).startsWith('gps-')) {
+              if (parsed && (String(parsed.id).startsWith('gps-') || parsed.tag === 'Current Location')) {
                 targetAddress = parsed;
               }
             } catch {}
@@ -101,7 +114,12 @@ export const useAddressStore = create<AddressState>((set, get) => ({
       }
 
       // Discard any foreign database address from another user's session
-      if (targetAddress && !String(targetAddress.id).startsWith('gps-') && !addrList.some((a) => String(a.id) === String(targetAddress!.id))) {
+      if (
+        targetAddress &&
+        !String(targetAddress.id).startsWith('gps-') &&
+        targetAddress.tag !== 'Current Location' &&
+        !addrList.some((a) => String(a.id) === String(targetAddress!.id))
+      ) {
         targetAddress = null;
         storage.removeItemSync(SELECTED_ADDRESS_KEY);
       }
@@ -196,12 +214,14 @@ export const useAddressStore = create<AddressState>((set, get) => ({
       return;
     }
 
+    const isGps = String(addr.id).startsWith('gps-') || addr.tag === 'Current Location';
+
     set((state) => {
       const nextList = state.addresses.map((a) => ({
         ...a,
-        isDefault: makeDefault ? String(a.id) === String(addr.id) : a.isDefault,
+        isDefault: !isGps && makeDefault ? String(a.id) === String(addr.id) : a.isDefault,
       }));
-      const target = { ...addr, isDefault: makeDefault ? true : addr.isDefault };
+      const target = { ...addr, isDefault: isGps ? false : (makeDefault ? true : addr.isDefault) };
       storage.setItem(SELECTED_ADDRESS_KEY, JSON.stringify(target));
       return {
         selectedAddress: target,
@@ -209,7 +229,7 @@ export const useAddressStore = create<AddressState>((set, get) => ({
       };
     });
 
-    if (makeDefault && addr.id && !String(addr.id).startsWith('gps-')) {
+    if (makeDefault && addr.id && !isGps) {
       setDefaultUserAddress(addr.id).catch((err) =>
         console.warn('Background setDefault error on setSelectedAddress:', err)
       );
