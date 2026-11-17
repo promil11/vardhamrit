@@ -26,6 +26,7 @@ import { socket } from '../../services/socketService';
 import { EmptyState } from '../../components/common/EmptyState';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import { Icon } from '../../components/common/Icon';
+import { useResponsive } from '../../utils/responsive';
 
 interface OrderItemPreview {
   id: number;
@@ -59,6 +60,7 @@ type FilterTab = 'all' | 'active' | 'delivered' | 'cancelled';
 
 export default function OrdersScreen() {
   const router = useRouter();
+  const { isTablet } = useResponsive();
   const {
     items: currentCartItems,
     getTotalItemsCount,
@@ -834,19 +836,19 @@ export default function OrdersScreen() {
   return (
     <View style={styles.container}>
       {/* 1. TOP NAVBAR */}
-      <View style={styles.topNav}>
+      <View style={[styles.topNav, isTablet && { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16 }]}>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={handleBack}
-          style={styles.backButton}
+          style={[styles.backButton, isTablet && { paddingVertical: 8, paddingHorizontal: 16 }]}
         >
-          <Icon name="arrow-left" size={16} color={theme.colors.textPrimary} />
-          <Text style={styles.backText}>Shopping</Text>
+          <Icon name="arrow-left" size={isTablet ? 18 : 16} color={theme.colors.textPrimary} />
+          <Text style={[styles.backText, isTablet && { fontSize: 13.5 }]}>Shopping</Text>
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>My Orders</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={[styles.headerTitle, isTablet && { fontSize: 19 }]}>My Orders</Text>
+          <Text style={[styles.headerSubtitle, isTablet && { fontSize: 13 }]}>
             {orders.length} Harvest Shipments
           </Text>
         </View>
@@ -854,9 +856,9 @@ export default function OrdersScreen() {
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => router.push('/(tabs)/cart')}
-          style={styles.cartBtn}
+          style={[styles.cartBtn, isTablet && { width: 44, height: 44, borderRadius: 22 }]}
         >
-          <Icon name="shopping-bag" size={18} color={theme.colors.primary} />
+          <Icon name="shopping-bag" size={isTablet ? 22 : 18} color={theme.colors.primary} />
         </TouchableOpacity>
       </View>
 

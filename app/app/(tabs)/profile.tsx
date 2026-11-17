@@ -28,6 +28,7 @@ import { ProfileSkeleton } from '../../components/common/Skeleton';
 import { useAuth } from '../../store/authContext';
 import { useWishlistStore } from '../../store/useWishlistStore';
 import { useAddressStore } from '../../store/useAddressStore';
+import { useResponsive } from '../../utils/responsive';
 
 const PROFILE_FLAVOURS = [
   { id: 'Normal Chai', label: 'Normal Chai', emoji: '' },
@@ -76,6 +77,7 @@ export function normalizeMorningCup(val?: string | null): string {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { isTablet } = useResponsive();
   const { user, logout, setPreferredBlend: setPreferredBlendStore } = useAuth();
   const { wishlistIds } = useWishlistStore();
   const wishlistCount = wishlistIds.length;
@@ -326,22 +328,22 @@ export default function ProfileScreen() {
       )}
 
       {/* 1. TOP NAVBAR */}
-      <View style={styles.topNav}>
+      <View style={[styles.topNav, isTablet && styles.topNavTablet]}>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={handleBack}
-          style={styles.backButton}
+          style={[styles.backButton, isTablet && styles.backButtonTablet]}
         >
-          <Icon name="arrow-left" size={16} color={theme.colors.textPrimary} />
-          <Text style={styles.backText}>Shopping</Text>
+          <Icon name="arrow-left" size={isTablet ? 18 : 16} color={theme.colors.textPrimary} />
+          <Text style={[styles.backText, isTablet && { fontSize: 13.5 }]}>Shopping</Text>
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>My Profile</Text>
-          <Text style={styles.headerSubtitle}>Royal Connoisseur Club</Text>
+          <Text style={[styles.headerTitle, isTablet && { fontSize: 19 }]}>My Profile</Text>
+          <Text style={[styles.headerSubtitle, isTablet && { fontSize: 13 }]}>Royal Connoisseur Club</Text>
         </View>
 
-        <View style={styles.vipBadge}>
+        <View style={[styles.vipBadge, isTablet && { minWidth: 90 }]}>
           <Text style={styles.vipBadgeText}></Text>
         </View>
       </View>
@@ -496,17 +498,17 @@ export default function ProfileScreen() {
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeaderRow}>
               <View style={styles.sectionTitleRow}>
-                <Icon name="coffee" size={16} color={theme.colors.primary} />
-                <Text style={styles.sectionTitle}>My Tea Taste Profile</Text>
+                <Icon name="coffee" size={isTablet ? 20 : 16} color={theme.colors.primary} />
+                <Text style={[styles.sectionTitle, isTablet && { fontSize: 16.5 }]}>My Tea Taste Profile</Text>
               </View>
-              <View style={styles.activeProfileBadge}>
-                <Text style={styles.activeProfileBadgeText}>SAVED</Text>
+              <View style={[styles.activeProfileBadge, isTablet && { paddingHorizontal: 10, paddingVertical: 4 }]}>
+                <Text style={[styles.activeProfileBadgeText, isTablet && { fontSize: 11 }]}>SAVED</Text>
               </View>
             </View>
 
-            <View style={styles.preferenceGroup}>
-              <Text style={styles.prefHeading}>Favorite Morning Cup</Text>
-              <View style={styles.prefChipsRow}>
+            <View style={[styles.preferenceGroup, isTablet && { padding: 14 }]}>
+              <Text style={[styles.prefHeading, isTablet && { fontSize: 13.5, marginBottom: 10 }]}>Favorite Morning Cup</Text>
+              <View style={[styles.prefChipsRow, isTablet && styles.prefChipsRowTablet]}>
                 {PROFILE_FLAVOURS.map((f) => {
                   const isSelected =
                     normalizeMorningCup(preferredBlend) === normalizeMorningCup(f.id);
@@ -515,12 +517,17 @@ export default function ProfileScreen() {
                       key={f.id}
                       activeOpacity={0.75}
                       onPress={() => handleSelectMorningCup(f.id)}
-                      style={[styles.prefChip, isSelected && styles.prefChipActive]}
+                      style={[
+                        styles.prefChip,
+                        isTablet && styles.prefChipTablet,
+                        isSelected && styles.prefChipActive,
+                      ]}
                     >
                       <Text style={styles.prefChipEmoji}>{f.emoji}</Text>
                       <Text
                         style={[
                           styles.prefChipText,
+                          isTablet && { fontSize: 13.5 },
                           isSelected && styles.prefChipTextActive,
                         ]}
                       >
@@ -903,6 +910,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.06)',
   },
+  topNavTablet: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -911,6 +923,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: theme.radius.pill,
     gap: 4,
+  },
+  backButtonTablet: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   backText: {
     fontSize: 11.5,
@@ -1128,6 +1144,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  sectionCardTablet: {
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 18,
+  },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1173,6 +1194,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
+  prefChipsRowTablet: {
+    gap: 12,
+  },
   prefChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1188,6 +1212,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.03,
     shadowRadius: 2,
     elevation: 1,
+  },
+  prefChipTablet: {
+    flex: 1,
+    minWidth: 120,
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 24,
   },
   prefChipActive: {
     backgroundColor: theme.colors.primary,

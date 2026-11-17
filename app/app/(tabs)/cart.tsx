@@ -26,9 +26,11 @@ import { Icon } from '../../components/common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import { api } from '../../services/api';
 import { socket } from '../../services/socketService';
+import { useResponsive } from '../../utils/responsive';
 
 export default function CartScreen() {
   const router = useRouter();
+  const { isTablet } = useResponsive();
   const {
     items,
     incrementQuantity,
@@ -261,24 +263,24 @@ export default function CartScreen() {
   return (
     <View style={styles.container}>
       {/* Top Header */}
-      <View style={styles.topNav}>
+      <View style={[styles.topNav, isTablet && { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16 }]}>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={handleBack}
-          style={styles.backButton}
+          style={[styles.backButton, isTablet && { paddingVertical: 8, paddingHorizontal: 16 }]}
         >
-          <Icon name="arrow-left" size={16} color={theme.colors.textPrimary} style={{ marginRight: 4 }} />
-          <Text style={styles.backText}>Shopping</Text>
+          <Icon name="arrow-left" size={isTablet ? 18 : 16} color={theme.colors.textPrimary} style={{ marginRight: 4 }} />
+          <Text style={[styles.backText, isTablet && { fontSize: 13.5 }]}>Shopping</Text>
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>My Cart ({totalCount})</Text>
-          <Text style={styles.headerSubtitle}>Vardhamrit Tea Quick-Commerce</Text>
+          <Text style={[styles.headerTitle, isTablet && { fontSize: 19 }]}>My Cart ({totalCount})</Text>
+          <Text style={[styles.headerSubtitle, isTablet && { fontSize: 13 }]}>Vardhamrit Tea Quick-Commerce</Text>
         </View>
 
-        <View style={styles.expressBadge}>
-          <Icon name="zap" size={11} color={theme.colors.accentGoldDark} style={{ marginRight: 3 }} />
-          <Text style={styles.expressText}>48 hrs</Text>
+        <View style={[styles.expressBadge, isTablet && { paddingHorizontal: 10, paddingVertical: 5 }]}>
+          <Icon name="zap" size={isTablet ? 13 : 11} color={theme.colors.accentGoldDark} style={{ marginRight: 3 }} />
+          <Text style={[styles.expressText, isTablet && { fontSize: 12 }]}>48 hrs</Text>
         </View>
       </View>
 

@@ -25,6 +25,7 @@ import { useCartStore } from '../../store/useCartStore';
 import { useWishlistStore } from '../../store/useWishlistStore';
 import { Icon } from '../../components/common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
+import { useResponsive } from '../../utils/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -54,6 +55,7 @@ const parseVariantLabel = (rawLabel: string) => {
 export default function ProductDetailScreen() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
+  const { isTablet } = useResponsive();
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -240,22 +242,22 @@ export default function ProductDetailScreen() {
           </View>
 
           {/* 2. Product Headline & Rating Section */}
-          <View style={styles.sectionCard}>
+          <View style={[styles.sectionCard, isTablet && { padding: 20 }]}>
             <View style={styles.brandRow}>
-              <Text style={styles.brandTag}>VARDHAMRIT GARDEN FRESH</Text>
-              <RatingChip rating={product.rating} reviewCount={product.reviewCount} size="md" />
+              <Text style={[styles.brandTag, isTablet && { fontSize: 12 }]}>VARDHAMRIT GARDEN FRESH</Text>
+              <RatingChip rating={product.rating} reviewCount={product.reviewCount} size={isTablet ? 'lg' : 'md'} />
             </View>
 
-            <Text style={styles.productTitle}>{product.name}</Text>
-            <Text style={styles.productTagline}>{product.tagline}</Text>
+            <Text style={[styles.productTitle, isTablet && { fontSize: 24, lineHeight: 30 }]}>{product.name}</Text>
+            <Text style={[styles.productTagline, isTablet && { fontSize: 14.5, lineHeight: 20 }]}>{product.tagline}</Text>
 
             {/* Price Block */}
             <View style={styles.priceRow}>
-              <Text style={styles.priceCurrent}>₹{selectedVariant.price}</Text>
+              <Text style={[styles.priceCurrent, isTablet && { fontSize: 26 }]}>₹{selectedVariant.price}</Text>
               {selectedVariant.mrp > selectedVariant.price ? (
-                <Text style={styles.priceMrp}>₹{selectedVariant.mrp}</Text>
+                <Text style={[styles.priceMrp, isTablet && { fontSize: 16 }]}>₹{selectedVariant.mrp}</Text>
               ) : null}
-              <Text style={styles.priceTaxHint}>(Inclusive of all taxes)</Text>
+              <Text style={[styles.priceTaxHint, isTablet && { fontSize: 12 }]}>(Inclusive of all taxes)</Text>
             </View>
 
             {/* Berry "You Save Rs.X" Highlight Strip */}
