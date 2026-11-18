@@ -11,6 +11,8 @@ interface SendOtpEmailOptions {
 let transporter: Transporter | null = null;
 
 function getTransporter(): Transporter | null {
+  if (transporter) return transporter;
+
   const host = process.env.SMTP_HOST;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
@@ -18,29 +20,36 @@ function getTransporter(): Transporter | null {
   const secure = process.env.SMTP_SECURE === 'true' || port === 465;
 
   if (host && user && pass) {
-    if (!transporter) {
-      transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure,
-        auth: {
-          user,
-          pass,
-        },
-      });
-    }
+    transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: {
+        user,
+        pass,
+      },
+      connectionTimeout: 5000,
+      greetingTimeout: 4000,
+      socketTimeout: 8000,
+    });
     return transporter;
   }
 
   // Check if Gmail SMTP shortcut is provided
   if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-    return nodemailer.createTransport({
-      service: 'gmail',
+    transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.GMAIL_USER.trim(),
         pass: process.env.GMAIL_APP_PASSWORD.replace(/\s+/g, ''),
       },
+      connectionTimeout: 5000,
+      greetingTimeout: 4000,
+      socketTimeout: 8000,
     });
+    return transporter;
   }
 
   return null;

@@ -311,12 +311,14 @@ export async function sendEmailOtp(req: Request, res: Response, next: NextFuncti
       [email, otp, purpose, expiresAt]
     );
 
-    // Send email via emailService
-    await sendOtpEmail({
+    // Dispatch email delivery in background (non-blocking so API never times out)
+    sendOtpEmail({
       to: email,
       otp,
       userName,
       purpose: purpose === 'register' ? 'Registration' : 'Login / Verification',
+    }).catch((err) => {
+      console.error('[sendEmailOtp] Failed to deliver OTP email:', err);
     });
 
     return sendSuccess(
