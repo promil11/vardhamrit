@@ -49,16 +49,14 @@ async function seedDatabase() {
 
     // 1. SEED USERS
     console.log('👤 1. Seeding Users (Admin & Customer Connoisseurs)...');
-    const adminPasswordHash = await bcrypt.hash('Admin@123', 10);
-    const customerPasswordHash = await bcrypt.hash('Customer@123', 10);
 
     await connection.query(`
-      INSERT INTO users (id, name, email, phone, password_hash, role, status, push_token, coins_balance, tier, preferred_blend, preferred_milk_ratio, referral_code)
+      INSERT INTO users (id, name, email, phone, role, status, push_token, coins_balance, tier, preferred_blend, preferred_milk_ratio, referral_code)
       VALUES 
-      (1, 'Vardhamrit Master Admin', 'admin@vardhamrit.com', '+919999900001', '${adminPasswordHash}', 'admin', 'active', NULL, 1000, 'PLATINUM', 'Upper Assam Kadak', '50% Creamy Milk', 'VARDHADMIN'),
-      (2, 'Rahul Sharma', 'customer@vardhamrit.com', '+919876543210', '${customerPasswordHash}', 'customer', 'active', 'ExponentPushToken[mock_customer_token_123]', 450, 'GOLD', 'Upper Assam Kadak', '50% Creamy Milk', 'VARDH100'),
-      (3, 'Aarav Sharma', 'aarav.tea@vardhamrit.com', '+919988776655', '${customerPasswordHash}', 'customer', 'active', NULL, 200, 'GOLD', 'Grand Masala', 'Light Milk Splash', 'AARAV2026')
-      ON DUPLICATE KEY UPDATE name=VALUES(name), password_hash=VALUES(password_hash), coins_balance=VALUES(coins_balance), tier=VALUES(tier);
+      (1, 'Vardhamrit Master Admin', 'admin@vardhamrit.com', '+919999900001', 'admin', 'active', NULL, 1000, 'PLATINUM', 'Upper Assam Kadak', '50% Creamy Milk', 'VARDHADMIN'),
+      (2, 'Rahul Sharma', 'customer@vardhamrit.com', '+919876543210', 'customer', 'active', 'ExponentPushToken[mock_customer_token_123]', 450, 'GOLD', 'Upper Assam Kadak', '50% Creamy Milk', 'VARDH100'),
+      (3, 'Aarav Sharma', 'aarav.tea@vardhamrit.com', '+919988776655', 'customer', 'active', NULL, 200, 'GOLD', 'Grand Masala', 'Light Milk Splash', 'AARAV2026')
+      ON DUPLICATE KEY UPDATE name=VALUES(name), coins_balance=VALUES(coins_balance), tier=VALUES(tier);
     `);
 
     // 2. SEED ADDRESSES

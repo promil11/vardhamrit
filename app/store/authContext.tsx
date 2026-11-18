@@ -6,6 +6,7 @@ import { storage } from '../services/storage';
 import { useCartStore } from './useCartStore';
 import { useWishlistStore } from './useWishlistStore';
 import { useAddressStore } from './useAddressStore';
+import { useScratchCardStore } from './useScratchCardStore';
 
 export interface User {
   id: number;
@@ -27,18 +28,27 @@ interface AuthContextType {
   isLoading: boolean;
   login: (identifier: string, password: string) => Promise<void>;
   sendPhoneOtp: (phone: string) => Promise<any>;
-  loginWithPhone: (phone: string, otp?: string) => Promise<any>;
+  loginWithPhone: (phone: string, otp: string) => Promise<any>;
+  loginWithFirebasePhone: (phone: string, idToken?: string, name?: string) => Promise<any>;
+  sendEmailOtp: (email: string, purpose?: string) => Promise<any>;
+  loginWithEmailOtp: (email: string, otp: string, name?: string) => Promise<any>;
   loginAsGuest: () => Promise<void>;
   register: (
     name: string,
     email: string,
     phone: string,
-    password: string,
     inviteCode?: string,
     preferredBlend?: string
   ) => Promise<{ inviteBonusAwarded?: boolean; user?: User; message?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUserProfile: (data: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    preferred_blend?: string;
+    favorite_morning_cup?: string;
+  }) => Promise<User>;
   setCoinsBalance: (coins: number) => void;
   setPreferredBlend: (blend: string) => void;
 }
@@ -75,6 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (storedUser) {
         setUser(storedUser);
         useCartStore.getState().setCurrentUser(storedUser.id);
+        useScratchCardStore.getState().setCurrentUser(storedUser.id);
         useWishlistStore.getState().loadWishlist();
       }
 
@@ -85,10 +96,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(res.data.data);
           await storage.setUser(res.data.data);
           useCartStore.getState().setCurrentUser(res.data.data.id);
+          useScratchCardStore.getState().setCurrentUser(res.data.data.id);
           useWishlistStore.getState().loadWishlist();
           registerPushToken();
         }
       } else if (!storedUser) {
+        useCartStore.getState().setCurrentUser(null);
+        useScratchCardStore.getState().setCurrentUser(null);
         useWishlistStore.getState().loadWishlist();
       }
     } catch (e) {
@@ -98,6 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await storage.clearAuth();
         setUser(null);
         useCartStore.getState().setCurrentUser(null);
+        useScratchCardStore.getState().setCurrentUser(null);
         useWishlistStore.getState().clearWishlist();
       }
     } finally {
@@ -117,6 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await storage.setUser(userData);
       setUser(userData);
       useCartStore.getState().setCurrentUser(userData.id);
+      useScratchCardStore.getState().setCurrentUser(userData.id);
       useWishlistStore.getState().loadWishlist();
       useAddressStore.getState().clearAddresses();
       useAddressStore.getState().loadAddresses();
@@ -129,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return res.data;
   };
 
-  const loginWithPhone = async (phone: string, otp: string = '1234') => {
+  const loginWithPhone = async (phone: string, otp: string) => {
     const res = await api.post('/auth/verify-otp', { phone, otp });
     if (res.data?.success) {
       const { user: userData, accessToken, refreshToken } = res.data.data;
@@ -137,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await storage.setUser(userData);
       setUser(userData);
       useCartStore.getState().setCurrentUser(userData.id);
+      useScratchCardStore.getState().setCurrentUser(userData.id);
       useWishlistStore.getState().loadWishlist();
       useAddressStore.getState().clearAddresses();
       useAddressStore.getState().loadAddresses();
@@ -144,6 +161,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return userData;
     }
     throw new Error(res.data?.error || 'Verification failed');
+  };
+
+  const loginWithFirebasePhone = async (phone: string, idToken?: string, name?: string) => {
+    const res = await api.post('/auth/firebase-login', { phone, idToken, name });
+    if (res.data?.success) {
+      const { user: userData, accessToken, refreshToken } = res.data.data;
+      await storage.setTokens(accessToken, refreshToken);
+      await storage.setUser(userData);
+      setUser(userData);
+      useCartStore.getState().setCurrentUser(userData.id);
+      useScratchCardStore.getState().setCurrentUser(userData.id);
+      useWishlistStore.getState().loadWishlist();
+      useAddressStore.getState().clearAddresses();
+      useAddressStore.getState().loadAddresses();
+      registerPushToken();
+      return userData;
+    }
+    throw new Error(res.data?.error || 'Firebase phone verification failed');
+  };
+
+  const sendEmailOtp = async (email: string, purpose: string = 'login') => {
+    const res = await api.post('/auth/send-email-otp', { email: email.trim().toLowerCase(), purpose });
+    return res.data;
+  };
+
+  const loginWithEmailOtp = async (email: string, otp: string, name?: string) => {
+    const res = await api.post('/auth/verify-email-otp', {
+      email: email.trim().toLowerCase(),
+      otp: otp.trim(),
+      name,
+    });
+    if (res.data?.success) {
+      const { user: userData, accessToken, refreshToken } = res.data.data;
+      await storage.setTokens(accessToken, refreshToken);
+      await storage.setUser(userData);
+      setUser(userData);
+      useCartStore.getState().setCurrentUser(userData.id);
+      useScratchCardStore.getState().setCurrentUser(userData.id);
+      useWishlistStore.getState().loadWishlist();
+      useAddressStore.getState().clearAddresses();
+      useAddressStore.getState().loadAddresses();
+      registerPushToken();
+      return userData;
+    }
+    throw new Error(res.data?.error || 'Email OTP verification failed');
   };
 
   const loginAsGuest = async () => {
@@ -157,6 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await storage.setUser(guestUser);
     setUser(guestUser);
     useCartStore.getState().setCurrentUser(null);
+    useScratchCardStore.getState().setCurrentUser(null);
     useWishlistStore.getState().loadWishlist();
     useAddressStore.getState().clearAddresses();
     useAddressStore.getState().loadAddresses();
@@ -166,7 +229,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: string,
     email: string,
     phone: string,
-    password: string,
     inviteCode?: string,
     preferredBlend?: string
   ) => {
@@ -174,7 +236,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       name,
       email: email || undefined,
       phone: phone || undefined,
-      password,
       inviteCode: inviteCode && inviteCode.trim() ? inviteCode.trim().toUpperCase() : undefined,
       preferredBlend: preferredBlend || 'Upper Assam Kadak',
       favoriteMorningCup: preferredBlend || 'Upper Assam Kadak',
@@ -185,6 +246,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await storage.setUser(userData);
       setUser(userData);
       useCartStore.getState().setCurrentUser(userData.id);
+      useScratchCardStore.getState().setCurrentUser(userData.id);
       useWishlistStore.getState().loadWishlist();
       useAddressStore.getState().clearAddresses();
       useAddressStore.getState().loadAddresses();
@@ -221,6 +283,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     useCartStore.getState().setCurrentUser(null);
     useCartStore.getState().clearCart();
+    useScratchCardStore.getState().clearCards();
     useWishlistStore.getState().clearWishlist();
     useAddressStore.getState().clearAddresses();
   };
@@ -237,6 +300,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUserProfile = async (data: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    preferred_blend?: string;
+    favorite_morning_cup?: string;
+  }) => {
+    const res = await api.put('/api/v1/user/profile', {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      preferredBlend: data.preferred_blend || data.favorite_morning_cup,
+      favoriteMorningCup: data.favorite_morning_cup || data.preferred_blend,
+    });
+    if (res.data?.success && res.data?.data?.user) {
+      const updatedUser = res.data.data.user;
+      await storage.setUser(updatedUser);
+      setUser(updatedUser);
+      return updatedUser;
+    }
+    throw new Error(res.data?.error || 'Failed to update profile');
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -246,10 +332,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         sendPhoneOtp,
         loginWithPhone,
+        loginWithFirebasePhone,
+        sendEmailOtp,
+        loginWithEmailOtp,
         loginAsGuest,
         register,
         logout,
         refreshUser,
+        updateUserProfile,
         setCoinsBalance,
         setPreferredBlend,
       }}

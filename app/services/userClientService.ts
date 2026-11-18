@@ -71,6 +71,29 @@ export async function fetchUserProfile(): Promise<UserProfile | null> {
   }
 }
 
+export async function updateUserProfile(data: {
+  name?: string;
+  email?: string;
+  phone?: string;
+  preferredBlend?: string;
+  favoriteMorningCup?: string;
+}): Promise<{ success: boolean; user?: UserProfile; message?: string }> {
+  try {
+    const res = await api.put('/api/v1/user/profile', data);
+    if (res.data?.success && res.data?.data?.user) {
+      return {
+        success: true,
+        user: res.data.data.user,
+        message: res.data.message || 'Profile updated successfully',
+      };
+    }
+    return { success: false, message: res.data?.error || 'Update failed' };
+  } catch (err: any) {
+    const msg = err.response?.data?.error || err.message || 'Failed to update profile';
+    throw new Error(msg);
+  }
+}
+
 export async function fetchUserCoins(): Promise<{
   balance: number;
   transactions: CoinTransaction[];

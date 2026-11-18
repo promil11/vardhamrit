@@ -30,8 +30,8 @@ type FilterTab = 'all' | 'unscratched' | 'claimed';
 
 export default function RewardsScreen() {
   const router = useRouter();
-  const { setCoinsBalance: setAuthCoinsBalance } = useAuth();
-  const { cards, loadCards, syncWithOrders, markClaimed } = useScratchCardStore();
+  const { user, setCoinsBalance: setAuthCoinsBalance } = useAuth();
+  const { cards, loadCards, syncWithOrders, markClaimed, setCurrentUser } = useScratchCardStore();
 
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -41,19 +41,24 @@ export default function RewardsScreen() {
 
   const initData = async (isRefresh = false) => {
     try {
+      if (!user) {
+        setCoinsBalance(0);
+        return;
+      }
+
+      await setCurrentUser(user.id);
+
       const [_, coinsRes, ordersRes] = await Promise.all([
-        loadCards(),
+        loadCards(user.id),
         fetchUserCoins().catch(() => null),
-        fetchUserOrders(1, 20).catch(() => null),
+        fetchUserOrders(1, 50).catch(() => null),
       ]);
 
       if (coinsRes?.balance !== undefined) {
         setCoinsBalance(coinsRes.balance);
       }
 
-      if (ordersRes?.orders?.length) {
-        await syncWithOrders(ordersRes.orders);
-      }
+      await syncWithOrders(ordersRes?.orders || [], user.id);
     } catch (e) {
       console.warn('Error loading rewards:', e);
     } finally {
@@ -65,7 +70,7 @@ export default function RewardsScreen() {
 
   useEffect(() => {
     initData();
-  }, []);
+  }, [user?.id]);
 
   const triggerRefreshHaptic = useCallback(() => {
     if (Platform.OS !== 'web') {

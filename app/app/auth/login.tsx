@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,24 +15,157 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { Icon } from '../../components/common/Icon';
 import { useAuth } from '../../store/authContext';
+import { sendFirebasePhoneOtp, ConfirmationResult } from '../../lib/firebase';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, sendPhoneOtp, loginWithPhone, loginAsGuest } = useAuth();
+  const {
+    login,
+    sendPhoneOtp,
+    loginWithPhone,
+    loginWithFirebasePhone,
+    sendEmailOtp,
+    loginWithEmailOtp,
+    loginAsGuest,
+  } = useAuth();
 
-  const [authMode, setAuthMode] = useState<'otp' | 'password'>('otp');
+  const [authMode, setAuthMode] = useState<'email-otp' | 'otp'>('email-otp');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
 
-  // Email / Password states
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  // Email OTP states
+  const [email, setEmail] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [emailTimer, setEmailTimer] = useState(0);
+  const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
+
+  // Phone OTP states
+  const [phoneTimer, setPhoneTimer] = useState(0);
+  const [devPhoneOtpHint, setDevPhoneOtpHint] = useState<string | null>(null);
+  const [firebaseConfirmation, setFirebaseConfirmation] = useState<ConfirmationResult | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [userNotFound, setUserNotFound] = useState(false);
+
+  useEffect(() => {
+    let interval: any;
+    if (emailTimer > 0) {
+      interval = setInterval(() => {
+        setEmailTimer((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [emailTimer]);
+
+  useEffect(() => {
+    let interval: any;
+    if (phoneTimer > 0) {
+      interval = setInterval(() => {
+        setPhoneTimer((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [phoneTimer]);
+
+  const handleSendEmailOtp = async () => {
+    if (loading) return;
+    const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      setErrorMsg('Please enter a valid email address.');
+      setUserNotFound(false);
+      return;
+    }
+
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch { }
+    }
+
+    setErrorMsg(null);
+    setUserNotFound(false);
+    setLoading(true);
+
+    try {
+      const res = await sendEmailOtp(cleanEmail, 'login');
+      setLoading(false);
+      setEmailOtpSent(true);
+      setEmailTimer(60);
+      if (res?.debugOtp) {
+        setDevOtpHint(res.debugOtp);
+      } else {
+        setDevOtpHint(null);
+      }
+    } catch (err: any) {
+      setLoading(false);
+      const isNotFound =
+        err.response?.status === 404 ||
+        err.response?.data?.code === 'USER_NOT_FOUND' ||
+        err.message?.includes('No account found');
+
+      if (isNotFound) {
+        setUserNotFound(true);
+        setErrorMsg(
+          err.response?.data?.error ||
+          `No account found with ${cleanEmail}. Please create an account to get started!`
+        );
+      } else {
+        setErrorMsg(
+          err.response?.data?.error ||
+          err.message ||
+          'Failed to send email verification code. Please check your email.'
+        );
+      }
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    if (emailOtp.trim().length < 6) {
+      setErrorMsg('Please enter the complete 6-digit verification code.');
+      return;
+    }
+
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch { }
+    }
+
+    setErrorMsg(null);
+    setUserNotFound(false);
+    setLoading(true);
+
+    try {
+      await loginWithEmailOtp(email, emailOtp);
+      router.replace('/(tabs)');
+    } catch (err: any) {
+      const isNotFound =
+        err.response?.status === 404 ||
+        err.response?.data?.code === 'USER_NOT_FOUND' ||
+        err.message?.includes('No account found');
+
+      if (isNotFound) {
+        setUserNotFound(true);
+        setEmailOtpSent(false);
+        setErrorMsg(
+          err.response?.data?.error ||
+          `No account found with ${email}. Please create an account to get started.`
+        );
+      } else {
+        setErrorMsg(
+          err.response?.data?.error ||
+          err.message ||
+          'Verification failed. Please check the code and try again.'
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSendOtp = async () => {
     if (loading) return;
@@ -54,10 +187,29 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
+      try {
+        const confirmation = await sendFirebasePhoneOtp(clean);
+        setFirebaseConfirmation(confirmation);
+        setLoading(false);
+        setOtpSent(true);
+        setPhoneTimer(60);
+        setOtp('');
+        return;
+      } catch (fbErr: any) {
+        console.warn('[Firebase] Phone OTP notice:', fbErr?.code || fbErr?.message);
+        // If not yet enabled in Firebase Console, proceed with backend OTP fallback:
+      }
+
       const data = await sendPhoneOtp(clean);
       setLoading(false);
       setOtpSent(true);
-      setOtp(data?.data?.otp || '1234');
+      setPhoneTimer(60);
+      setOtp('');
+      if (data?.data?.debugOtp) {
+        setDevPhoneOtpHint(data.data.debugOtp);
+      } else {
+        setDevPhoneOtpHint(null);
+      }
     } catch (err: any) {
       setLoading(false);
       const isNotFound =
@@ -82,8 +234,8 @@ export default function LoginScreen() {
   };
 
   const handleVerifyOtp = async () => {
-    if (otp.length < 4) {
-      setErrorMsg('Please enter the 4-digit verification code.');
+    if (otp.length < 6) {
+      setErrorMsg('Please enter the 6-digit verification code.');
       return;
     }
 
@@ -98,6 +250,22 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
+      if (firebaseConfirmation) {
+        try {
+          const result = await firebaseConfirmation.confirm(otp);
+          const idToken = await result.user.getIdToken();
+          await loginWithFirebasePhone(phone, idToken);
+          router.replace('/(tabs)');
+          return;
+        } catch (fbErr: any) {
+          if (fbErr?.code === 'auth/invalid-verification-code') {
+            setErrorMsg('Invalid verification code. Please check the SMS and try again.');
+            return;
+          }
+          throw fbErr;
+        }
+      }
+
       await loginWithPhone(phone, otp);
       router.replace('/(tabs)');
     } catch (err: any) {
@@ -117,40 +285,6 @@ export default function LoginScreen() {
           err.response?.data?.error ||
           err.message ||
           'Verification failed. Please check the code and try again.'
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePasswordLogin = async () => {
-    if (!identifier.trim() || !password) {
-      setErrorMsg('Please enter your email/phone and password.');
-      return;
-    }
-
-    setErrorMsg(null);
-    setUserNotFound(false);
-    setLoading(true);
-    try {
-      await login(identifier.trim(), password);
-      router.replace('/(tabs)');
-    } catch (err: any) {
-      const isNotFound =
-        err.response?.status === 404 ||
-        err.response?.data?.code === 'USER_NOT_FOUND';
-
-      if (isNotFound) {
-        setUserNotFound(true);
-        setErrorMsg(
-          err.response?.data?.error ||
-          'No account found with this email or mobile number. Please create an account.'
-        );
-      } else {
-        setErrorMsg(
-          err.response?.data?.error ||
-          'Invalid credentials. Please verify your password.'
         );
       }
     } finally {
@@ -226,6 +360,32 @@ export default function LoginScreen() {
           <View style={styles.tabSwitcher}>
             <TouchableOpacity
               onPress={() => {
+                setAuthMode('email-otp');
+                setErrorMsg(null);
+                setUserNotFound(false);
+              }}
+              style={[
+                styles.tabBtn,
+                authMode === 'email-otp' && styles.tabBtnActive,
+              ]}
+            >
+              <Icon
+                name="mail"
+                size={13}
+                color={authMode === 'email-otp' ? theme.colors.primary : '#64748B'}
+              />
+              <Text
+                style={[
+                  styles.tabBtnText,
+                  authMode === 'email-otp' && styles.tabBtnTextActive,
+                ]}
+              >
+                Email OTP
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
                 setAuthMode('otp');
                 setErrorMsg(null);
                 setUserNotFound(false);
@@ -237,7 +397,7 @@ export default function LoginScreen() {
             >
               <Icon
                 name="phone"
-                size={14}
+                size={13}
                 color={authMode === 'otp' ? theme.colors.primary : '#64748B'}
               />
               <Text
@@ -247,32 +407,6 @@ export default function LoginScreen() {
                 ]}
               >
                 Mobile OTP
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => {
-                setAuthMode('password');
-                setErrorMsg(null);
-                setUserNotFound(false);
-              }}
-              style={[
-                styles.tabBtn,
-                authMode === 'password' && styles.tabBtnActive,
-              ]}
-            >
-              <Icon
-                name="lock"
-                size={14}
-                color={authMode === 'password' ? theme.colors.primary : '#64748B'}
-              />
-              <Text
-                style={[
-                  styles.tabBtnText,
-                  authMode === 'password' && styles.tabBtnTextActive,
-                ]}
-              >
-                Password
               </Text>
             </TouchableOpacity>
           </View>
@@ -298,7 +432,12 @@ export default function LoginScreen() {
                   const clean = phone.replace(/[^0-9]/g, '');
                   router.push({
                     pathname: '/auth/register',
-                    params: clean ? { phone: clean } : {},
+                    params:
+                      authMode === 'otp' && clean
+                        ? { phone: clean }
+                        : email
+                          ? { email: email.trim().toLowerCase() }
+                          : {},
                   });
                 }}
                 style={styles.createAccountCtaBtn}
@@ -314,17 +453,144 @@ export default function LoginScreen() {
             </View>
           ) : null}
 
-          {/* Mode 1: Mobile OTP */}
-          {authMode === 'otp' ? (
+          {/* Mode 1: Free Email OTP */}
+          {authMode === 'email-otp' ? (
+            <>
+              <Text style={styles.cardHeading}>
+                {emailOtpSent ? 'Verify Email Code' : 'Sign In with Email OTP'}
+              </Text>
+              <Text style={styles.cardSub}>
+                {emailOtpSent
+                  ? `Enter the 6-digit verification code sent to ${email}.`
+                  : 'Fast & 100% free login. Enter your registered email address'}
+              </Text>
+
+              {devOtpHint && emailOtpSent && (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setEmailOtp(devOtpHint)}
+                  style={styles.devHintBanner}
+                >
+                  <Icon name="sparkles" size={13} color="#0D9488" />
+                  <Text style={styles.devHintText}>
+                    Dev Code: <Text style={{ fontWeight: 'bold' }}>{devOtpHint}</Text> (Tap to auto-fill)
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {!emailOtpSent ? (
+                /* Email Input */
+                <View style={styles.inputWrapper}>
+                  <Icon
+                    name="mail"
+                    size={16}
+                    color="#9CA3AF"
+                    style={{ marginLeft: 14 }}
+                  />
+                  <TextInput
+                    style={styles.standardInput}
+                    placeholder="Enter your email address"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    value={email}
+                    onChangeText={(t) => {
+                      setEmail(t);
+                      if (errorMsg) setErrorMsg(null);
+                    }}
+                    underlineColorAndroid="transparent"
+                  />
+                </View>
+              ) : (
+                /* 6-Digit OTP Section */
+                <View style={styles.otpSection}>
+                  <TextInput
+                    style={styles.otpInput}
+                    placeholder="••••••"
+                    placeholderTextColor="#CBD5E1"
+                    keyboardType="numeric"
+                    maxLength={6}
+                    value={emailOtp}
+                    onChangeText={(t) => {
+                      setEmailOtp(t.replace(/[^0-9]/g, ''));
+                      if (errorMsg) setErrorMsg(null);
+                    }}
+                    autoFocus
+                    underlineColorAndroid="transparent"
+                  />
+
+                  <View style={styles.otpActionRow}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setEmailOtpSent(false);
+                        setEmailOtp('');
+                        setDevOtpHint(null);
+                      }}
+                      style={styles.editNumberBtn}
+                    >
+                      <Text style={styles.editNumberText}>Change Email</Text>
+                    </TouchableOpacity>
+
+                    {emailTimer > 0 ? (
+                      <Text style={styles.resendTimerText}>
+                        Resend code in {emailTimer}s
+                      </Text>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={handleSendEmailOtp}
+                        disabled={loading}
+                      >
+                        <Text style={styles.resendActiveText}>Resend Code</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* Primary Action Button */}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={emailOtpSent ? handleVerifyEmailOtp : handleSendEmailOtp}
+                disabled={loading}
+                style={styles.primaryBtn}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <View style={styles.btnContentRow}>
+                    <Text style={styles.primaryBtnText}>
+                      {emailOtpSent ? 'Verify & Continue' : 'Get Email OTP'}
+                    </Text>
+                    <Icon name="arrow-right" size={16} color="#FFFFFF" />
+                  </View>
+                )}
+              </TouchableOpacity>
+            </>
+          ) : (
+            /* Mode 2: Mobile OTP */
             <>
               <Text style={styles.cardHeading}>
                 {otpSent ? 'Verify Mobile Code' : 'Enter Mobile Number'}
               </Text>
               <Text style={styles.cardSub}>
                 {otpSent
-                  ? `Enter the 4-digit code sent to +91 ${phone} (Demo code: 1234)`
-                  : 'Fast OTP login for instant doorstep tea orders'}
+                  ? `Enter the 6-digit verification code sent via SMS to +91 ${phone}`
+                  : 'Fast & 100% free login via Mobile OTP'}
               </Text>
+
+              {devPhoneOtpHint && otpSent && (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setOtp(devPhoneOtpHint)}
+                  style={styles.devHintBanner}
+                >
+                  <Icon name="sparkles" size={13} color="#0D9488" />
+                  <Text style={styles.devHintText}>
+                    Dev Code: <Text style={{ fontWeight: 'bold' }}>{devPhoneOtpHint}</Text> (Tap to auto-fill)
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               {!otpSent ? (
                 /* Phone Input */
@@ -350,32 +616,49 @@ export default function LoginScreen() {
                   />
                 </View>
               ) : (
-                /* OTP Input */
+                /* 6-Digit OTP Section */
                 <View style={styles.otpSection}>
                   <TextInput
                     style={styles.otpInput}
-                    placeholder="1234"
-                    placeholderTextColor="#9CA3AF"
+                    placeholder="••••••"
+                    placeholderTextColor="#CBD5E1"
                     keyboardType="numeric"
-                    maxLength={4}
+                    maxLength={6}
                     value={otp}
                     onChangeText={(t) => {
-                      setOtp(t);
+                      setOtp(t.replace(/[^0-9]/g, ''));
                       if (errorMsg) setErrorMsg(null);
                     }}
                     autoFocus
                     underlineColorAndroid="transparent"
                   />
 
-                  <TouchableOpacity
-                    onPress={() => {
-                      setOtpSent(false);
-                      setUserNotFound(false);
-                    }}
-                    style={styles.editNumberBtn}
-                  >
-                    <Text style={styles.editNumberText}>Change Mobile Number</Text>
-                  </TouchableOpacity>
+                  <View style={styles.otpActionRow}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setOtpSent(false);
+                        setUserNotFound(false);
+                        setOtp('');
+                        setDevPhoneOtpHint(null);
+                      }}
+                      style={styles.editNumberBtn}
+                    >
+                      <Text style={styles.editNumberText}>Change Mobile Number</Text>
+                    </TouchableOpacity>
+
+                    {phoneTimer > 0 ? (
+                      <Text style={styles.resendTimerText}>
+                        Resend code in {phoneTimer}s
+                      </Text>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={handleSendOtp}
+                        disabled={loading}
+                      >
+                        <Text style={styles.resendActiveText}>Resend Code</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
               )}
 
@@ -391,100 +674,17 @@ export default function LoginScreen() {
                 ) : (
                   <View style={styles.btnContentRow}>
                     <Text style={styles.primaryBtnText}>
-                      {otpSent ? 'Verify & Continue' : 'Get OTP Code'}
+                      {otpSent ? 'Verify & Continue' : 'Get Mobile OTP'}
                     </Text>
                     <Icon name="arrow-right" size={16} color="#FFFFFF" />
                   </View>
                 )}
               </TouchableOpacity>
             </>
-          ) : (
-            /* Mode 2: Password Login */
-            <>
-              <Text style={styles.cardHeading}>Account Login</Text>
-              <Text style={styles.cardSub}>
-                Sign in with your email or registered phone number
-              </Text>
-
-              {/* Identifier Input */}
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Email or Phone</Text>
-                <View style={styles.inputWrapper}>
-                  <Icon
-                    name="user"
-                    size={16}
-                    color="#9CA3AF"
-                    style={{ marginLeft: 12 }}
-                  />
-                  <TextInput
-                    style={styles.standardInput}
-                    placeholder="name@example.com or 10-digit phone"
-                    placeholderTextColor="#9CA3AF"
-                    autoCapitalize="none"
-                    value={identifier}
-                    onChangeText={(t) => {
-                      setIdentifier(t);
-                      if (errorMsg) setErrorMsg(null);
-                      if (userNotFound) setUserNotFound(false);
-                    }}
-                    underlineColorAndroid="transparent"
-                  />
-                </View>
-              </View>
-
-              {/* Password Input */}
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Password</Text>
-                <View style={styles.inputWrapper}>
-                  <Icon
-                    name="lock"
-                    size={16}
-                    color="#9CA3AF"
-                    style={{ marginLeft: 12 }}
-                  />
-                  <TextInput
-                    style={styles.standardInput}
-                    placeholder="Enter password"
-                    placeholderTextColor="#9CA3AF"
-                    secureTextEntry={!showPassword}
-                    value={password}
-                    onChangeText={(t) => {
-                      setPassword(t);
-                      if (errorMsg) setErrorMsg(null);
-                    }}
-                    underlineColorAndroid="transparent"
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={{ paddingRight: 14 }}
-                  >
-                    <Icon
-                      name={showPassword ? 'eye-off' : 'eye'}
-                      size={16}
-                      color="#9CA3AF"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Primary Action Button */}
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={handlePasswordLogin}
-                disabled={loading}
-                style={styles.primaryBtn}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <View style={styles.btnContentRow}>
-                    <Text style={styles.primaryBtnText}>Sign In</Text>
-                    <Icon name="arrow-right" size={16} color="#FFFFFF" />
-                  </View>
-                )}
-              </TouchableOpacity>
-            </>
           )}
+
+          {/* Invisible reCAPTCHA container for Google Firebase Phone Auth */}
+          <View nativeID="recaptcha-container" id="recaptcha-container" />
 
           <View style={styles.registerRow}>
             <Text style={styles.registerPrompt}>New to Vardhamrit? </Text>
@@ -493,7 +693,12 @@ export default function LoginScreen() {
                 const clean = phone.replace(/[^0-9]/g, '');
                 router.push({
                   pathname: '/auth/register',
-                  params: clean ? { phone: clean } : {},
+                  params:
+                    authMode === 'otp' && clean
+                      ? { phone: clean }
+                      : email
+                        ? { email: email.trim().toLowerCase() }
+                        : {},
                 });
               }}
             >
@@ -627,6 +832,51 @@ const styles = StyleSheet.create({
   tabBtnTextActive: {
     color: theme.colors.primary,
     fontWeight: theme.typography.weights.extraBold,
+  },
+  freeBadge: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  freeBadgeText: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    color: '#15803D',
+  },
+  devHintBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#F0FDFA',
+    borderWidth: 1,
+    borderColor: '#99F6E4',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  devHintText: {
+    fontSize: 11.5,
+    color: '#0F766E',
+  },
+  otpActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 4,
+    marginTop: 4,
+  },
+  resendTimerText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontWeight: theme.typography.weights.medium,
+  },
+  resendActiveText: {
+    fontSize: 11.5,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.weights.bold,
   },
   cardHeading: {
     fontSize: 16,

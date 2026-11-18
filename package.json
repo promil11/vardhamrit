@@ -29,5 +29,8 @@
     "mysql"
   ],
   "author": "Vardhamrit Engineering Team",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "nodemailer": "^10.6.0"
+  }
 }

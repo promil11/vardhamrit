@@ -3,7 +3,7 @@ import { z } from 'zod';
 import pool from '../config/db';
 import { createOrder, getUserOrders, getOrderById, cancelOrder } from '../services/orderService';
 import { calculateDynamicDistanceFees } from '../utils/pricing';
-import { sendSuccess } from '../utils/response';
+import { sendSuccess, sendError } from '../utils/response';
 
 export const calculateFeesSchema = z.object({
   address: z.any().optional(),
@@ -40,7 +40,10 @@ export const cancelOrderSchema = z.object({
 
 export async function placeOrder(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId || (req as any).user?.id || 2;
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      return sendError(res, 'Authentication required to place order', 401);
+    }
     const { addressId, address, paymentMethod, couponCode, coinsToRedeem, items } = req.body;
 
     const normalizedPaymentMethod =
@@ -80,7 +83,10 @@ export async function getOrders(req: Request, res: Response, next: NextFunction)
 
 export async function getSingleOrder(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId || (req as any).user?.id || 2;
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      return sendError(res, 'Authentication required', 401);
+    }
     const orderId = Number(req.params.id);
 
     // If user is not admin, ensure they only access their own order
@@ -144,7 +150,10 @@ export async function handleCalculateDeliveryFees(req: Request, res: Response, n
 
 export async function cancelUserOrder(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId || (req as any).user?.id || 2;
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      return sendError(res, 'Authentication required', 401);
+    }
     const orderId = Number(req.params.id);
     const { reason } = req.body;
 

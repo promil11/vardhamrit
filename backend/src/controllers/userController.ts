@@ -8,7 +8,10 @@ import { sendSuccess, sendError } from '../utils/response';
  */
 export async function getUserProfile(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId || (req as any).user?.id || 2; // Default to Rahul Sharma (id 2)
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      return sendError(res, 'Authentication required', 401);
+    }
 
     const [users]: any = await pool.query(
       `SELECT id, name, email, phone, role, coins_balance, referral_code, referred_by, preferred_blend, created_at FROM users WHERE id = ?`,
@@ -142,7 +145,13 @@ export async function updateUserPreferences(req: Request, res: Response, next: N
  */
 export async function getCoinHistory(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId || (req as any).user?.id || 2;
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      return sendSuccess(res, {
+        current_balance: 0,
+        transactions: [],
+      });
+    }
 
     const [transactions]: any = await pool.query(
       `SELECT id, transaction_type as type, amount, description, order_id as reference_id, balance_after, created_at
@@ -173,7 +182,10 @@ export async function getCoinHistory(req: Request, res: Response, next: NextFunc
  */
 export async function claimScratchCard(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId || (req as any).user?.id || 2;
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      return sendError(res, 'Authentication required', 401);
+    }
     const { orderNumber, orderId, coinsEarned } = req.body;
     const coinsToAdd = Math.max(1, Math.round(Number(coinsEarned) || 5));
 
@@ -220,6 +232,93 @@ export async function claimScratchCard(req: Request, res: Response, next: NextFu
     } finally {
       connection.release();
     }
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * PUT/PATCH /api/v1/user/profile
+ * Updates basic profile details: name, email, phone, morning cup preference.
+ */
+export async function updateUserProfile(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      return sendError(res, 'Authentication required', 401);
+    }
+
+    const { name, email, phone, preferredBlend, favoriteMorningCup } = req.body;
+
+    const [currentUsers]: any = await pool.query(
+      'SELECT id, name, email, phone, role, coins_balance, referral_code, preferred_blend FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (currentUsers.length === 0) {
+      return sendError(res, 'User not found', 404);
+    }
+
+    const currentUser = currentUsers[0];
+    const newName = name !== undefined ? String(name).trim() : currentUser.name;
+    let newEmail = email !== undefined ? String(email).trim().toLowerCase() : currentUser.email;
+    let newPhone = phone !== undefined ? String(phone).trim() : currentUser.phone;
+    const newBlend = (favoriteMorningCup || (preferredBlend !== undefined ? preferredBlend : currentUser.preferred_blend))?.trim();
+
+    if (newName && newName.length < 2) {
+      return sendError(res, 'Name must be at least 2 characters long', 400);
+    }
+
+    // Check email uniqueness if changing email
+    if (newEmail && newEmail !== currentUser.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newEmail)) {
+        return sendError(res, 'Please provide a valid email address', 400);
+      }
+
+      const [existingEmail]: any = await pool.query(
+        'SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1',
+        [newEmail, userId]
+      );
+      if (existingEmail.length > 0) {
+        return sendError(res, 'This email address is already in use by another account', 400);
+      }
+    }
+
+    // Check phone uniqueness if changing phone
+    if (newPhone) {
+      const clean = newPhone.replace(/[^0-9]/g, '');
+      const clean10 = clean.length > 10 ? clean.slice(-10) : clean;
+      if (clean10.length === 10) {
+        newPhone = `+91${clean10}`;
+        if (newPhone !== currentUser.phone) {
+          const variants = [`+91${clean10}`, clean10, `0${clean10}`, `91${clean10}`];
+          const [existingPhone]: any = await pool.query(
+            'SELECT id FROM users WHERE phone IN (?, ?, ?, ?) AND id != ? LIMIT 1',
+            [...variants, userId]
+          );
+          if (existingPhone.length > 0) {
+            return sendError(res, 'This mobile number is already linked to another account', 400);
+          }
+        }
+      }
+    }
+
+    await pool.query(
+      'UPDATE users SET name = ?, email = ?, phone = ?, preferred_blend = ? WHERE id = ?',
+      [newName || currentUser.name, newEmail || null, newPhone || null, newBlend || 'Normal Chai', userId]
+    );
+
+    const updatedUser = {
+      ...currentUser,
+      name: newName || currentUser.name,
+      email: newEmail || null,
+      phone: newPhone || null,
+      preferred_blend: newBlend || 'Normal Chai',
+      favorite_morning_cup: newBlend || 'Normal Chai',
+    };
+
+    return sendSuccess(res, { user: updatedUser }, 'Profile updated successfully');
   } catch (err) {
     return next(err);
   }

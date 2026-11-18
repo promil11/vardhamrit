@@ -22,7 +22,10 @@ export const addressParamSchema = z.object({
 
 export async function getAddresses(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.userId || (req as any).user?.id || 2;
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      return sendSuccess(res, []);
+    }
 
     const [addresses]: any = await pool.query(
       `SELECT id, user_id, name, phone, tag, line1, line2, city, state, pincode, landmark, is_default, created_at, updated_at
@@ -41,7 +44,11 @@ export async function getAddresses(req: Request, res: Response, next: NextFuncti
 export async function createAddress(req: Request, res: Response, next: NextFunction) {
   const connection = await pool.getConnection();
   try {
-    const userId = req.user?.userId || (req as any).user?.id || 2;
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      connection.release();
+      return sendError(res, 'Authentication required', 401);
+    }
     const { name, phone, tag, line1, line2, city, state, pincode, landmark, isDefault } = req.body;
 
     await connection.beginTransaction();
@@ -88,7 +95,11 @@ export async function createAddress(req: Request, res: Response, next: NextFunct
 export async function updateAddress(req: Request, res: Response, next: NextFunction) {
   const connection = await pool.getConnection();
   try {
-    const userId = req.user?.userId || (req as any).user?.id || 2;
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      connection.release();
+      return sendError(res, 'Authentication required', 401);
+    }
     const addressId = Number(req.params.id);
     const { name, phone, tag, line1, line2, city, state, pincode, landmark, isDefault } = req.body;
 
@@ -137,7 +148,11 @@ export async function updateAddress(req: Request, res: Response, next: NextFunct
 export async function deleteAddress(req: Request, res: Response, next: NextFunction) {
   const connection = await pool.getConnection();
   try {
-    const userId = req.user?.userId || (req as any).user?.id || 2;
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      connection.release();
+      return sendError(res, 'Authentication required', 401);
+    }
     const addressId = Number(req.params.id);
 
     await connection.beginTransaction();
@@ -186,7 +201,11 @@ export async function deleteAddress(req: Request, res: Response, next: NextFunct
 export async function setDefaultAddress(req: Request, res: Response, next: NextFunction) {
   const connection = await pool.getConnection();
   try {
-    const userId = req.user?.userId || (req as any).user?.id || 2;
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      connection.release();
+      return sendError(res, 'Authentication required', 401);
+    }
     const addressId = Number(req.params.id);
 
     await connection.beginTransaction();

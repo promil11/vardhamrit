@@ -59,14 +59,12 @@ const MORNING_CUP_OPTIONS = [
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ invite?: string; code?: string; phone?: string }>();
+  const params = useLocalSearchParams<{ invite?: string; code?: string; phone?: string; email?: string }>();
   const { register } = useAuth();
 
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(params.email ? String(params.email).trim().toLowerCase() : '');
   const [phone, setPhone] = useState(params.phone ? String(params.phone).replace(/[^0-9]/g, '') : '');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [favoriteMorningCup, setFavoriteMorningCup] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -77,6 +75,13 @@ export default function RegisterScreen() {
       setPhone(params.phone.replace(/[^0-9]/g, ''));
     }
   }, [params.phone]);
+
+  // Auto-fill email from navigation param
+  useEffect(() => {
+    if (params.email && typeof params.email === 'string') {
+      setEmail(params.email.trim().toLowerCase());
+    }
+  }, [params.email]);
 
   // Invite Code State
   const [inviteCodeInput, setInviteCodeInput] = useState('');
@@ -147,10 +152,6 @@ export default function RegisterScreen() {
       setErrorMessage('Please enter either your email or phone number.');
       return;
     }
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.');
-      return;
-    }
     if (!favoriteMorningCup) {
       setErrorMessage('Please select your Favorite Morning Cup to personalize your profile.');
       if (Platform.OS !== 'web') {
@@ -176,7 +177,6 @@ export default function RegisterScreen() {
         name.trim(),
         email.trim(),
         phone.trim(),
-        password,
         activeInvite,
         favoriteMorningCup
       );
@@ -343,41 +343,6 @@ export default function RegisterScreen() {
                 maxLength={10}
                 underlineColorAndroid="transparent"
               />
-            </View>
-          </View>
-
-          {/* Password */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Password (min. 6 characters)</Text>
-            <View style={styles.inputWrapper}>
-              <Icon
-                name="lock"
-                size={16}
-                color="#9CA3AF"
-                style={{ marginLeft: 12 }}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Create a secure password"
-                placeholderTextColor="#9CA3AF"
-                value={password}
-                onChangeText={(t) => {
-                  setPassword(t);
-                  if (errorMessage) setErrorMessage(null);
-                }}
-                secureTextEntry={!showPassword}
-                underlineColorAndroid="transparent"
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={{ paddingRight: 14 }}
-              >
-                <Icon
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={16}
-                  color="#9CA3AF"
-                />
-              </TouchableOpacity>
             </View>
           </View>
 

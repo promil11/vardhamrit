@@ -26,6 +26,8 @@ import {
   PackageCheck,
   MessageSquare,
   CreditCard,
+  Edit2,
+  Pencil,
   Landmark,
   Banknote,
   Lock,
@@ -65,6 +67,7 @@ import {
   QrCode,
   ScanQrCode,
   Coins,
+  Mail,
   LucideProps,
 } from 'lucide-react-native';
 import { theme } from '../../theme';
@@ -101,6 +104,9 @@ export type IconName =
   | 'package-check'
   | 'message-square'
   | 'credit-card'
+  | 'edit'
+  | 'edit-2'
+  | 'pencil'
   | 'landmark'
   | 'banknote'
   | 'lock'
@@ -137,7 +143,8 @@ export type IconName =
   | 'scan-qr'
   | 'coins'
   | 'coin'
-  | 'copy';
+  | 'copy'
+  | 'mail';
 
 interface IconProps extends Omit<LucideProps, 'ref'> {
   name: IconName;
@@ -225,6 +232,11 @@ export const Icon: React.FC<IconProps> = ({
       return <MessageSquare {...commonProps} />;
     case 'credit-card':
       return <CreditCard {...commonProps} />;
+    case 'edit':
+    case 'edit-2':
+      return <Edit2 {...commonProps} />;
+    case 'pencil':
+      return <Pencil {...commonProps} />;
     case 'landmark':
       return <Landmark {...commonProps} />;
     case 'banknote':
@@ -299,6 +311,8 @@ export const Icon: React.FC<IconProps> = ({
     case 'coins':
     case 'coin':
       return <Coins {...commonProps} />;
+    case 'mail':
+      return <Mail {...commonProps} />;
     default:
       return <Coffee {...commonProps} />;
   }

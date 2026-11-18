@@ -22,6 +22,7 @@ import { fetchUserAddresses, saveUserAddress, removeUserAddress } from '../../se
 import { fetchUserOrders } from '../../services/orderClientService';
 import { AddAddressModal } from '../../components/checkout/AddAddressModal';
 import { DeleteAddressModal } from '../../components/address/DeleteAddressModal';
+import { EditProfileModal } from '../../components/profile/EditProfileModal';
 import { useScratchCardStore } from '../../store/useScratchCardStore';
 import { Icon } from '../../components/common/Icon';
 import { ProfileSkeleton } from '../../components/common/Skeleton';
@@ -78,7 +79,7 @@ export function normalizeMorningCup(val?: string | null): string {
 export default function ProfileScreen() {
   const router = useRouter();
   const { isTablet } = useResponsive();
-  const { user, logout, setPreferredBlend: setPreferredBlendStore } = useAuth();
+  const { user, logout, setPreferredBlend: setPreferredBlendStore, updateUserProfile } = useAuth();
   const { wishlistIds } = useWishlistStore();
   const wishlistCount = wishlistIds.length;
   const {
@@ -90,6 +91,7 @@ export default function ProfileScreen() {
   } = useAddressStore();
   const [loading, setLoading] = useState(true);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [addressToDelete, setAddressToDelete] = useState<Address | null>(null);
@@ -137,12 +139,15 @@ export default function ProfileScreen() {
   const loadProfile = async () => {
     try {
       setLoading(true);
+      if (user?.id) {
+        await useScratchCardStore.getState().setCurrentUser(user.id);
+      }
       const [prof, coins, _addr, _wish, _cards, ordersRes] = await Promise.all([
         fetchUserProfile(),
         fetchUserCoins(),
         loadAddresses(),
         useWishlistStore.getState().loadWishlist(),
-        useScratchCardStore.getState().loadCards(),
+        useScratchCardStore.getState().loadCards(user?.id),
         fetchUserOrders(1, 15).catch(() => ({ orders: [] })),
       ]);
       if (prof) {
@@ -157,9 +162,7 @@ export default function ProfileScreen() {
       if (coins?.balance !== undefined) {
         setCoinsBalance(coins.balance);
       }
-      if (ordersRes?.orders?.length) {
-        await useScratchCardStore.getState().syncWithOrders(ordersRes.orders);
-      }
+      await useScratchCardStore.getState().syncWithOrders(ordersRes?.orders || [], user?.id);
     } catch (e) {
       console.warn('Error loading user profile:', e);
     } finally {
@@ -170,7 +173,7 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     loadProfile();
-  }, []);
+  }, [user?.id]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -244,6 +247,24 @@ export default function ProfileScreen() {
     } catch (err) {
       console.warn('Failed to update favorite morning cup:', err);
     }
+  };
+
+  const handleSaveProfile = async (updatedData: {
+    name: string;
+    email: string;
+    phone: string;
+    favoriteMorningCup: string;
+  }) => {
+    await updateUserProfile({
+      name: updatedData.name,
+      email: updatedData.email,
+      phone: updatedData.phone,
+      favorite_morning_cup: updatedData.favoriteMorningCup,
+      preferred_blend: updatedData.favoriteMorningCup,
+    });
+    setPreferredBlend(updatedData.favoriteMorningCup);
+    await loadProfile();
+    showPreferenceToast(updatedData.favoriteMorningCup);
   };
 
   const handleSignOut = () => {
@@ -386,6 +407,15 @@ export default function ProfileScreen() {
                     {user?.name || 'Aarav Sharma'}
                   </Text>
                   <Icon name="badge-check" size={15} color="#86EFAC" />
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setEditProfileModalVisible(true)}
+                    style={styles.editProfilePill}
+                  >
+                    <Icon name="edit-2" size={10} color="#0A3622" />
+                    <Text style={styles.editProfilePillText}>Edit</Text>
+                  </TouchableOpacity>
                 </View>
 
                 <Text style={styles.memberContactText}>
@@ -659,6 +689,24 @@ export default function ProfileScreen() {
 
           {/* 7. QUICK SERVICES & SUPPORT MENU */}
           <View style={styles.menuCard}>
+            {/* Edit Personal Profile */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => setEditProfileModalVisible(true)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.menuIconContainer, { backgroundColor: '#E0F2FE' }]}>
+                <Icon name="user" size={16} color="#0284C7" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.menuText}>Personal Details & Profile</Text>
+                <Text style={styles.menuSubtext}>Edit your name, email, phone & taste preference</Text>
+              </View>
+              <Icon name="chevron-right" size={14} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            <View style={styles.menuDivider} />
+
             <TouchableOpacity
               style={styles.menuRow}
               onPress={() => router.push('/(tabs)/orders')}
@@ -764,6 +812,14 @@ export default function ProfileScreen() {
           </Text>
         </ScrollView>
       )}
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        visible={editProfileModalVisible}
+        onClose={() => setEditProfileModalVisible(false)}
+        user={user}
+        onSave={handleSaveProfile}
+      />
 
       {/* Add Address Modal */}
       <AddAddressModal
@@ -1013,6 +1069,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  editProfilePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 9,
+    paddingVertical: 3.5,
+    borderRadius: 12,
+    marginLeft: 'auto',
+    gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  editProfilePillText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#0A3622',
   },
   memberName: {
     fontSize: 16,

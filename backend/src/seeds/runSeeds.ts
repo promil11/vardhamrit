@@ -10,21 +10,19 @@ async function runSeeds() {
 
     // 1. Seed Users (Admin & Customer)
     console.log('👤 Seeding Users...');
-    const adminPasswordHash = await bcrypt.hash('Admin@123', 10);
-    const customerPasswordHash = await bcrypt.hash('Customer@123', 10);
 
     const [adminResult]: any = await connection.query(
-      `INSERT INTO users (name, email, phone, password_hash, role)
-       VALUES (?, ?, ?, ?, 'admin')
-       ON DUPLICATE KEY UPDATE name = VALUES(name), password_hash = VALUES(password_hash);`,
-      ['Vardhamrit Master Admin', 'admin@vardhamrit.com', '+919999900001', adminPasswordHash]
+      `INSERT INTO users (name, email, phone, role)
+       VALUES (?, ?, ?, 'admin')
+       ON DUPLICATE KEY UPDATE name = VALUES(name);`,
+      ['Vardhamrit Master Admin', 'admin@vardhamrit.com', '+919999900001']
     );
 
     const [customerResult]: any = await connection.query(
-      `INSERT INTO users (name, email, phone, password_hash, role, push_token)
-       VALUES (?, ?, ?, ?, 'customer', 'ExponentPushToken[mock_customer_token_123]')
-       ON DUPLICATE KEY UPDATE name = VALUES(name), password_hash = VALUES(password_hash);`,
-      ['Rahul Sharma', 'customer@vardhamrit.com', '+919876543210', customerPasswordHash]
+      `INSERT INTO users (name, email, phone, role, push_token)
+       VALUES (?, ?, ?, 'customer', 'ExponentPushToken[mock_customer_token_123]')
+       ON DUPLICATE KEY UPDATE name = VALUES(name);`,
+      ['Rahul Sharma', 'customer@vardhamrit.com', '+919876543210']
     );
 
     const [customerRows]: any = await connection.query(
