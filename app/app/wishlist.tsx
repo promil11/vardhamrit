@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,9 @@ import {
   Alert,
   Platform,
   Dimensions,
+  RefreshControl,
+  Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -49,23 +52,222 @@ export default function WishlistScreen() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sync wishlist and products with database on mount
+  const loadData = async (isRefresh = false) => {
+    try {
+      if (!isRefresh) {
+        setLoading(true);
+      }
+      const [_, res] = await Promise.all([
+        loadWishlist(),
+        fetchProducts(),
+      ]);
+      setProducts(res?.items || []);
+    } catch (e) {
+      console.warn('Error fetching dynamic products in wishlist:', e);
+    } finally {
+      setLoading(false);
+      if (!isRefresh) {
+        setRefreshing(false);
+      }
+    }
+  };
+
   useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      loadWishlist(),
-      fetchProducts(),
-    ])
-      .then(([_, res]) => {
-        setProducts(res?.items || []);
-      })
-      .catch((e) => console.warn('Error fetching dynamic products in wishlist:', e))
-      .finally(() => setLoading(false));
+    loadData();
   }, []);
+
+  const triggerRefreshHaptic = useCallback(() => {
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch { }
+    } else if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+      try {
+        window.navigator.vibrate(20);
+      } catch { }
+    }
+  }, []);
+
+  // Web Pull-To-Refresh Gestures State & Refs
+  const scrollYRef = useRef(0);
+  const startYRef = useRef(0);
+  const startXRef = useRef(0);
+  const canPullRef = useRef(false);
+  const isPullingRef = useRef(false);
+  const isMouseDownRef = useRef(false);
+  const hasTriggeredThresholdHaptic = useRef(false);
+  const pullAnim = useRef(new Animated.Value(0)).current;
+  const [pullDistanceState, setPullDistanceState] = useState(0);
+
+  const onRefresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    triggerRefreshHaptic();
+
+    if (Platform.OS === 'web') {
+      Animated.spring(pullAnim, {
+        toValue: 56,
+        useNativeDriver: false,
+        friction: 8,
+        tension: 40,
+      }).start();
+    }
+
+    const startTime = Date.now();
+    try {
+      await loadData(true);
+    } catch (e) {
+      console.warn('Error refreshing wishlist:', e);
+    } finally {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 750 - elapsed);
+      if (remaining > 0) {
+        await new Promise((r) => setTimeout(r, remaining));
+      }
+      setRefreshing(false);
+      if (Platform.OS === 'web') {
+        Animated.timing(pullAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: false,
+        }).start(() => {
+          setPullDistanceState(0);
+        });
+      }
+    }
+  }, [refreshing, triggerRefreshHaptic]);
+
+  const finishPull = useCallback(() => {
+    if (!isPullingRef.current) {
+      canPullRef.current = false;
+      hasTriggeredThresholdHaptic.current = false;
+      return;
+    }
+    isPullingRef.current = false;
+    canPullRef.current = false;
+    hasTriggeredThresholdHaptic.current = false;
+
+    if (pullDistanceState >= 55 && !refreshing) {
+      onRefresh();
+    } else if (!refreshing) {
+      Animated.spring(pullAnim, {
+        toValue: 0,
+        useNativeDriver: false,
+        friction: 8,
+        tension: 40,
+      }).start(() => {
+        setPullDistanceState(0);
+      });
+    }
+  }, [pullDistanceState, refreshing, onRefresh]);
+
+  const handleTouchStart = (e: any) => {
+    if (refreshing) return;
+    const touch = e.touches ? e.touches[0] : e;
+    if (!touch) return;
+    startYRef.current = touch.clientY;
+    startXRef.current = touch.clientX;
+    canPullRef.current = scrollYRef.current <= 2;
+    isPullingRef.current = false;
+    hasTriggeredThresholdHaptic.current = false;
+  };
+
+  const handleTouchMove = (e: any) => {
+    if (!canPullRef.current || refreshing) return;
+    const touch = e.touches ? e.touches[0] : e;
+    if (!touch) return;
+    const deltaY = touch.clientY - startYRef.current;
+    const deltaX = touch.clientX - startXRef.current;
+
+    // Reject horizontal movements
+    if (Math.abs(deltaX) > Math.abs(deltaY) && !isPullingRef.current) {
+      canPullRef.current = false;
+      return;
+    }
+
+    // Must be downward pull at the top of the scroll container
+    if (deltaY > 8 && scrollYRef.current <= 2) {
+      isPullingRef.current = true;
+      const distance = Math.min(85, Math.pow(deltaY, 0.82) * 1.6);
+      pullAnim.setValue(distance);
+      setPullDistanceState(distance);
+
+      if (distance >= 55 && !hasTriggeredThresholdHaptic.current) {
+        hasTriggeredThresholdHaptic.current = true;
+        triggerRefreshHaptic();
+      } else if (distance < 55) {
+        hasTriggeredThresholdHaptic.current = false;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    finishPull();
+  };
+
+  const handleMouseDown = (e: any) => {
+    if (refreshing || scrollYRef.current > 2) return;
+    if (e.button !== 0) return; // Only primary left mouse button
+    isMouseDownRef.current = true;
+    startYRef.current = e.clientY;
+    startXRef.current = e.clientX;
+    canPullRef.current = true;
+    isPullingRef.current = false;
+    hasTriggeredThresholdHaptic.current = false;
+  };
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
+    const onWindowMouseMove = (e: MouseEvent) => {
+      if (!isMouseDownRef.current || !canPullRef.current || refreshing) return;
+      if (e.buttons !== 1) {
+        isMouseDownRef.current = false;
+        finishPull();
+        return;
+      }
+      const deltaY = e.clientY - startYRef.current;
+      const deltaX = e.clientX - startXRef.current;
+
+      if (Math.abs(deltaX) > Math.abs(deltaY) && !isPullingRef.current) {
+        canPullRef.current = false;
+        return;
+      }
+
+      if (deltaY > 8 && scrollYRef.current <= 2) {
+        isPullingRef.current = true;
+        const distance = Math.min(85, Math.pow(deltaY, 0.82) * 1.6);
+        pullAnim.setValue(distance);
+        setPullDistanceState(distance);
+
+        if (distance >= 55 && !hasTriggeredThresholdHaptic.current) {
+          hasTriggeredThresholdHaptic.current = true;
+          triggerRefreshHaptic();
+        } else if (distance < 55) {
+          hasTriggeredThresholdHaptic.current = false;
+        }
+      }
+    };
+
+    const onWindowMouseUp = () => {
+      if (isMouseDownRef.current) {
+        isMouseDownRef.current = false;
+        finishPull();
+      }
+    };
+
+    window.addEventListener('mousemove', onWindowMouseMove);
+    window.addEventListener('mouseup', onWindowMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onWindowMouseMove);
+      window.removeEventListener('mouseup', onWindowMouseUp);
+    };
+  }, [refreshing, finishPull, triggerRefreshHaptic]);
 
   // Filter products that are in wishlist
   const wishlistProducts = useMemo(() => {
@@ -174,7 +376,18 @@ export default function WishlistScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.container}>
+      <View
+        style={styles.container}
+        {...(Platform.OS === 'web'
+          ? {
+              onTouchStart: handleTouchStart,
+              onTouchMove: handleTouchMove,
+              onTouchEnd: handleTouchEnd,
+              onTouchCancel: handleTouchEnd,
+              onMouseDown: handleMouseDown,
+            }
+          : {})}
+      >
         {/* 1. LUXURY 2026 GRADIENT HEADER */}
         <LinearGradient
           colors={theme.colors.primaryGradient as any}
@@ -259,7 +472,68 @@ export default function WishlistScreen() {
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
+            bounces={true}
+            alwaysBounceVertical={true}
+            scrollEventThrottle={16}
+            onScroll={(e) => {
+              scrollYRef.current = e.nativeEvent.contentOffset.y;
+            }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={theme.colors.primary}
+                colors={[theme.colors.primary]}
+                progressBackgroundColor="#FFFFFF"
+                progressViewOffset={Platform.OS === 'android' ? 20 : 0}
+              />
+            }
           >
+            {/* Custom Web Pull-To-Refresh Indicator */}
+            {Platform.OS === 'web' && (
+              <Animated.View
+                style={[
+                  styles.webPullIndicatorContainer,
+                  {
+                    height: pullAnim,
+                    opacity: pullAnim.interpolate({
+                      inputRange: [0, 15, 55],
+                      outputRange: [0, 0.5, 1],
+                      extrapolate: 'clamp',
+                    }),
+                  },
+                ]}
+              >
+                <View style={styles.webPullIndicatorBadge}>
+                  {refreshing ? (
+                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                  ) : (
+                    <Animated.View
+                      style={{
+                        transform: [
+                          {
+                            rotate: pullAnim.interpolate({
+                              inputRange: [0, 55],
+                              outputRange: ['0deg', '180deg'],
+                              extrapolate: 'clamp',
+                            }),
+                          },
+                        ],
+                      }}
+                    >
+                      <Icon name="chevron-down" size={15} color={theme.colors.primary} />
+                    </Animated.View>
+                  )}
+                  <Text style={styles.webPullIndicatorText}>
+                    {refreshing
+                      ? 'Refreshing Saved Teas...'
+                      : pullDistanceState >= 55
+                      ? 'Release to refresh'
+                      : 'Pull down to refresh'}
+                  </Text>
+                </View>
+              </Animated.View>
+            )}
             {totalCount > 0 ? (
               <>
                 {/* SAVINGS & ACTIONS HERO CARD */}
@@ -485,6 +759,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F6F0',
+  },
+  webPullIndicatorContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  webPullIndicatorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 7,
+    paddingHorizontal: 15,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 37, 34, 0.16)',
+    gap: 8,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+    elevation: 3,
+    marginVertical: 4,
+  },
+  webPullIndicatorText: {
+    fontSize: 12,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.primary,
+    letterSpacing: 0.2,
   },
   topHeader: {
     paddingTop: Platform.OS === 'ios' ? 48 : 16,

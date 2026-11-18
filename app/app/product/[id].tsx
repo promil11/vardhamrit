@@ -245,7 +245,7 @@ export default function ProductDetailScreen() {
           <View style={[styles.sectionCard, isTablet && { padding: 20 }]}>
             <View style={styles.brandRow}>
               <Text style={[styles.brandTag, isTablet && { fontSize: 12 }]}>VARDHAMRIT GARDEN FRESH</Text>
-              <RatingChip rating={product.rating} reviewCount={product.reviewCount} size={isTablet ? 'lg' : 'md'} />
+              <RatingChip rating={product.rating} reviewCount={product.reviewCount} size="md" />
             </View>
 
             <Text style={[styles.productTitle, isTablet && { fontSize: 24, lineHeight: 30 }]}>{product.name}</Text>

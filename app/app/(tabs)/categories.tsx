@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Image,
   RefreshControl,
+  Animated,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -170,13 +171,44 @@ export default function CategoriesScreen() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [dynamicHero, setDynamicHero] = useState<any>(null);
 
-  const handleRefresh = async () => {
+  const triggerRefreshHaptic = useCallback(() => {
     if (Platform.OS !== 'web') {
       try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch {}
+    } else if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+      try {
+        window.navigator.vibrate(20);
       } catch {}
     }
+  }, []);
+
+  // Web Pull-To-Refresh Gestures State & Refs
+  const scrollYRef = useRef(0);
+  const startYRef = useRef(0);
+  const startXRef = useRef(0);
+  const canPullRef = useRef(false);
+  const isPullingRef = useRef(false);
+  const isMouseDownRef = useRef(false);
+  const hasTriggeredThresholdHaptic = useRef(false);
+  const pullAnim = useRef(new Animated.Value(0)).current;
+  const [pullDistanceState, setPullDistanceState] = useState(0);
+
+  const handleRefresh = useCallback(async () => {
+    if (refreshing) return;
     setRefreshing(true);
+    triggerRefreshHaptic();
+
+    if (Platform.OS === 'web') {
+      Animated.spring(pullAnim, {
+        toValue: 56,
+        useNativeDriver: false,
+        friction: 8,
+        tension: 40,
+      }).start();
+    }
+
+    const startTime = Date.now();
     try {
       const [cats, prods] = await Promise.all([
         fetchCategories(),
@@ -191,9 +223,150 @@ export default function CategoriesScreen() {
     } catch (e) {
       console.warn('Error refreshing categories screen from database:', e);
     } finally {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 750 - elapsed);
+      if (remaining > 0) {
+        await new Promise((r) => setTimeout(r, remaining));
+      }
       setRefreshing(false);
+      if (Platform.OS === 'web') {
+        Animated.timing(pullAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: false,
+        }).start(() => {
+          setPullDistanceState(0);
+        });
+      }
+    }
+  }, [refreshing, filterState.categoryId, triggerRefreshHaptic]);
+
+  const finishPull = useCallback(() => {
+    if (!isPullingRef.current) {
+      canPullRef.current = false;
+      hasTriggeredThresholdHaptic.current = false;
+      return;
+    }
+    isPullingRef.current = false;
+    canPullRef.current = false;
+    hasTriggeredThresholdHaptic.current = false;
+
+    if (pullDistanceState >= 55 && !refreshing) {
+      handleRefresh();
+    } else if (!refreshing) {
+      Animated.spring(pullAnim, {
+        toValue: 0,
+        useNativeDriver: false,
+        friction: 8,
+        tension: 40,
+      }).start(() => {
+        setPullDistanceState(0);
+      });
+    }
+  }, [pullDistanceState, refreshing, handleRefresh]);
+
+  const handleTouchStart = (e: any) => {
+    if (refreshing) return;
+    const touch = e.touches ? e.touches[0] : e;
+    if (!touch) return;
+    startYRef.current = touch.clientY;
+    startXRef.current = touch.clientX;
+    canPullRef.current = scrollYRef.current <= 2;
+    isPullingRef.current = false;
+    hasTriggeredThresholdHaptic.current = false;
+  };
+
+  const handleTouchMove = (e: any) => {
+    if (!canPullRef.current || refreshing) return;
+    const touch = e.touches ? e.touches[0] : e;
+    if (!touch) return;
+    const deltaY = touch.clientY - startYRef.current;
+    const deltaX = touch.clientX - startXRef.current;
+
+    // Reject horizontal movements (e.g. horizontal category rail or quick filter rail)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && !isPullingRef.current) {
+      canPullRef.current = false;
+      return;
+    }
+
+    // Must be downward pull at the top of the scroll container
+    if (deltaY > 8 && scrollYRef.current <= 2) {
+      isPullingRef.current = true;
+      const distance = Math.min(85, Math.pow(deltaY, 0.82) * 1.6);
+      pullAnim.setValue(distance);
+      setPullDistanceState(distance);
+
+      if (distance >= 55 && !hasTriggeredThresholdHaptic.current) {
+        hasTriggeredThresholdHaptic.current = true;
+        triggerRefreshHaptic();
+      } else if (distance < 55) {
+        hasTriggeredThresholdHaptic.current = false;
+      }
     }
   };
+
+  const handleTouchEnd = () => {
+    finishPull();
+  };
+
+  const handleMouseDown = (e: any) => {
+    if (refreshing || scrollYRef.current > 2) return;
+    if (e.button !== 0) return; // Only primary left mouse button
+    isMouseDownRef.current = true;
+    startYRef.current = e.clientY;
+    startXRef.current = e.clientX;
+    canPullRef.current = true;
+    isPullingRef.current = false;
+    hasTriggeredThresholdHaptic.current = false;
+  };
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
+    const onWindowMouseMove = (e: MouseEvent) => {
+      if (!isMouseDownRef.current || !canPullRef.current || refreshing) return;
+      if (e.buttons !== 1) {
+        isMouseDownRef.current = false;
+        finishPull();
+        return;
+      }
+      const deltaY = e.clientY - startYRef.current;
+      const deltaX = e.clientX - startXRef.current;
+
+      if (Math.abs(deltaX) > Math.abs(deltaY) && !isPullingRef.current) {
+        canPullRef.current = false;
+        return;
+      }
+
+      if (deltaY > 8 && scrollYRef.current <= 2) {
+        isPullingRef.current = true;
+        const distance = Math.min(85, Math.pow(deltaY, 0.82) * 1.6);
+        pullAnim.setValue(distance);
+        setPullDistanceState(distance);
+
+        if (distance >= 55 && !hasTriggeredThresholdHaptic.current) {
+          hasTriggeredThresholdHaptic.current = true;
+          triggerRefreshHaptic();
+        } else if (distance < 55) {
+          hasTriggeredThresholdHaptic.current = false;
+        }
+      }
+    };
+
+    const onWindowMouseUp = () => {
+      if (isMouseDownRef.current) {
+        isMouseDownRef.current = false;
+        finishPull();
+      }
+    };
+
+    window.addEventListener('mousemove', onWindowMouseMove);
+    window.addEventListener('mouseup', onWindowMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onWindowMouseMove);
+      window.removeEventListener('mouseup', onWindowMouseUp);
+    };
+  }, [refreshing, finishPull, triggerRefreshHaptic]);
 
   // Initial load: fetch all categories and all products from database API
   useEffect(() => {
@@ -483,7 +656,18 @@ export default function CategoriesScreen() {
   const selectedHeroImage = rawHeroImage ? getFullImageUrl(rawHeroImage) : null;
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      {...(Platform.OS === 'web'
+        ? {
+            onTouchStart: handleTouchStart,
+            onTouchMove: handleTouchMove,
+            onTouchEnd: handleTouchEnd,
+            onTouchCancel: handleTouchEnd,
+            onMouseDown: handleMouseDown,
+          }
+        : {})}
+    >
       {/* 1. TOP APP HEADER & SEARCH BAR */}
       <View style={styles.topHeader}>
         <View style={styles.headerTitleRow}>
@@ -550,6 +734,12 @@ export default function CategoriesScreen() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          bounces={true}
+          alwaysBounceVertical={true}
+          scrollEventThrottle={16}
+          onScroll={(e) => {
+            scrollYRef.current = e.nativeEvent.contentOffset.y;
+          }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -557,9 +747,55 @@ export default function CategoriesScreen() {
               tintColor={theme.colors.primary}
               colors={[theme.colors.primary]}
               progressBackgroundColor="#FFFFFF"
+              progressViewOffset={Platform.OS === 'android' ? 20 : 0}
             />
           }
         >
+          {/* Custom Web Pull-To-Refresh Indicator */}
+          {Platform.OS === 'web' && (
+            <Animated.View
+              style={[
+                styles.webPullIndicatorContainer,
+                {
+                  height: pullAnim,
+                  opacity: pullAnim.interpolate({
+                    inputRange: [0, 15, 55],
+                    outputRange: [0, 0.5, 1],
+                    extrapolate: 'clamp',
+                  }),
+                },
+              ]}
+            >
+              <View style={styles.webPullIndicatorBadge}>
+                {refreshing ? (
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                ) : (
+                  <Animated.View
+                    style={{
+                      transform: [
+                        {
+                          rotate: pullAnim.interpolate({
+                            inputRange: [0, 55],
+                            outputRange: ['0deg', '180deg'],
+                            extrapolate: 'clamp',
+                          }),
+                        },
+                      ],
+                    }}
+                  >
+                    <Icon name="chevron-down" size={15} color={theme.colors.primary} />
+                  </Animated.View>
+                )}
+                <Text style={styles.webPullIndicatorText}>
+                  {refreshing
+                    ? 'Refreshing Categories & Teas...'
+                    : pullDistanceState >= 55
+                    ? 'Release to refresh'
+                    : 'Pull down to refresh'}
+                </Text>
+              </View>
+            </Animated.View>
+          )}
         {/* 2. HORIZONTAL CATEGORY SCROLL RAIL (Hidden on big screens / tablets) */}
         {!isTablet && (
           <View style={styles.categorySection}>
@@ -832,6 +1068,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  webPullIndicatorContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  webPullIndicatorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 7,
+    paddingHorizontal: 15,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 37, 34, 0.16)',
+    gap: 8,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+    elevation: 3,
+    marginVertical: 4,
+  },
+  webPullIndicatorText: {
+    fontSize: 12,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.primary,
+    letterSpacing: 0.2,
   },
   topHeader: {
     backgroundColor: '#FFFFFF',

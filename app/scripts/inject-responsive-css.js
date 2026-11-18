@@ -11,6 +11,11 @@ if (!fs.existsSync(distHtmlPath)) {
 const responsiveCss = `
 <!-- Vardhamrit Universal Responsive Engine -->
 <style id="vardhamrit-responsive-engine">
+  /* Enable smooth in-app pull-to-refresh without full-page browser reload */
+  html, body, #root {
+    overscroll-behavior-y: contain !important;
+  }
+
   /* Ensure bottom navigation tab bar and labels never clip descenders ('g', 'y', 'p', 'q') */
   [role="tablist"], [role="tablist"] *, [role="tab"], [role="tab"] * {
     overflow: visible !important;
