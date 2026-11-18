@@ -55,12 +55,91 @@ function getTransporter(): Transporter | null {
   return null;
 }
 
+async function sendViaResendHttp(
+  to: string,
+  subject: string,
+  htmlContent: string,
+  plainText: string,
+  fromName: string
+): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return false;
+
+  const from = process.env.RESEND_FROM || `${fromName} <onboarding@resend.dev>`;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey.trim()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject,
+        html: htmlContent,
+        text: plainText,
+      }),
+    });
+    const data: any = await res.json();
+    if (res.ok && data?.id) {
+      console.log(`[EmailService] ✅ Email OTP sent via Resend API (ID: ${data.id})`);
+      return true;
+    }
+    console.error('[EmailService] ❌ Resend API returned error:', data);
+  } catch (err: any) {
+    console.error('[EmailService] ❌ Failed to call Resend API:', err.message);
+  }
+  return false;
+}
+
+async function sendViaBrevoHttp(
+  to: string,
+  subject: string,
+  htmlContent: string,
+  plainText: string,
+  fromName: string,
+  fromEmail: string
+): Promise<boolean> {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return false;
+
+  try {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey.trim(),
+        'Content-Type': 'application/json',
+        'accept': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: fromName, email: fromEmail },
+        to: [{ email: to }],
+        subject,
+        htmlContent,
+        textContent: plainText,
+      }),
+    });
+    const data: any = await res.json();
+    if (res.ok && (data?.messageId || data?.id)) {
+      console.log(`[EmailService] ✅ Email OTP sent via Brevo HTTP API (MessageId: ${data.messageId || data.id})`);
+      return true;
+    }
+    console.error('[EmailService] ❌ Brevo HTTP API error:', data);
+  } catch (err: any) {
+    console.error('[EmailService] ❌ Failed to call Brevo HTTP API:', err.message);
+  }
+  return false;
+}
+
 export async function sendOtpEmail({ to, otp, userName, purpose = 'Login' }: SendOtpEmailOptions): Promise<{ sent: boolean; messageId?: string; previewUrl?: string }> {
   const fromName = process.env.EMAIL_FROM_NAME || process.env.SMTP_FROM_NAME || 'Vardhamrit Tea';
   const fromEmail = process.env.GMAIL_USER || process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@vardhamrit.com';
   const from = `"${fromName}" <${fromEmail}>`;
   const subject = `Your Vardhamrit Verification Code: ${otp}`;
   const nameDisplay = userName ? `Hello ${userName},` : 'Hello Chai Lover,';
+
+  const plainText = `${nameDisplay}\n\nYour Vardhamrit verification code is: ${otp}\n\nThis code is valid for 10 minutes. Please enter it in the app to continue.\n\nDo not share this code with anyone.\n\nWarm regards,\nVardhamrit Tea Estates Pvt Ltd\ncare@vardhamrit.com`;
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -116,12 +195,23 @@ export async function sendOtpEmail({ to, otp, userName, purpose = 'Login' }: Sen
 </html>
 `;
 
+  // 1. Try Resend HTTP API (Port 443 - works 100% on Render Free Tier without SMTP block)
+  if (process.env.RESEND_API_KEY) {
+    const sent = await sendViaResendHttp(to, subject, htmlContent, plainText, fromName);
+    if (sent) return { sent: true };
+  }
+
+  // 2. Try Brevo HTTP API (Port 443 - works 100% on Render Free Tier without SMTP block)
+  if (process.env.BREVO_API_KEY) {
+    const sent = await sendViaBrevoHttp(to, subject, htmlContent, plainText, fromName, fromEmail);
+    if (sent) return { sent: true };
+  }
+
+  // 3. Fallback to direct SMTP transporter
   const activeTransporter = getTransporter();
 
   if (activeTransporter) {
     try {
-      const plainText = `${nameDisplay}\n\nYour Vardhamrit verification code is: ${otp}\n\nThis code is valid for 10 minutes. Please enter it in the app to continue.\n\nDo not share this code with anyone.\n\nWarm regards,\nVardhamrit Tea Estates Pvt Ltd\ncare@vardhamrit.com`;
-
       const info = await activeTransporter.sendMail({
         from,
         to,
