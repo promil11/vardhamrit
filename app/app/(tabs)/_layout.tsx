@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme';
 import { useCartStore } from '../../store/useCartStore';
 import { Icon } from '../../components/common/Icon';
@@ -8,12 +9,16 @@ import { useResponsive } from '../../utils/responsive';
 
 export default function TabLayout() {
   const totalCount = useCartStore((s) => s.getTotalItemsCount());
+  const insets = useSafeAreaInsets();
   const { isTablet } = useResponsive();
 
-  const tabHeight = isTablet ? 78 : (Platform.OS === 'ios' ? 84 : 64);
-  const tabPaddingBottom = isTablet ? 12 : (Platform.OS === 'ios' ? 24 : 8);
-  const tabPaddingTop = isTablet ? 10 : 8;
-  const labelFontSize = isTablet ? 13.5 : 10;
+  // On devices with home indicators (e.g. newer iPhones), insets.bottom is ~34px.
+  // On mobile web and Android, ensure a generous bottom inset so descenders ("g", "y", "p") are never clipped.
+  const bottomInset = isTablet ? 12 : Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 10);
+  const tabHeight = isTablet ? 78 : (58 + bottomInset);
+  const tabPaddingBottom = bottomInset;
+  const tabPaddingTop = isTablet ? 10 : 6;
+  const labelFontSize = isTablet ? 13.5 : 10.5;
   const iconSize = isTablet ? 25 : 20;
 
   return (
@@ -35,7 +40,8 @@ export default function TabLayout() {
           fontSize: labelFontSize,
           fontWeight: theme.typography.weights.extraBold,
           letterSpacing: 0.2,
-          marginTop: isTablet ? 3 : 0,
+          lineHeight: isTablet ? 16 : 14,
+          marginTop: isTablet ? 3 : 1,
         },
       }}
     >
@@ -137,9 +143,9 @@ const styles = StyleSheet.create({
   iconWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
   },
   iconWrapperTablet: {
     width: 44,
