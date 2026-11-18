@@ -75,12 +75,13 @@ export async function validateCoupon(
   }
 
   // 6. Per-user usage limit check
-  if (coupon.usage_limit_per_user && userId > 0) {
+  const usageLimitPerUser = Number(coupon.usage_limit_per_user || 0);
+  if (usageLimitPerUser > 0 && userId > 0) {
     const [userUsageRows]: any = await queryExecutor.query(
       'SELECT COUNT(*) as count FROM coupon_usages WHERE coupon_id = ? AND user_id = ?',
       [coupon.id, userId]
     );
-    if (userUsageRows[0]?.count >= coupon.usage_limit_per_user) {
+    if (userUsageRows[0]?.count >= usageLimitPerUser) {
       throw new AppError(
         `You have already used coupon '${upperCode}'. It cannot be used again.`,
         400

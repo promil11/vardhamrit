@@ -11,6 +11,14 @@ if (!fs.existsSync(distHtmlPath)) {
 const responsiveCss = `
 <!-- Vardhamrit Universal Responsive Engine -->
 <style id="vardhamrit-responsive-engine">
+  /* Ensure bottom navigation tab bar and labels never clip descenders ('g', 'y', 'p', 'q') */
+  [role="tablist"], [role="tablist"] *, [role="tab"], [role="tab"] * {
+    overflow: visible !important;
+  }
+  [role="tab"] {
+    justify-content: center !important;
+  }
+
   /* Default Text & Input Scaling on Web */
   @media (min-width: 600px) and (max-width: 839px) {
     .css-text-146c3p1 {

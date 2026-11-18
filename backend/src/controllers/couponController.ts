@@ -58,7 +58,7 @@ export async function listCoupons(req: Request, res: Response, next: NextFunctio
     const userId = req.user?.userId || (req.user as any)?.id || Number(req.query.userId) || 0;
 
     let hasPriorOrders = false;
-    const usedCouponIds = new Set<number>();
+    const userUsageMap = new Map<number, number>();
 
     if (userId > 0) {
       const [orderRows]: any = await pool.query(
@@ -68,10 +68,10 @@ export async function listCoupons(req: Request, res: Response, next: NextFunctio
       hasPriorOrders = (orderRows[0]?.count || 0) > 0;
 
       const [usageRows]: any = await pool.query(
-        'SELECT coupon_id FROM coupon_usages WHERE user_id = ?',
+        'SELECT coupon_id, COUNT(*) as count FROM coupon_usages WHERE user_id = ? GROUP BY coupon_id',
         [userId]
       );
-      usageRows.forEach((u: any) => usedCouponIds.add(u.coupon_id));
+      usageRows.forEach((u: any) => userUsageMap.set(u.coupon_id, Number(u.count)));
     }
 
     const [coupons]: any = await pool.query(
@@ -81,16 +81,20 @@ export async function listCoupons(req: Request, res: Response, next: NextFunctio
        ORDER BY discount_value DESC`
     );
 
-    // If coupon is for first order only, only include in list if user has NO prior orders and has NOT used it
+    // Filter available coupons according to first-order and per-user usage limits
     const availableCoupons = coupons.filter((c: any) => {
       const isFirstOnly = Boolean(c.is_first_order_only) || c.code === 'WELCOMEFIRST';
       if (isFirstOnly) {
-        if (hasPriorOrders || usedCouponIds.has(c.id)) {
+        if (hasPriorOrders || (userUsageMap.get(c.id) || 0) > 0) {
           return false;
         }
       }
-      if (usedCouponIds.has(c.id) && c.usage_limit_per_user && c.usage_limit_per_user <= 1) {
-        return false;
+      const usageLimit = Number(c.usage_limit_per_user || 0);
+      if (usageLimit > 0) {
+        const usedCount = userUsageMap.get(c.id) || 0;
+        if (usedCount >= usageLimit) {
+          return false;
+        }
       }
       return true;
     });

@@ -86,8 +86,25 @@ export const CouponBottomSheet: React.FC<CouponBottomSheetProps> = ({
   useEffect(() => {
     if (visible) {
       loadCoupons();
+      setCustomCode('');
+      setErrorMsg(null);
     }
   }, [visible, user?.id]);
+
+  // Clear promo code text input whenever an applied coupon changes
+  useEffect(() => {
+    setCustomCode('');
+  }, [appliedCoupon?.code]);
+
+  // Auto-remove applied coupon if subtotal falls below minimum order value
+  useEffect(() => {
+    if (appliedCoupon) {
+      const minVal = Number(appliedCoupon.minOrderValue || 0);
+      if (minVal > 0 && subtotal < minVal) {
+        removeCoupon();
+      }
+    }
+  }, [subtotal, appliedCoupon]);
 
   useEffect(() => {
     loadCoupons();
@@ -173,6 +190,7 @@ export const CouponBottomSheet: React.FC<CouponBottomSheetProps> = ({
   }, [appliedCoupon]);
 
   const handleApplyCoupon = async (coupon: Coupon) => {
+    setCustomCode('');
     if (subtotal < coupon.minOrderValue) {
       setErrorMsg(`Minimum order value for ${coupon.code} is ₹${coupon.minOrderValue}`);
       return;
@@ -189,6 +207,7 @@ export const CouponBottomSheet: React.FC<CouponBottomSheetProps> = ({
 
       if (res.data?.success) {
         applyCoupon(coupon);
+        setCustomCode('');
         onClose();
       } else {
         setErrorMsg(res.data?.error || `Coupon ${coupon.code} is not valid.`);
@@ -223,8 +242,8 @@ export const CouponBottomSheet: React.FC<CouponBottomSheetProps> = ({
           description: valData.message || `Saved ₹${valData.discountAmount}`,
           discountType: valData.type,
           discountValue: Number(valData.value),
-          minOrderValue: 0,
-          maxDiscount: undefined,
+          minOrderValue: Number(valData.min_order_value || valData.minOrderValue || 0),
+          maxDiscount: valData.max_discount ? Number(valData.max_discount) : undefined,
         };
         applyCoupon(validCoupon);
         setCustomCode('');
@@ -279,7 +298,7 @@ export const CouponBottomSheet: React.FC<CouponBottomSheetProps> = ({
         ) : null}
 
         {/* Applied Coupon Strip if active */}
-        {appliedCoupon ? (
+        {appliedCoupon && (!appliedCoupon.minOrderValue || subtotal >= appliedCoupon.minOrderValue) ? (
           <View style={styles.appliedCard}>
             <View style={{ flex: 1 }}>
               <View style={styles.appliedTitleRow}>
@@ -294,7 +313,11 @@ export const CouponBottomSheet: React.FC<CouponBottomSheetProps> = ({
 
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => removeCoupon()}
+              onPress={() => {
+                removeCoupon();
+                setCustomCode('');
+                setErrorMsg(null);
+              }}
               style={styles.removeBtn}
             >
               <Text style={styles.removeText}>REMOVE</Text>
@@ -328,8 +351,8 @@ export const CouponBottomSheet: React.FC<CouponBottomSheetProps> = ({
             </View>
           ) : (
             coupons.map((coupon) => {
-              const isApplied = appliedCoupon?.code === coupon.code;
-              const isEligible = subtotal >= coupon.minOrderValue;
+              const isEligible = subtotal >= Number(coupon.minOrderValue || 0);
+              const isApplied = appliedCoupon?.code === coupon.code && isEligible;
 
               return (
                 <View
@@ -354,6 +377,8 @@ export const CouponBottomSheet: React.FC<CouponBottomSheetProps> = ({
                     <TouchableOpacity
                       activeOpacity={0.8}
                       onPress={() => {
+                        setCustomCode('');
+                        setErrorMsg(null);
                         if (isApplied) {
                           removeCoupon();
                         } else {

@@ -663,17 +663,17 @@ async function seedDatabase() {
     // 10. SEED COUPONS
     console.log('🏷️ 10. Seeding Promotional Coupons...');
     const couponsData = [
-      { id: 1, code: 'CHAI10', title: '10% OFF on all Teas', description: 'Valid on cart subtotal above ₹199', discount_type: 'PERCENT', discount_value: 10.00, min_order_value: 199.00, max_discount: 100.00 },
-      { id: 2, code: 'WELCOME50', title: 'Flat ₹50 OFF for New Chai Lovers', description: 'Instant discount on first order above ₹299', discount_type: 'FLAT', discount_value: 50.00, min_order_value: 299.00, max_discount: null },
-      { id: 3, code: 'KADAK100', title: 'Flat ₹100 OFF on Family Packs', description: 'Valid on orders containing 1kg packs above ₹599', discount_type: 'FLAT', discount_value: 100.00, min_order_value: 599.00, max_discount: null },
+      { id: 1, code: 'CHAI10', title: '10% OFF on all Teas', description: 'Valid on cart subtotal above ₹199', discount_type: 'PERCENT', discount_value: 10.00, min_order_value: 199.00, max_discount: 100.00, usage_limit_per_user: null },
+      { id: 2, code: 'WELCOME50', title: 'Flat ₹50 OFF for New Chai Lovers', description: 'Instant discount on first order above ₹299', discount_type: 'FLAT', discount_value: 50.00, min_order_value: 299.00, max_discount: null, usage_limit_per_user: 1 },
+      { id: 3, code: 'KADAK100', title: 'Flat ₹100 OFF on Family Packs', description: 'Valid on orders containing 1kg packs above ₹599', discount_type: 'FLAT', discount_value: 100.00, min_order_value: 599.00, max_discount: null, usage_limit_per_user: null },
     ];
 
     for (const c of couponsData) {
       await connection.query(`
         INSERT INTO coupons (id, code, title, description, discount_type, discount_value, min_order_value, max_discount, usage_limit_total, usage_limit_per_user)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 10000, 2)
-        ON DUPLICATE KEY UPDATE title=VALUES(title), discount_value=VALUES(discount_value);
-      `, [c.id, c.code, c.title, c.description, c.discount_type, c.discount_value, c.min_order_value, c.max_discount]);
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 10000, ?)
+        ON DUPLICATE KEY UPDATE title=VALUES(title), discount_value=VALUES(discount_value), min_order_value=VALUES(min_order_value), usage_limit_per_user=VALUES(usage_limit_per_user);
+      `, [c.id, c.code, c.title, c.description, c.discount_type, c.discount_value, c.min_order_value, c.max_discount, c.usage_limit_per_user]);
     }
 
     // 11. SEED ORDERS, ITEMS & TRACKING (Targeting the 4 flavours)

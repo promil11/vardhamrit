@@ -893,17 +893,6 @@ export default function HomeScreen() {
                     </View>
                   </View>
 
-                  <TouchableOpacity
-                    activeOpacity={0.85}
-                    onPress={handleShopRecipeKit}
-                    style={styles.brewingCtaRow}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Icon name="shopping-bag" size={13} color="#0A3622" />
-                      <Text style={styles.brewingCtaText}>Add Recipe Essentials to Cart</Text>
-                    </View>
-                    <Icon name="arrow-right" size={13} color="#0A3622" />
-                  </TouchableOpacity>
                 </View>
               </View>
 

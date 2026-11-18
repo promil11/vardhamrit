@@ -49,6 +49,11 @@ export default function CartScreen() {
     isSyncing,
   } = useCartStore();
 
+  const totalCount = getTotalItemsCount();
+  const subtotal = getSubtotal();
+  const totalSavings = getTotalSavings();
+  const couponDiscount = getCouponDiscount();
+
   const [couponSheetVisible, setCouponSheetVisible] = useState(false);
   const [addressSheetVisible, setAddressSheetVisible] = useState(false);
   const [addAddressModalVisible, setAddAddressModalVisible] = useState(false);
@@ -139,9 +144,14 @@ export default function CartScreen() {
     loadAddresses();
   }, []);
 
-  // Validate applied coupon against backend on mount
+  // Validate applied coupon against backend and cart value
   useEffect(() => {
     if (appliedCoupon?.code) {
+      const minVal = Number(appliedCoupon.minOrderValue || 0);
+      if (minVal > 0 && subtotal < minVal) {
+        removeCoupon();
+        return;
+      }
       api
         .post('/api/v1/coupons/validate', {
           code: appliedCoupon.code,
@@ -152,7 +162,7 @@ export default function CartScreen() {
           removeCoupon();
         });
     }
-  }, [appliedCoupon?.code]);
+  }, [appliedCoupon?.code, subtotal]);
 
   // Real-time socket: If coupon is disabled by admin while viewing cart, remove it immediately
   useEffect(() => {
@@ -174,11 +184,6 @@ export default function CartScreen() {
       socket.off('coupons.updated', handleCouponDeactivated);
     };
   }, [appliedCoupon]);
-
-  const totalCount = getTotalItemsCount();
-  const subtotal = getSubtotal();
-  const totalSavings = getTotalSavings();
-  const couponDiscount = getCouponDiscount();
 
   // Dynamic distance-based fees (< 500m => Delivery: ₹30, Handling: ₹5)
   const currentDeliveryFee = distanceInfo
@@ -417,7 +422,7 @@ export default function CartScreen() {
                     <View style={styles.tagIconCircle}>
                       <Icon name="tag" size={16} color={theme.colors.primary} />
                     </View>
-                    {appliedCoupon ? (
+                    {appliedCoupon && (!appliedCoupon.minOrderValue || subtotal >= appliedCoupon.minOrderValue) ? (
                       <View>
                         <Text style={styles.couponCodeText}>
                           Coupon '{appliedCoupon.code}' Applied
@@ -438,7 +443,7 @@ export default function CartScreen() {
 
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
                     <Text style={styles.couponArrow}>
-                      {appliedCoupon ? 'Change' : 'View Offers'}
+                      {appliedCoupon && (!appliedCoupon.minOrderValue || subtotal >= appliedCoupon.minOrderValue) ? 'Change' : 'View Offers'}
                     </Text>
                     <Icon name="chevron-right" size={14} color={theme.colors.primary} />
                   </View>

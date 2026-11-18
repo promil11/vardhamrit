@@ -80,6 +80,11 @@ export default function CheckoutScreen() {
     getTotalItemsCount,
   } = useCartStore();
 
+  const totalCount = getTotalItemsCount();
+  const subtotal = getSubtotal();
+  const baseSavings = getTotalSavings();
+  const couponDiscount = getCouponDiscount();
+
   const {
     addresses,
     selectedAddress,
@@ -188,9 +193,14 @@ export default function CheckoutScreen() {
     };
   }, []);
 
-  // Check validity of applied coupon on checkout mount
+  // Check validity of applied coupon on checkout mount and when subtotal changes
   useEffect(() => {
     if (appliedCoupon?.code) {
+      const minVal = Number(appliedCoupon.minOrderValue || 0);
+      if (minVal > 0 && subtotal < minVal) {
+        removeCoupon();
+        return;
+      }
       api
         .post('/api/v1/coupons/validate', {
           code: appliedCoupon.code,
@@ -201,7 +211,7 @@ export default function CheckoutScreen() {
           removeCoupon();
         });
     }
-  }, [appliedCoupon?.code]);
+  }, [appliedCoupon?.code, subtotal]);
 
   // Real-time socket: If coupon is disabled while user is on checkout screen, remove it immediately
   useEffect(() => {
@@ -231,11 +241,6 @@ export default function CheckoutScreen() {
       console.warn('Error saving new address to DB:', e);
     }
   };
-
-  const totalCount = getTotalItemsCount();
-  const subtotal = getSubtotal();
-  const baseSavings = getTotalSavings();
-  const couponDiscount = getCouponDiscount();
 
   // Dynamic fees based on distance (< 500m => Delivery: ₹30, Handling: ₹5)
   const deliveryFee = distanceInfo.isServiceable ? distanceInfo.deliveryFee : 0;

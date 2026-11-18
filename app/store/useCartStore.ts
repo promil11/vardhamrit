@@ -102,6 +102,15 @@ const scheduleBackendSync = (userId: number | string | null, items: CartItem[]) 
   }, 350);
 };
 
+// Helper to check if an applied coupon meets the minimum order value requirement
+export const validateCouponEligibility = (items: CartItem[], coupon: Coupon | null): Coupon | null => {
+  if (!coupon) return null;
+  const min = Number(coupon.minOrderValue || 0);
+  if (min <= 0) return coupon;
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  return subtotal >= min ? coupon : null;
+};
+
 // Initial synchronous load for Web
 const initialUser = storage.getUserSync();
 const initialUserId = initialUser?.id ?? null;
@@ -118,7 +127,8 @@ try {
     if (Array.isArray(parsed.items)) {
       initialItems = parsed.items;
     }
-    initialCoupon = parsed.appliedCoupon || null;
+    const parsedCoupon = parsed.appliedCoupon || null;
+    initialCoupon = validateCouponEligibility(initialItems, parsedCoupon);
   }
 } catch {
   // Ignore synchronous parse error
@@ -220,9 +230,10 @@ export const useCartStore = create<CartState>((set, get) => ({
         );
       }
 
-      persistCartData(state.currentUserId, updatedItems, state.appliedCoupon);
+      const validCoupon = validateCouponEligibility(updatedItems, state.appliedCoupon);
+      persistCartData(state.currentUserId, updatedItems, validCoupon);
       scheduleBackendSync(state.currentUserId, updatedItems);
-      return { items: updatedItems };
+      return { items: updatedItems, appliedCoupon: validCoupon };
     });
   },
 
@@ -239,9 +250,10 @@ export const useCartStore = create<CartState>((set, get) => ({
           )
       );
 
-      persistCartData(state.currentUserId, updatedItems, state.appliedCoupon);
+      const validCoupon = validateCouponEligibility(updatedItems, state.appliedCoupon);
+      persistCartData(state.currentUserId, updatedItems, validCoupon);
       scheduleBackendSync(state.currentUserId, updatedItems);
-      return { items: updatedItems };
+      return { items: updatedItems, appliedCoupon: validCoupon };
     });
   },
 
@@ -274,9 +286,10 @@ export const useCartStore = create<CartState>((set, get) => ({
           updated.push({ ...item });
         }
       }
-      persistCartData(state.currentUserId, updated, state.appliedCoupon);
+      const validCoupon = validateCouponEligibility(updated, state.appliedCoupon);
+      persistCartData(state.currentUserId, updated, validCoupon);
       scheduleBackendSync(state.currentUserId, updated);
-      return { items: updated };
+      return { items: updated, appliedCoupon: validCoupon };
     });
   },
 
@@ -372,7 +385,8 @@ export const useCartStore = create<CartState>((set, get) => ({
         try {
           const parsed = JSON.parse(raw);
           loadedItems = Array.isArray(parsed.items) ? parsed.items : [];
-          loadedCoupon = parsed.appliedCoupon || null;
+          const parsedCoupon = parsed.appliedCoupon || null;
+          loadedCoupon = validateCouponEligibility(loadedItems, parsedCoupon);
         } catch { }
       }
 
@@ -427,8 +441,9 @@ export const useCartStore = create<CartState>((set, get) => ({
             }
           }
 
-          set({ items: finalItems });
-          persistCartData(currentUserId, finalItems, get().appliedCoupon);
+          const validCoupon = validateCouponEligibility(finalItems, get().appliedCoupon);
+          set({ items: finalItems, appliedCoupon: validCoupon });
+          persistCartData(currentUserId, finalItems, validCoupon);
         } else if (items.length > 0) {
           // If backend has no items but frontend has local items, push them to backend
           const payload = items.map((i) => ({
@@ -479,6 +494,10 @@ export const useCartStore = create<CartState>((set, get) => ({
     const { appliedCoupon } = get();
     if (!appliedCoupon) return 0;
     const subtotal = get().getSubtotal();
+    const minOrderValue = Number(appliedCoupon.minOrderValue || 0);
+    if (minOrderValue > 0 && subtotal < minOrderValue) {
+      return 0;
+    }
 
     if (appliedCoupon.discountType === 'PERCENT') {
       const discount = (subtotal * appliedCoupon.discountValue) / 100;

@@ -141,7 +141,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           >
             <Icon
               name="heart"
-              size={isTablet ? 16 : 13}
+              size={isTablet ? 22 : 19}
               color={isFavorite ? '#DC2626' : '#6B7280'}
               fill={isFavorite ? '#DC2626' : 'transparent'}
             />
