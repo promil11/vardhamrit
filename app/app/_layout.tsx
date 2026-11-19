@@ -143,6 +143,8 @@ const RESPONSIVE_ENGINE_CSS = `
       margin: 0 auto;
       box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
       background-color: #FFFFFF;
+      position: relative !important;
+      overflow-x: hidden !important;
     }
   }
 

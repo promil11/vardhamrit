@@ -546,7 +546,7 @@ export default function CartScreen() {
               style={styles.bottomAddressSection}
             >
               <View style={styles.addressTagRow}>
-                <Text style={styles.bottomTagText}>
+                <Text style={styles.bottomTagText} numberOfLines={1} ellipsizeMode="tail">
                   {selectedAddress && addresses.length > 0
                     ? `DELIVER TO ${selectedAddress.tag}`
                     : selectedAddress?.tag === 'Current Location'
@@ -554,7 +554,7 @@ export default function CartScreen() {
                       : 'DELIVERY ADDRESS'}
                 </Text>
               </View>
-              <Text style={styles.bottomAddrLine} numberOfLines={1}>
+              <Text style={styles.bottomAddrLine} numberOfLines={1} ellipsizeMode="tail">
                 {selectedAddress
                   ? (selectedAddress.line1 && selectedAddress.line1.includes(selectedAddress.city)
                     ? selectedAddress.line1
@@ -647,6 +647,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    position: 'relative',
+    overflow: 'hidden',
+    width: '100%',
   },
   topNav: {
     backgroundColor: theme.colors.surface,
@@ -1069,11 +1072,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    width: '100%',
+    maxWidth: '100%',
     backgroundColor: theme.colors.surface,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
-    paddingHorizontal: theme.spacing.base,
-    paddingTop: theme.spacing.sm + 2,
+    paddingHorizontal: 12,
+    paddingTop: 10,
     paddingBottom: Platform.OS === 'ios' ? 28 : theme.spacing.base,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1081,12 +1086,15 @@ const styles = StyleSheet.create({
     ...theme.shadows.card,
   },
   bottomAddressSection: {
-    maxWidth: '45%',
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
+    justifyContent: 'center',
   },
   addressTagRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   bottomTagText: {
     fontSize: theme.typography.scale.xs - 2,
@@ -1107,18 +1115,19 @@ const styles = StyleSheet.create({
   proceedBtnWrapper: {
     borderRadius: theme.radius.md,
     overflow: 'hidden',
+    flexShrink: 0,
     ...theme.shadows.card,
   },
   proceedBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.sm + 2,
-    paddingHorizontal: theme.spacing.base,
-    gap: theme.spacing.md,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 8,
   },
   proceedPrice: {
     color: theme.colors.textInverse,
-    fontSize: theme.typography.scale.md,
+    fontSize: 14.5,
     fontWeight: theme.typography.weights.extraBold,
   },
   proceedSub: {
@@ -1129,11 +1138,11 @@ const styles = StyleSheet.create({
   proceedCta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   proceedBtnText: {
     color: theme.colors.textInverse,
-    fontSize: theme.typography.scale.sm,
+    fontSize: 13,
     fontWeight: theme.typography.weights.extraBold,
   },
 });
