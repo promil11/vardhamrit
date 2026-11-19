@@ -150,6 +150,7 @@ export default function TabLayout() {
         name="cart"
         options={{
           href: null,
+          tabBarStyle: { display: 'none' },
         }}
       />
     </Tabs>

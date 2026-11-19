@@ -27,9 +27,11 @@ import { getFullImageUrl } from '../../utils/imageUtils';
 import { api } from '../../services/api';
 import { socket } from '../../services/socketService';
 import { useResponsive } from '../../utils/responsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CartScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { isTablet } = useResponsive();
   const {
     items,
@@ -305,7 +307,10 @@ export default function CartScreen() {
             data={items}
             keyExtractor={(item) => item.id}
             renderItem={renderCartItem}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: Math.max(insets.bottom + 120, 150) },
+            ]}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
               <>
@@ -523,7 +528,12 @@ export default function CartScreen() {
           />
 
           {/* 7. Sticky Bottom Address + Proceed to Pay Bar */}
-          <View style={styles.bottomBar}>
+          <View
+            style={[
+              styles.bottomBar,
+              { paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 14) },
+            ]}
+          >
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => {
@@ -693,7 +703,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: theme.spacing.base,
-    paddingBottom: 130,
+    paddingBottom: 150,
   },
   deliveryBanner: {
     backgroundColor: theme.colors.surface,
