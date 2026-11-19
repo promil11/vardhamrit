@@ -33,14 +33,14 @@ const parseVariantLabel = (rawLabel: string) => {
   if (!rawLabel) return { size: 'Pack', tag: null };
   const label = rawLabel.trim();
 
-  // Pattern 1: e.g. "400 g (Twin Pack)" or "1 kg (Saver Pack)"
+  // Pattern 1: e.g. "500 g (Family Pack)" or "1 kg (Saver Pack)"
   const parenMatch = label.match(/^([^(]+?)\s*\(([^)]+)\)$/);
   if (parenMatch) {
     return { size: parenMatch[1].trim(), tag: parenMatch[2].trim() };
   }
 
   // Pattern 2: e.g. "1 kg Saver" or "500 g Value Pack"
-  const tagKeywords = ['Saver Pack', 'Super Saver', 'Saver', 'Twin Pack', 'Family Pack', 'Value Pack', 'Combo', 'Trial'];
+  const tagKeywords = ['Saver Pack', 'Super Saver', 'Saver', 'Family Pack', 'Value Pack', 'Combo', 'Trial'];
   for (const kw of tagKeywords) {
     const reg = new RegExp(`^(.*?)\\s+(${kw}.*)$`, 'i');
     const m = label.match(reg);

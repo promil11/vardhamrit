@@ -61,7 +61,7 @@ export const Products: React.FC = () => {
     Array<{ id?: number; label: string; price: number; mrp: number; stock: number; sku: string }>
   >([
     { label: '200 g', price: 129, mrp: 160, stock: 100, sku: '' },
-    { label: '400 g (Twin Pack)', price: 239, mrp: 299, stock: 80, sku: '' },
+    { label: '400 g', price: 239, mrp: 299, stock: 80, sku: '' },
     { label: '500 g', price: 279, mrp: 349, stock: 60, sku: '' },
     { label: '1 kg Saver', price: 519, mrp: 649, stock: 40, sku: '' },
   ]);
@@ -82,7 +82,7 @@ export const Products: React.FC = () => {
     setIsActive(true);
     setVariants([
       { label: '200 g', price: 129, mrp: 160, stock: 100, sku: `TEA-${Date.now()}-200G` },
-      { label: '400 g (Twin Pack)', price: 239, mrp: 299, stock: 80, sku: `TEA-${Date.now()}-400G` },
+      { label: '400 g', price: 239, mrp: 299, stock: 80, sku: `TEA-${Date.now()}-400G` },
       { label: '500 g', price: 279, mrp: 349, stock: 60, sku: `TEA-${Date.now()}-500G` },
       { label: '1 kg Saver', price: 519, mrp: 649, stock: 40, sku: `TEA-${Date.now()}-1KG` },
     ]);
@@ -245,11 +245,10 @@ export const Products: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setCategoryFilter(tab.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
-                  categoryFilter === tab.id
-                    ? 'bg-emerald-800 text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                }`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all ${categoryFilter === tab.id
+                  ? 'bg-emerald-800 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
               >
                 {tab.label}
               </button>
@@ -281,22 +280,20 @@ export const Products: React.FC = () => {
             <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-lg transition-all ${
-                  viewMode === 'grid'
-                    ? 'bg-white text-emerald-800 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid'
+                  ? 'bg-white text-emerald-800 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+                  }`}
                 title="Grid view"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-1.5 rounded-lg transition-all ${
-                  viewMode === 'table'
-                    ? 'bg-white text-emerald-800 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'table'
+                  ? 'bg-white text-emerald-800 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+                  }`}
                 title="Table view"
               >
                 <List className="w-4 h-4" />
@@ -352,16 +349,14 @@ export const Products: React.FC = () => {
                         ESTATE BLEND
                       </span>
                       <span
-                        className={`inline-flex items-center gap-1.5 text-[10px] font-black px-2.5 py-1 rounded-full border shadow-2xs ${
-                          p.is_active
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
-                            : 'bg-slate-100 text-slate-500 border-slate-200'
-                        }`}
+                        className={`inline-flex items-center gap-1.5 text-[10px] font-black px-2.5 py-1 rounded-full border shadow-2xs ${p.is_active
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                          }`}
                       >
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            p.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
-                          }`}
+                          className={`w-1.5 h-1.5 rounded-full ${p.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                            }`}
                         />
                         {p.is_active ? 'ACTIVE' : 'DRAFT'}
                       </span>
@@ -411,11 +406,10 @@ export const Products: React.FC = () => {
                           Total Stock
                         </span>
                         <span
-                          className={`inline-flex items-center text-[11px] font-black px-2 py-0.5 rounded-md border ${
-                            hasLowStock
-                              ? 'bg-amber-50 text-amber-700 border-amber-200'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          }`}
+                          className={`inline-flex items-center text-[11px] font-black px-2 py-0.5 rounded-md border ${hasLowStock
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            }`}
                         >
                           {totalStock} units
                         </span>
@@ -466,11 +460,10 @@ export const Products: React.FC = () => {
                                 )}
 
                                 <span
-                                  className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-md shrink-0 ${
-                                    isLow
-                                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                      : 'bg-slate-100 text-slate-600'
-                                  }`}
+                                  className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-md shrink-0 ${isLow
+                                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                    : 'bg-slate-100 text-slate-600'
+                                    }`}
                                   title={`${stockCount} units available`}
                                 >
                                   {stockCount}
@@ -551,11 +544,10 @@ export const Products: React.FC = () => {
                               return (
                                 <span
                                   key={v.id}
-                                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                                    stockCount <= 15
-                                      ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                      : 'bg-slate-50 text-slate-700 border-slate-200'
-                                  }`}
+                                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${stockCount <= 15
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : 'bg-slate-50 text-slate-700 border-slate-200'
+                                    }`}
                                 >
                                   {v.label}: ₹{v.price} ({stockCount})
                                 </span>
@@ -568,11 +560,10 @@ export const Products: React.FC = () => {
                         </td>
                         <td className="py-3.5 px-4">
                           <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-black ${
-                              p.is_active
-                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                                : 'bg-slate-100 text-slate-500 border border-slate-200'
-                            }`}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-black ${p.is_active
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                              : 'bg-slate-100 text-slate-500 border border-slate-200'
+                              }`}
                           >
                             {p.is_active ? 'ACTIVE' : 'DRAFT'}
                           </span>
@@ -664,11 +655,10 @@ export const Products: React.FC = () => {
                       key={preset.path}
                       type="button"
                       onClick={() => setImageUrl(preset.path)}
-                      className={`p-2.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
-                        imageUrl === preset.path
-                          ? 'border-emerald-600 bg-emerald-50/70 shadow-xs'
-                          : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
-                      }`}
+                      className={`p-2.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${imageUrl === preset.path
+                        ? 'border-emerald-600 bg-emerald-50/70 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
+                        }`}
                     >
                       <div className="w-12 h-12 flex items-center justify-center">
                         <img src={preset.preview} alt={preset.label} className="w-full h-full object-contain" />
@@ -833,13 +823,12 @@ export const Products: React.FC = () => {
                                   const calculatedMrp = pct > 0 ? Math.round(price / (1 - pct / 100)) : price;
                                   updateVariant(idx, 'mrp', calculatedMrp);
                                 }}
-                                className={`px-2 py-0.5 rounded-lg text-[10px] font-black transition-colors ${
-                                  discountPct === pct
-                                    ? pct === 0
-                                      ? 'bg-slate-700 text-white shadow-xs'
-                                      : 'bg-rose-600 text-white shadow-xs'
-                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
-                                }`}
+                                className={`px-2 py-0.5 rounded-lg text-[10px] font-black transition-colors ${discountPct === pct
+                                  ? pct === 0
+                                    ? 'bg-slate-700 text-white shadow-xs'
+                                    : 'bg-rose-600 text-white shadow-xs'
+                                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
+                                  }`}
                               >
                                 {pct === 0 ? '0% (None)' : `${pct}%`}
                               </button>
@@ -968,11 +957,10 @@ export const Products: React.FC = () => {
 
             <button
               onClick={() => setFeedback(null)}
-              className={`w-full py-3 rounded-2xl font-black text-xs shadow-sm transition-all active:scale-95 ${
-                feedback.type === 'success'
-                  ? 'bg-emerald-800 hover:bg-emerald-700 text-white'
-                  : 'bg-slate-900 hover:bg-slate-800 text-white'
-              }`}
+              className={`w-full py-3 rounded-2xl font-black text-xs shadow-sm transition-all active:scale-95 ${feedback.type === 'success'
+                ? 'bg-emerald-800 hover:bg-emerald-700 text-white'
+                : 'bg-slate-900 hover:bg-slate-800 text-white'
+                }`}
             >
               {feedback.type === 'success' ? 'Great, Got It' : 'Dismiss'}
             </button>

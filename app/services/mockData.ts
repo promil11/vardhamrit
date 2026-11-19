@@ -139,7 +139,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Original Assam', 'Rich & Robust', 'Single Estate'],
     variants: [
       { id: 81, label: '200 g', weightGrams: 200, price: 129, mrp: 160, stock: 50 },
-      { id: 107, label: '400 g (Twin Pack)', weightGrams: 400, price: 239, mrp: 320, stock: 40 },
+      { id: 107, label: '400 g', weightGrams: 400, price: 239, mrp: 320, stock: 40 },
       { id: 82, label: '500 g', weightGrams: 500, price: 279, mrp: 350, stock: 44 },
       { id: 83, label: '1 kg Saver', weightGrams: 1000, price: 519, mrp: 650, stock: 30 },
     ],
@@ -165,7 +165,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Morning Kadak', 'Extra Punch', 'Dark Granules'],
     variants: [
       { id: 84, label: '200 g', weightGrams: 200, price: 129, mrp: 160, stock: 60 },
-      { id: 108, label: '400 g (Twin Pack)', weightGrams: 400, price: 219, mrp: 300, stock: 35 },
+      { id: 108, label: '400 g', weightGrams: 400, price: 219, mrp: 300, stock: 35 },
       { id: 85, label: '500 g', weightGrams: 500, price: 259, mrp: 330, stock: 40 },
       { id: 86, label: '1 kg Saver', weightGrams: 1000, price: 489, mrp: 620, stock: 25 },
     ],
@@ -191,7 +191,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Gold Tipped', 'Orthodox Blend', 'Supreme Aroma'],
     variants: [
       { id: 87, label: '200 g', weightGrams: 200, price: 129, mrp: 160, stock: 45 },
-      { id: 109, label: '400 g (Twin Pack)', weightGrams: 400, price: 279, mrp: 380, stock: 30 },
+      { id: 109, label: '400 g', weightGrams: 400, price: 279, mrp: 380, stock: 30 },
       { id: 88, label: '500 g', weightGrams: 500, price: 319, mrp: 425, stock: 35 },
       { id: 122, label: '1 kg Saver', weightGrams: 1000, price: 599, mrp: 800, stock: 20 },
     ],
@@ -219,7 +219,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Spiced & Aromatic', '7 Whole Spices', 'Royal Recipe'],
     variants: [
       { id: 89, label: '200 g', weightGrams: 200, price: 169, mrp: 225, stock: 60 },
-      { id: 110, label: '400 g (Twin Pack)', weightGrams: 400, price: 319, mrp: 430, stock: 40 },
+      { id: 110, label: '400 g', weightGrams: 400, price: 319, mrp: 430, stock: 40 },
       { id: 90, label: '500 g', weightGrams: 500, price: 379, mrp: 510, stock: 25 },
       { id: 119, label: '1 kg Saver', weightGrams: 1000, price: 699, mrp: 950, stock: 20 },
     ],
@@ -245,7 +245,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Immunity Shield', '12 Herbs', 'Ayurvedic'],
     variants: [
       { id: 91, label: '200 g', weightGrams: 200, price: 169, mrp: 225, stock: 40 },
-      { id: 111, label: '400 g (Twin Pack)', weightGrams: 400, price: 349, mrp: 460, stock: 30 },
+      { id: 111, label: '400 g', weightGrams: 400, price: 349, mrp: 460, stock: 30 },
       { id: 92, label: '500 g', weightGrams: 500, price: 419, mrp: 550, stock: 20 },
       { id: 123, label: '1 kg Saver', weightGrams: 1000, price: 769, mrp: 1020, stock: 15 },
     ],
@@ -271,7 +271,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Malabar Spices', 'Green Elaichi', 'Zesty Pepper'],
     variants: [
       { id: 93, label: '200 g', weightGrams: 200, price: 169, mrp: 225, stock: 50 },
-      { id: 112, label: '400 g (Twin Pack)', weightGrams: 400, price: 299, mrp: 400, stock: 35 },
+      { id: 112, label: '400 g', weightGrams: 400, price: 299, mrp: 400, stock: 35 },
       { id: 94, label: '500 g', weightGrams: 500, price: 359, mrp: 460, stock: 30 },
       { id: 124, label: '1 kg Saver', weightGrams: 1000, price: 649, mrp: 880, stock: 20 },
     ],
@@ -299,7 +299,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Exotic & Fragrant', 'Grade-A Saffron', 'Royal Heritage'],
     variants: [
       { id: 95, label: '200 g', weightGrams: 200, price: 299, mrp: 399, stock: 25 },
-      { id: 113, label: '400 g (Twin Pack)', weightGrams: 400, price: 569, mrp: 750, stock: 25 },
+      { id: 113, label: '400 g', weightGrams: 400, price: 569, mrp: 750, stock: 25 },
       { id: 96, label: '500 g Gift Box', weightGrams: 500, price: 649, mrp: 820, stock: 20 },
       { id: 120, label: '1 kg Saver', weightGrams: 1000, price: 1199, mrp: 1550, stock: 15 },
     ],
@@ -325,7 +325,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Pampore Saffron', 'Golden Liquor', 'Pure Mogra'],
     variants: [
       { id: 97, label: '200 g', weightGrams: 200, price: 299, mrp: 399, stock: 30 },
-      { id: 114, label: '400 g (Twin Pack)', weightGrams: 400, price: 599, mrp: 800, stock: 20 },
+      { id: 114, label: '400 g', weightGrams: 400, price: 599, mrp: 800, stock: 20 },
       { id: 98, label: '500 g', weightGrams: 500, price: 699, mrp: 890, stock: 15 },
       { id: 125, label: '1 kg Saver', weightGrams: 1000, price: 1299, mrp: 1700, stock: 15 },
     ],
@@ -351,7 +351,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Roasted Pista', 'Royal Festive', 'Crunchy Nuts'],
     variants: [
       { id: 99, label: '200 g', weightGrams: 200, price: 299, mrp: 399, stock: 25 },
-      { id: 115, label: '400 g (Twin Pack)', weightGrams: 400, price: 649, mrp: 860, stock: 20 },
+      { id: 115, label: '400 g', weightGrams: 400, price: 649, mrp: 860, stock: 20 },
       { id: 100, label: '500 g', weightGrams: 500, price: 749, mrp: 960, stock: 15 },
       { id: 126, label: '1 kg Saver', weightGrams: 1000, price: 1399, mrp: 1850, stock: 15 },
     ],
@@ -379,7 +379,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Indulgent & Velvet', 'Dark Cocoa Nibs', 'Dessert Chai'],
     variants: [
       { id: 101, label: '200 g', weightGrams: 200, price: 189, mrp: 240, stock: 34 },
-      { id: 116, label: '400 g (Twin Pack)', weightGrams: 400, price: 349, mrp: 460, stock: 30 },
+      { id: 116, label: '400 g', weightGrams: 400, price: 349, mrp: 460, stock: 30 },
       { id: 102, label: '500 g Pouch', weightGrams: 500, price: 419, mrp: 499, stock: 20 },
       { id: 121, label: '1 kg Saver', weightGrams: 1000, price: 799, mrp: 1050, stock: 20 },
     ],
@@ -405,7 +405,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Dutch Cocoa', '70% Dark', 'Rich Malty'],
     variants: [
       { id: 103, label: '200 g', weightGrams: 200, price: 189, mrp: 240, stock: 40 },
-      { id: 117, label: '400 g (Twin Pack)', weightGrams: 400, price: 379, mrp: 500, stock: 25 },
+      { id: 117, label: '400 g', weightGrams: 400, price: 379, mrp: 500, stock: 25 },
       { id: 104, label: '500 g', weightGrams: 500, price: 449, mrp: 590, stock: 25 },
       { id: 127, label: '1 kg Saver', weightGrams: 1000, price: 849, mrp: 1120, stock: 20 },
     ],
@@ -431,7 +431,7 @@ export const MOCK_PRODUCTS: Product[] = [
     badges: ['Crushed Beans', 'Sweet Cinnamon', 'Velvet Aroma'],
     variants: [
       { id: 105, label: '200 g', weightGrams: 200, price: 189, mrp: 240, stock: 35 },
-      { id: 118, label: '400 g (Twin Pack)', weightGrams: 400, price: 369, mrp: 480, stock: 25 },
+      { id: 118, label: '400 g', weightGrams: 400, price: 369, mrp: 480, stock: 25 },
       { id: 106, label: '500 g', weightGrams: 500, price: 429, mrp: 540, stock: 20 },
       { id: 128, label: '1 kg Saver', weightGrams: 1000, price: 819, mrp: 1080, stock: 20 },
     ],
