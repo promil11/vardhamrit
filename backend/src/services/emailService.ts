@@ -98,6 +98,9 @@ async function sendViaResendHttp(
       return true;
     }
     console.error('[EmailService] ❌ Resend API returned error:', data);
+    if (data?.message?.includes('testing emails')) {
+      console.error('[EmailService] ⚠️ Resend Sandbox Limitation: To send emails to recipients other than promiljain11@gmail.com, verify your custom domain at https://resend.com/domains and set RESEND_FROM in Render env.');
+    }
   } catch (err: any) {
     console.error('[EmailService] ❌ Failed to call Resend API:', err.message);
   }
