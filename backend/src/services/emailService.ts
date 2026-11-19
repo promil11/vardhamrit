@@ -110,6 +110,46 @@ async function sendViaResendHttp(
   return false;
 }
 
+async function sendViaSendGridHttp(
+  to: string,
+  subject: string,
+  htmlContent: string,
+  plainText: string,
+  fromName: string,
+  fromEmail: string
+): Promise<boolean> {
+  const apiKey = process.env.SENDGRID_API_KEY;
+  if (!apiKey) return false;
+
+  try {
+    const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey.trim()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email: to }] }],
+        from: { email: fromEmail, name: fromName },
+        subject,
+        content: [
+          { type: 'text/plain', value: plainText },
+          { type: 'text/html', value: htmlContent },
+        ],
+      }),
+    });
+    if (res.status === 202 || res.ok) {
+      console.log(`[EmailService] ✅ Email OTP sent via SendGrid API to ${to}`);
+      return true;
+    }
+    const data = await res.json().catch(() => null);
+    console.error('[EmailService] ❌ SendGrid API error:', data);
+  } catch (err: any) {
+    console.error('[EmailService] ❌ Failed to call SendGrid API:', err.message);
+  }
+  return false;
+}
+
 async function sendViaBrevoHttp(
   to: string,
   subject: string,
@@ -221,7 +261,19 @@ export async function sendOtpEmail({ to, otp, userName, purpose = 'Login' }: Sen
     if (sent) return { sent: true };
   }
 
-  // 2. Direct SMTP transporter (Gmail App Password fallback for any recipient)
+  // 2. Try SendGrid HTTP API (Port 443 - works on Render to ANY recipient without custom domain)
+  if (process.env.SENDGRID_API_KEY) {
+    const sent = await sendViaSendGridHttp(to, subject, htmlContent, plainText, fromName, fromEmail);
+    if (sent) return { sent: true };
+  }
+
+  // 3. Try Brevo HTTP API (Port 443)
+  if (process.env.BREVO_API_KEY) {
+    const sent = await sendViaBrevoHttp(to, subject, htmlContent, plainText, fromName, fromEmail);
+    if (sent) return { sent: true };
+  }
+
+  // 4. Direct SMTP transporter (Gmail App Password fallback for any recipient)
   const activeTransporter = getTransporter();
 
   if (activeTransporter) {
