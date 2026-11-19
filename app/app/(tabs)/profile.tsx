@@ -11,6 +11,7 @@ import {
   RefreshControl,
   Share,
   Animated,
+  Linking,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -283,24 +284,78 @@ export default function ProfileScreen() {
   };
 
   const userReferralCode = userProfile?.referral_code || user?.referral_code || '';
+  const [copiedReferral, setCopiedReferral] = useState(false);
 
-  const handleCopyReferral = async () => {
-    const code = userReferralCode;
+  const getInviteMessage = (code: string) => {
+    const inviteLink = `https://vardhamrit.onrender.com/auth/register?code=${code}`;
+    return `Hey! ☕ I'm inviting you to try fresh single-estate Assam tea from *Vardhamrit*.\n\nUse my invite code *${code}* during signup to get *50 free Tea Coins (₹50 value)* on your account!\n\nOrder fresh from estate here:\n${inviteLink}`;
+  };
+
+  const handleCopyReferralCode = async () => {
+    const code = userReferralCode || 'VARDHAMRIT50';
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch { }
+    }
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch { }
+    }
+    setCopiedReferral(true);
+    setTimeout(() => {
+      setCopiedReferral(false);
+    }, 2500);
+  };
+
+  const handleWhatsAppShare = async () => {
+    const code = userReferralCode || 'VARDHAMRIT50';
+    const message = getInviteMessage(code);
+    const encoded = encodeURIComponent(message);
+    const whatsappNativeUrl = `whatsapp://send?text=${encoded}`;
+    const whatsappWebUrl = `https://api.whatsapp.com/send?text=${encoded}`;
+
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch { }
+    }
+
     try {
-      if (Platform.OS !== 'web') {
-        try {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        } catch { }
+      const canOpen = await Linking.canOpenURL(whatsappNativeUrl);
+      if (canOpen) {
+        await Linking.openURL(whatsappNativeUrl);
+        return;
       }
+    } catch { }
+
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.open(whatsappWebUrl, '_blank');
+      } else {
+        await Linking.openURL(whatsappWebUrl);
+      }
+    } catch {
+      handleNativeShare();
+    }
+  };
+
+  const handleNativeShare = async () => {
+    const code = userReferralCode || 'VARDHAMRIT50';
+    const message = getInviteMessage(code);
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch { }
+    }
+    try {
       await Share.share({
-        message: `Join Vardhamrit with my invite code "${code}" and get 50 extra Tea Coins (₹50 value) to spend on single-estate royal teas! Download: https://vardhamrit.com/join?code=${code}`,
+        message,
         title: 'Invite a Friend to Vardhamrit Tea Club',
       });
-    } catch (e) {
-      Alert.alert(
-        'Invite Code Copied! 🎁',
-        `Share code "${code}" with friends. When they create an account, you BOTH get 50 Tea Coins (₹50 value)!`
-      );
+    } catch {
+      handleCopyReferralCode();
     }
   };
 
@@ -674,17 +729,49 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             </View>
+
+            {/* Referral Code Box with Tap-to-Copy */}
             <TouchableOpacity
               activeOpacity={0.85}
-              onPress={handleCopyReferral}
+              onPress={handleCopyReferralCode}
               style={styles.referCodeBtn}
             >
-              <Text style={styles.referCodeText}>Code: {userReferralCode}</Text>
-              <View style={styles.referCopyPill}>
-                <Icon name="share" size={11} color="#FFFFFF" />
-                <Text style={styles.referCopyText}>Share</Text>
+              <View style={styles.referCodeLeft}>
+                <Text style={styles.referCodeLabel}>Your Invite Code</Text>
+                <Text style={styles.referCodeText}>{userReferralCode || 'VARDHAMRIT50'}</Text>
+              </View>
+              <View style={[styles.referCopyPill, copiedReferral && styles.referCopyPillSuccess]}>
+                <Icon
+                  name={copiedReferral ? 'check' : 'copy'}
+                  size={11}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.referCopyText}>
+                  {copiedReferral ? 'Copied!' : 'Copy Code'}
+                </Text>
               </View>
             </TouchableOpacity>
+
+            {/* Sharing Action Buttons */}
+            <View style={styles.referActionsRow}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleWhatsAppShare}
+                style={styles.referWhatsAppBtn}
+              >
+                <Icon name="whatsapp" size={16} color="#FFFFFF" />
+                <Text style={styles.referWhatsAppText}>Share on WhatsApp</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleNativeShare}
+                style={styles.referOtherShareBtn}
+                accessibilityLabel="Share options"
+              >
+                <Icon name="share" size={15} color="#92400E" />
+              </TouchableOpacity>
+            </View>
           </LinearGradient>
 
           {/* 7. QUICK SERVICES & SUPPORT MENU */}
@@ -1452,7 +1539,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   referTitle: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: theme.typography.weights.extraBold,
     color: '#92400E',
   },
@@ -1460,6 +1547,7 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     color: '#78350F',
     marginTop: 2,
+    lineHeight: 15,
   },
   referCodeBtn: {
     backgroundColor: '#FFFFFF',
@@ -1471,26 +1559,77 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: '#FCD34D',
+    marginBottom: 10,
+  },
+  referCodeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  referCodeLabel: {
+    fontSize: 11,
+    fontWeight: theme.typography.weights.bold,
+    color: '#78350F',
   },
   referCodeText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: theme.typography.weights.extraBold,
     color: '#92400E',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   referCopyPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#B45309',
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 6,
-    gap: 3,
+    gap: 4,
+  },
+  referCopyPillSuccess: {
+    backgroundColor: '#059669',
   },
   referCopyText: {
     fontSize: 10,
     fontWeight: theme.typography.weights.extraBold,
     color: '#FFFFFF',
+  },
+  referActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  referWhatsAppBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#25D366',
+    borderRadius: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    gap: 7,
+    shadowColor: '#128C7E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  referWhatsAppText: {
+    fontSize: 12,
+    fontWeight: theme.typography.weights.extraBold,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
+  referOtherShareBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FCD34D',
   },
   menuCard: {
     backgroundColor: '#FFFFFF',
