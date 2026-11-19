@@ -95,11 +95,6 @@ export default function LoginScreen() {
       setLoading(false);
       setEmailOtpSent(true);
       setEmailTimer(60);
-      if (res?.debugOtp) {
-        setDevOtpHint(res.debugOtp);
-      } else {
-        setDevOtpHint(null);
-      }
     } catch (err: any) {
       setLoading(false);
       const isNotFound =
@@ -205,11 +200,6 @@ export default function LoginScreen() {
       setOtpSent(true);
       setPhoneTimer(60);
       setOtp('');
-      if (data?.data?.debugOtp) {
-        setDevPhoneOtpHint(data.data.debugOtp);
-      } else {
-        setDevPhoneOtpHint(null);
-      }
     } catch (err: any) {
       setLoading(false);
       const isNotFound =
@@ -465,19 +455,6 @@ export default function LoginScreen() {
                   : 'Fast & 100% free login. Enter your registered email address'}
               </Text>
 
-              {devOtpHint && emailOtpSent && (
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => setEmailOtp(devOtpHint)}
-                  style={styles.devHintBanner}
-                >
-                  <Icon name="sparkles" size={13} color="#0D9488" />
-                  <Text style={styles.devHintText}>
-                    Dev Code: <Text style={{ fontWeight: 'bold' }}>{devOtpHint}</Text> (Tap to auto-fill)
-                  </Text>
-                </TouchableOpacity>
-              )}
-
               {!emailOtpSent ? (
                 /* Email Input */
                 <View style={styles.inputWrapper}>
@@ -578,19 +555,6 @@ export default function LoginScreen() {
                   ? `Enter the 6-digit verification code sent via SMS to +91 ${phone}`
                   : 'Fast & 100% free login via Mobile OTP'}
               </Text>
-
-              {devPhoneOtpHint && otpSent && (
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => setOtp(devPhoneOtpHint)}
-                  style={styles.devHintBanner}
-                >
-                  <Icon name="sparkles" size={13} color="#0D9488" />
-                  <Text style={styles.devHintText}>
-                    Dev Code: <Text style={{ fontWeight: 'bold' }}>{devPhoneOtpHint}</Text> (Tap to auto-fill)
-                  </Text>
-                </TouchableOpacity>
-              )}
 
               {!otpSent ? (
                 /* Phone Input */

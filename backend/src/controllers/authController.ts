@@ -305,6 +305,12 @@ export async function sendEmailOtp(req: Request, res: Response, next: NextFuncti
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+    // Invalidate all previous unverified OTPs for this email address so only the latest is valid
+    await pool.query(
+      'UPDATE email_otps SET verified = 1 WHERE email = ? AND verified = 0',
+      [email]
+    );
+
     // Save to email_otps table
     await pool.query(
       'INSERT INTO email_otps (email, otp, purpose, expires_at) VALUES (?, ?, ?, ?)',
@@ -327,13 +333,6 @@ export async function sendEmailOtp(req: Request, res: Response, next: NextFuncti
         email,
         registered: users.length > 0,
         expiresIn: 600,
-        // In development mode or if live email API key is not yet configured on Render, provide debugOtp for frictionless testing
-        debugOtp:
-          process.env.NODE_ENV === 'development' ||
-          process.env.SHOW_DEBUG_OTP === 'true' ||
-          (!process.env.RESEND_API_KEY && !process.env.BREVO_API_KEY)
-            ? otp
-            : undefined,
       },
       `Verification code sent to ${email}`
     );
@@ -355,20 +354,13 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
       return sendError(res, 'Email and verification code are required', 400);
     }
 
-    // Check for valid OTP in database
+    // Check for valid active OTP in database (strictly requires real matching OTP)
     const [otpRecords]: any = await connection.query(
       'SELECT id, otp, expires_at FROM email_otps WHERE email = ? AND otp = ? AND expires_at > NOW() AND verified = 0 ORDER BY id DESC LIMIT 1',
       [email, otp]
     );
 
-    const isDevMasterCode =
-      (process.env.NODE_ENV === 'development' ||
-        !process.env.NODE_ENV ||
-        process.env.ENABLE_MASTER_OTP === 'true' ||
-        (!process.env.RESEND_API_KEY && !process.env.BREVO_API_KEY)) &&
-      (otp === '1234' || otp === '123456');
-
-    if (otpRecords.length === 0 && !isDevMasterCode) {
+    if (otpRecords.length === 0) {
       return sendError(res, 'Invalid or expired verification code. Please check and try again.', 400);
     }
 
@@ -504,6 +496,12 @@ export async function sendOtp(req: Request, res: Response, next: NextFunction) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+    // Invalidate all previous unverified OTPs for this phone
+    await pool.query(
+      'UPDATE phone_otps SET verified = 1 WHERE (phone = ? OR phone = ? OR phone = ?) AND verified = 0',
+      [cleanPhone, user.phone, `+91${cleanPhone}`]
+    );
+
     // Store in phone_otps table
     await pool.query(
       'INSERT INTO phone_otps (phone, otp, purpose, expires_at) VALUES (?, ?, "login", ?)',
@@ -579,11 +577,7 @@ export async function verifyOtp(req: Request, res: Response, next: NextFunction)
       [cleanPhone, user.phone, `+91${cleanPhone}`, String(otp).trim()]
     );
 
-    const isDevMasterCode =
-      (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) &&
-      (String(otp).trim() === '1234' || String(otp).trim() === '123456');
-
-    if (otpRecords.length === 0 && !isDevMasterCode) {
+    if (otpRecords.length === 0) {
       return sendError(res, 'Invalid or expired verification code. Please check and try again.', 400);
     }
 
