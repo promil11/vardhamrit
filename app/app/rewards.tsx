@@ -318,6 +318,14 @@ export default function RewardsScreen() {
         }
       }
 
+      if (claimRes?.coinsAdded === 0 && (claimRes?.newBalance ?? coinsBalance) >= 500) {
+        Alert.alert(
+          'Maximum Coins Limit',
+          'You have reached the maximum wallet balance of 500 Tea Coins. Redeem your coins at checkout to unlock more rewards!',
+          [{ text: 'Got it' }]
+        );
+      }
+
       if (Platform.OS !== 'web') {
         try {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -473,7 +481,7 @@ export default function RewardsScreen() {
                 </View>
 
                 <Text style={styles.heroSubtext}>
-                  1 Tea Coin = ₹1 flat deduction at checkout
+                  1 Tea Coin = ₹1 flat deduction at checkout • Max: 500 Coins
                 </Text>
               </View>
 

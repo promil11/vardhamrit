@@ -503,7 +503,9 @@ export default function ProfileScreen() {
 
                 <Text style={styles.memberContactText}>
                   {user?.phone || '+91 98765 43210'}
-                  {user?.email ? ` • ${user.email}` : ' • Verified Connoisseur'}
+                </Text>
+                <Text style={styles.memberContactText}>
+                  {user?.email ? `${user.email}` : 'Verified Connoisseur'}
                 </Text>
 
               </View>
@@ -516,9 +518,16 @@ export default function ProfileScreen() {
                   <Text style={styles.loyaltyPointsNumber}>{coinsBalance}</Text>
                   <Text style={styles.loyaltyPointsLabel}>Tea Coins</Text>
                 </View>
-                <Text style={styles.loyaltyValueText}>
-                  Worth ₹{coinsBalance} Off Next Order
-                </Text>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.loyaltyValueText}>
+                    {coinsBalance >= 500
+                      ? 'Max Balance (500) Reached'
+                      : `Worth ₹${coinsBalance} Off Next Order`}
+                  </Text>
+                  <Text style={{ fontSize: 9.5, color: '#92400E', fontWeight: '600', marginTop: 1 }}>
+                    {coinsBalance >= 500 ? 'Redeem at checkout to earn more' : 'Max Wallet Cap: 500 Coins'}
+                  </Text>
+                </View>
               </View>
 
               <View style={styles.loyaltyProgressBarTrack}>
@@ -1235,10 +1244,9 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   memberContactText: {
-    fontSize: 10.5,
+    fontSize: 11.5,
     color: 'rgba(255, 255, 255, 0.85)',
-    marginTop: 2,
-    marginBottom: 6,
+    marginVertical: 2,
   },
   tierCapsule: {
     flexDirection: 'row',

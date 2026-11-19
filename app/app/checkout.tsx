@@ -521,8 +521,10 @@ export default function CheckoutScreen() {
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Text style={styles.coinsCardTitle}>Vardhamrit Tea Coins</Text>
-                      <View style={styles.coinBalanceCapsule}>
-                        <Text style={styles.coinBalanceCapsuleText}>{userCoins} Coins</Text>
+                      <View style={[styles.coinBalanceCapsule, userCoins >= 500 && { backgroundColor: '#FEF3C7', borderColor: '#F59E0B' }]}>
+                        <Text style={[styles.coinBalanceCapsuleText, userCoins >= 500 && { color: '#B45309' }]}>
+                          {userCoins} Coins{userCoins >= 500 ? ' (MAX)' : ''}
+                        </Text>
                       </View>
                     </View>
                     <Text style={styles.coinsCardSubtitle}>

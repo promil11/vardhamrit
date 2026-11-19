@@ -210,18 +210,25 @@ export async function register(req: Request, res: Response, next: NextFunction) 
         [userId, `Invite bonus: Joined using ${referrer.name}'s invite code (${referrer.referral_code})`]
       );
 
-      // 3. Reward Referrer with 50 coins
-      const updatedReferrerBal = Number(referrer.coins_balance || 0) + 50;
-      await connection.query(
-        'UPDATE users SET coins_balance = ? WHERE id = ?',
-        [updatedReferrerBal, referrer.id]
-      );
+      // 3. Reward Referrer with 50 coins (Strictly capped at MAX_TEA_COINS = 500)
+      const MAX_TEA_COINS = 500;
+      const currentReferrerBal = Number(referrer.coins_balance || 0);
 
-      await connection.query(
-        `INSERT INTO coin_transactions (user_id, amount, transaction_type, description, balance_after)
-         VALUES (?, 50, 'REFERRAL_BONUS', ?, ?)`,
-        [referrer.id, `Referral reward: ${name} joined with your invite code!`, updatedReferrerBal]
-      );
+      if (currentReferrerBal < MAX_TEA_COINS) {
+        const coinsToAdd = Math.min(50, MAX_TEA_COINS - currentReferrerBal);
+        const updatedReferrerBal = currentReferrerBal + coinsToAdd;
+
+        await connection.query(
+          'UPDATE users SET coins_balance = ? WHERE id = ?',
+          [updatedReferrerBal, referrer.id]
+        );
+
+        await connection.query(
+          `INSERT INTO coin_transactions (user_id, amount, transaction_type, description, balance_after)
+           VALUES (?, ?, 'REFERRAL_BONUS', ?, ?)`,
+          [referrer.id, coinsToAdd, `Referral reward: ${name} joined with your invite code!`, updatedReferrerBal]
+        );
+      }
     } else {
       // Standard Welcome Bonus (50 coins)
       await connection.query(

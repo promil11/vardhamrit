@@ -179,6 +179,7 @@ export async function getCoinHistory(req: Request, res: Response, next: NextFunc
 /**
  * POST /api/v1/user/claim-scratch-card
  * Credits coins won from a scratch card directly to the user's wallet.
+ * Max coin balance is strictly capped at 500. If user crosses/reaches 500, no update is made.
  */
 export async function claimScratchCard(req: Request, res: Response, next: NextFunction) {
   try {
@@ -188,42 +189,63 @@ export async function claimScratchCard(req: Request, res: Response, next: NextFu
     }
     const { orderNumber, orderId, coinsEarned } = req.body;
     const coinsToAdd = Math.max(1, Math.round(Number(coinsEarned) || 5));
+    const MAX_TEA_COINS = 500;
 
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
 
-      // 1. Credit coins to users.coins_balance
-      await connection.query(
-        'UPDATE users SET coins_balance = coins_balance + ? WHERE id = ?',
-        [coinsToAdd, userId]
-      );
-
-      // 2. Fetch updated balance
+      // 1. Fetch current coin balance with row lock
       const [uRows]: any = await connection.query(
-        'SELECT coins_balance FROM users WHERE id = ?',
+        'SELECT coins_balance FROM users WHERE id = ? FOR UPDATE',
         [userId]
       );
-      const newBalance = Number(uRows[0]?.coins_balance) || 0;
+      const currentBalance = Number(uRows[0]?.coins_balance) || 0;
 
-      // 3. Record in coin_transactions ledger
-      const desc = orderNumber
-        ? `Scratch card reward on Order #${orderNumber}`
-        : 'Scratch card cashback reward';
+      // If user has already reached or crossed 500 coins, no updation needed!
+      if (currentBalance >= MAX_TEA_COINS) {
+        await connection.commit();
+        return sendSuccess(res, {
+          claimed: true,
+          coinsAdded: 0,
+          newBalance: currentBalance,
+          maxReached: true,
+          orderNumber,
+          message: 'Maximum limit of 500 Tea Coins reached. Redeem your coins at checkout to earn more!',
+        });
+      }
 
-      await connection.query(
-        `INSERT INTO coin_transactions 
-         (user_id, order_id, amount, transaction_type, description, balance_after)
-         VALUES (?, ?, ?, 'ORDER_EARNED', ?, ?)`,
-        [userId, orderId && !isNaN(Number(orderId)) ? Number(orderId) : null, coinsToAdd, desc, newBalance]
-      );
+      // Calculate allowed coins to add without exceeding MAX_TEA_COINS (500)
+      const allowedCoinsToAdd = Math.min(coinsToAdd, Math.max(0, MAX_TEA_COINS - currentBalance));
+      const newBalance = currentBalance + allowedCoinsToAdd;
+
+      if (allowedCoinsToAdd > 0) {
+        // 2. Credit coins up to 500
+        await connection.query(
+          'UPDATE users SET coins_balance = ? WHERE id = ?',
+          [newBalance, userId]
+        );
+
+        // 3. Record in coin_transactions ledger
+        const desc = orderNumber
+          ? `Scratch card reward on Order #${orderNumber}`
+          : 'Scratch card cashback reward';
+
+        await connection.query(
+          `INSERT INTO coin_transactions 
+           (user_id, order_id, amount, transaction_type, description, balance_after)
+           VALUES (?, ?, ?, 'ORDER_EARNED', ?, ?)`,
+          [userId, orderId && !isNaN(Number(orderId)) ? Number(orderId) : null, allowedCoinsToAdd, desc, newBalance]
+        );
+      }
 
       await connection.commit();
 
       return sendSuccess(res, {
         claimed: true,
-        coinsAdded: coinsToAdd,
+        coinsAdded: allowedCoinsToAdd,
         newBalance,
+        maxReached: newBalance >= MAX_TEA_COINS,
         orderNumber,
       });
     } catch (err) {
