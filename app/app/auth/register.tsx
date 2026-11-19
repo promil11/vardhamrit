@@ -250,18 +250,19 @@ export default function RegisterScreen() {
             Unlock {totalRewardCoins} Welcome Tea Coins & Estate-First Access
           </Text>
 
-          {/* Perks Bar */}
-          <View style={styles.perksRow}>
-            <View style={[styles.perkChip, appliedInvite ? styles.perkChipActive : null]}>
-              <Text style={styles.perkChipText}>
-                {appliedInvite ? '✨ 100 Bonus Coins' : '🎁 50 Free Coins'}
-              </Text>
+          {/* Estate Purity Trust Badges */}
+          <View style={styles.heroTrustBadgesRow}>
+            <View style={styles.heroTrustBadgeItem}>
+              <Icon name="leaf" size={13} color="#86EFAC" />
+              <Text style={styles.heroTrustBadgeText}>100% Single-Estate</Text>
             </View>
-            <View style={styles.perkChip}>
-              <Text style={styles.perkChipText}>🚚 Free 1st Delivery</Text>
+            <View style={styles.heroTrustBadgeItem}>
+              <Icon name="zap" size={13} color="#FDE68A" />
+              <Text style={styles.heroTrustBadgeText}>48 hrs Fast Dispatch</Text>
             </View>
-            <View style={styles.perkChip}>
-              <Text style={styles.perkChipText}>🍃 Direct Harvest</Text>
+            <View style={styles.heroTrustBadgeItem}>
+              <Icon name="lock" size={13} color="#86EFAC" />
+              <Text style={styles.heroTrustBadgeText}>Secure Checkout</Text>
             </View>
           </View>
         </LinearGradient>
@@ -656,16 +657,16 @@ export default function RegisterScreen() {
         {/* 4. TRUST FOOTER */}
         <View style={styles.trustBadgesRow}>
           <View style={styles.trustBadgeItem}>
-            <Icon name="badge-check" size={14} color={theme.colors.primary} />
-            <Text style={styles.trustBadgeText}>100% Direct Harvest</Text>
+            <Icon name="leaf" size={14} color={theme.colors.primary} />
+            <Text style={styles.trustBadgeText}>100% Single-Estate</Text>
           </View>
           <View style={styles.trustBadgeItem}>
-            <Icon name="lock" size={14} color="#B45309" />
-            <Text style={styles.trustBadgeText}>256-Bit Encrypted</Text>
-          </View>
-          <View style={styles.trustBadgeItem}>
-            <Icon name="zap" size={14} color="#15803D" />
+            <Icon name="zap" size={14} color="#B45309" />
             <Text style={styles.trustBadgeText}>48 hrs Fast Dispatch</Text>
+          </View>
+          <View style={styles.trustBadgeItem}>
+            <Icon name="lock" size={14} color="#15803D" />
+            <Text style={styles.trustBadgeText}>Secure Checkout</Text>
           </View>
         </View>
       </ScrollView>
@@ -740,24 +741,24 @@ const styles = StyleSheet.create({
     marginTop: 3,
     textAlign: 'center',
   },
-  perksRow: {
+  heroTrustBadgesRow: {
     flexDirection: 'row',
-    gap: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 12,
     marginTop: 14,
   },
-  perkChip: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+  heroTrustBadgeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
-  perkChipActive: {
-    backgroundColor: '#F59E0B',
-  },
-  perkChipText: {
+  heroTrustBadgeText: {
+    fontSize: 11,
+    fontWeight: theme.typography.weights.medium,
     color: '#FFFFFF',
-    fontSize: 9.5,
-    fontWeight: theme.typography.weights.bold,
+    letterSpacing: 0.1,
   },
   bodyCard: {
     backgroundColor: '#FFFFFF',
