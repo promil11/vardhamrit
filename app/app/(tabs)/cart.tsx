@@ -208,7 +208,7 @@ export default function CartScreen() {
 
       <View style={styles.itemDetails}>
         <View style={styles.itemTitleRow}>
-          <Text style={styles.itemName} numberOfLines={1}>
+          <Text style={[styles.itemName, isTablet && { fontSize: 16.5, lineHeight: 22 }]} numberOfLines={1}>
             {item.productName}
           </Text>
           <TouchableOpacity
@@ -219,12 +219,12 @@ export default function CartScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.itemVariant}>Pack: {item.variantLabel}</Text>
+        <Text style={[styles.itemVariant, isTablet && { fontSize: 13.5 }]}>Pack: {item.variantLabel}</Text>
 
         <View style={styles.itemPriceRow}>
-          <Text style={styles.itemPrice}>₹{item.price}</Text>
+          <Text style={[styles.itemPrice, isTablet && { fontSize: 18 }]}>₹{item.price}</Text>
           {item.mrp > item.price ? (
-            <Text style={styles.itemMrp}>₹{item.mrp}</Text>
+            <Text style={[styles.itemMrp, isTablet && { fontSize: 14 }]}>₹{item.mrp}</Text>
           ) : null}
         </View>
 
@@ -240,7 +240,7 @@ export default function CartScreen() {
               <Icon name="minus" size={14} color={theme.colors.textInverse} />
             </TouchableOpacity>
 
-            <Text style={styles.stepperQty}>{item.quantity}</Text>
+            <Text style={[styles.stepperQty, isTablet && { fontSize: 15 }]}>{item.quantity}</Text>
 
             <TouchableOpacity
               activeOpacity={0.7}
@@ -253,7 +253,7 @@ export default function CartScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.lineTotal}>₹{item.price * item.quantity}</Text>
+          <Text style={[styles.lineTotal, isTablet && { fontSize: 18 }]}>₹{item.price * item.quantity}</Text>
         </View>
       </View>
     </View>
@@ -319,7 +319,7 @@ export default function CartScreen() {
                   <View style={styles.deliveryBannerTopRow}>
                     <View style={styles.deliveryBannerTop}>
                       <Icon name="zap" size={16} color={theme.colors.primary} />
-                      <Text style={styles.deliveryBannerTitle}>
+                      <Text style={[styles.deliveryBannerTitle, isTablet && { fontSize: 16.5 }]}>
                         Delivery in 48 hrs ({totalCount} {totalCount === 1 ? 'item' : 'items'})
                       </Text>
                     </View>
@@ -354,7 +354,7 @@ export default function CartScreen() {
                   >
                     <View style={styles.deliverToRow}>
                       <Icon name="map-pin" size={13} color={theme.colors.textSecondary} style={{ marginRight: 4 }} />
-                      <Text style={styles.deliverToText} numberOfLines={1}>
+                      <Text style={[styles.deliverToText, isTablet && { fontSize: 13.5 }]} numberOfLines={1}>
                         {selectedAddress
                           ? `Delivering to ${selectedAddress.tag}: ${selectedAddress.line1}, ${selectedAddress.city}`
                           : 'Select or add delivery address'}
@@ -438,8 +438,8 @@ export default function CartScreen() {
                       </View>
                     ) : (
                       <View>
-                        <Text style={styles.couponRowTitle}>Apply Coupon</Text>
-                        <Text style={styles.couponRowSub}>
+                        <Text style={[styles.couponRowTitle, isTablet && { fontSize: 16 }]}>Apply Coupon</Text>
+                        <Text style={[styles.couponRowSub, isTablet && { fontSize: 13.5 }]}>
                           Save up to ₹100 on your harvest cup
                         </Text>
                       </View>
@@ -456,19 +456,19 @@ export default function CartScreen() {
 
                 {/* 5. Bill Summary Card */}
                 <View style={styles.billCard}>
-                  <Text style={styles.billHeader}>Bill Summary</Text>
+                  <Text style={[styles.billHeader, isTablet && { fontSize: 18.5 }]}>Bill Summary</Text>
 
                   <View style={styles.billRow}>
-                    <Text style={styles.billLabel}>Item Total</Text>
-                    <Text style={styles.billVal}>₹{subtotal.toFixed(0)}</Text>
+                    <Text style={[styles.billLabel, isTablet && { fontSize: 15 }]}>Item Total</Text>
+                    <Text style={[styles.billVal, isTablet && { fontSize: 15.5 }]}>₹{subtotal.toFixed(0)}</Text>
                   </View>
 
                   {couponDiscount > 0 ? (
                     <View style={styles.billRow}>
-                      <Text style={[styles.billLabel, { color: theme.colors.success }]}>
+                      <Text style={[styles.billLabel, { color: theme.colors.success }, isTablet && { fontSize: 15 }]}>
                         Coupon Discount ({appliedCoupon?.code})
                       </Text>
-                      <Text style={[styles.billVal, { color: theme.colors.success }]}>
+                      <Text style={[styles.billVal, { color: theme.colors.success }, isTablet && { fontSize: 15.5 }]}>
                         −₹{couponDiscount.toFixed(0)}
                       </Text>
                     </View>
@@ -476,7 +476,7 @@ export default function CartScreen() {
 
                   <View style={styles.billRow}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={styles.billLabel}>Delivery Partner Fee</Text>
+                      <Text style={[styles.billLabel, isTablet && { fontSize: 15 }]}>Delivery Partner Fee</Text>
                       {distanceInfo ? (
                         <View style={styles.distanceTagPill}>
                           <Text style={styles.distanceTagPillText}>
@@ -485,9 +485,9 @@ export default function CartScreen() {
                         </View>
                       ) : null}
                     </View>
-                    <Text style={styles.billVal}>
+                    <Text style={[styles.billVal, isTablet && { fontSize: 15.5 }]}>
                       {currentDeliveryFee === 0 ? (
-                        <Text style={styles.freeText}>FREE</Text>
+                        <Text style={[styles.freeText, isTablet && { fontSize: 14.5 }]}>FREE</Text>
                       ) : (
                         `₹${currentDeliveryFee}`
                       )}
@@ -496,7 +496,7 @@ export default function CartScreen() {
 
                   <View style={styles.billRow}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={styles.billLabel}>Handling & Packaging</Text>
+                      <Text style={[styles.billLabel, isTablet && { fontSize: 15 }]}>Handling & Packaging</Text>
                       {distanceInfo ? (
                         <View style={styles.distanceTagPill}>
                           <Text style={styles.distanceTagPillText}>
@@ -505,21 +505,21 @@ export default function CartScreen() {
                         </View>
                       ) : null}
                     </View>
-                    <Text style={styles.billVal}>₹{currentHandlingFee}</Text>
+                    <Text style={[styles.billVal, isTablet && { fontSize: 15.5 }]}>₹{currentHandlingFee}</Text>
                   </View>
 
                   <View style={styles.divider} />
 
                   <View style={styles.billRow}>
-                    <Text style={styles.toPayLabel}>To Pay</Text>
-                    <Text style={styles.toPayVal}>₹{currentGrandTotal.toFixed(0)}</Text>
+                    <Text style={[styles.toPayLabel, isTablet && { fontSize: 18.5 }]}>To Pay</Text>
+                    <Text style={[styles.toPayVal, isTablet && { fontSize: 22 }]}>₹{currentGrandTotal.toFixed(0)}</Text>
                   </View>
                 </View>
 
                 {/* 6. Safety & Quality Guarantee */}
                 <View style={styles.policyBox}>
                   <Icon name="shield-check" size={20} color={theme.colors.primary} />
-                  <Text style={styles.policyText}>
+                  <Text style={[styles.policyText, isTablet && { fontSize: 13.5, lineHeight: 18 }]}>
                     100% genuine tea guarantee direct from Upper Assam gardens. Vacuum sealed for peak freshness.
                   </Text>
                 </View>
@@ -546,7 +546,7 @@ export default function CartScreen() {
               style={styles.bottomAddressSection}
             >
               <View style={styles.addressTagRow}>
-                <Text style={styles.bottomTagText} numberOfLines={1} ellipsizeMode="tail">
+                <Text style={[styles.bottomTagText, isTablet && { fontSize: 12.5 }]} numberOfLines={1} ellipsizeMode="tail">
                   {selectedAddress && addresses.length > 0
                     ? `DELIVER TO ${selectedAddress.tag}`
                     : selectedAddress?.tag === 'Current Location'
@@ -554,7 +554,7 @@ export default function CartScreen() {
                       : 'DELIVERY ADDRESS'}
                 </Text>
               </View>
-              <Text style={styles.bottomAddrLine} numberOfLines={1} ellipsizeMode="tail">
+              <Text style={[styles.bottomAddrLine, isTablet && { fontSize: 13.5 }]} numberOfLines={1} ellipsizeMode="tail">
                 {selectedAddress
                   ? (selectedAddress.line1 && selectedAddress.line1.includes(selectedAddress.city)
                     ? selectedAddress.line1
@@ -604,10 +604,10 @@ export default function CartScreen() {
                 style={styles.proceedBtn}
               >
                 <View>
-                  <Text style={styles.proceedPrice}>₹{currentGrandTotal.toFixed(0)}</Text>
+                  <Text style={[styles.proceedPrice, isTablet && { fontSize: 16.5 }]}>₹{currentGrandTotal.toFixed(0)}</Text>
                 </View>
                 <View style={styles.proceedCta}>
-                  <Text style={styles.proceedBtnText}>Proceed to Pay</Text>
+                  <Text style={[styles.proceedBtnText, isTablet && { fontSize: 15 }]}>Proceed to Pay</Text>
                   <Icon name="arrow-right" size={15} color={theme.colors.textInverse} />
                 </View>
               </LinearGradient>
