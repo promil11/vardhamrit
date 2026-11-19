@@ -518,20 +518,31 @@ export default function ProfileScreen() {
                   <Text style={styles.loyaltyPointsNumber}>{coinsBalance}</Text>
                   <Text style={styles.loyaltyPointsLabel}>Tea Coins</Text>
                 </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.loyaltyValueText}>
-                    {coinsBalance >= 500
-                      ? 'Max Balance (500) Reached'
-                      : `Worth ₹${coinsBalance} Off Next Order`}
-                  </Text>
-                  <Text style={{ fontSize: 9.5, color: '#92400E', fontWeight: '600', marginTop: 1 }}>
-                    {coinsBalance >= 500 ? 'Redeem at checkout to earn more' : 'Max Wallet Cap: 500 Coins'}
-                  </Text>
-                </View>
+                <Text style={styles.loyaltyValueText}>
+                  {coinsBalance >= 500
+                    ? 'Max ₹500 Off Ready'
+                    : `Worth ₹${coinsBalance} Off Next Order`}
+                </Text>
               </View>
 
               <View style={styles.loyaltyProgressBarTrack}>
                 <View style={[styles.loyaltyProgressBarFill, { width: `${Math.min(100, Math.round((coinsBalance / 500) * 100))}%` }]} />
+              </View>
+
+              <View style={styles.loyaltyFooterRow}>
+                <Text style={styles.loyaltyFooterNote}>
+                  1 Coin = ₹1 flat deduction
+                </Text>
+                <View style={[styles.loyaltyCapBadge, coinsBalance >= 500 && styles.loyaltyCapBadgeMax]}>
+                  <Icon
+                    name={coinsBalance >= 500 ? 'shield-check' : 'coins'}
+                    size={11}
+                    color={coinsBalance >= 500 ? '#34D399' : '#FEF08A'}
+                  />
+                  <Text style={[styles.loyaltyCapText, coinsBalance >= 500 && styles.loyaltyCapTextMax]}>
+                    {coinsBalance >= 500 ? 'Max Cap (500) Reached' : 'Max Wallet Cap: 500 Coins'}
+                  </Text>
+                </View>
               </View>
             </View>
           </LinearGradient>
@@ -1266,11 +1277,11 @@ const styles = StyleSheet.create({
   },
   loyaltyCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.14)',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
     marginTop: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
   },
   loyaltyTitleRow: {
     flexDirection: 'row',
@@ -1294,26 +1305,56 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
   },
   loyaltyValueText: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: theme.typography.weights.extraBold,
     color: '#FEF08A',
+    letterSpacing: 0.2,
   },
   loyaltyProgressBarTrack: {
-    height: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     borderRadius: 3,
     overflow: 'hidden',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   loyaltyProgressBarFill: {
     height: '100%',
     backgroundColor: '#FEF08A',
     borderRadius: 3,
   },
-  loyaltyProgressNote: {
+  loyaltyFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  loyaltyFooterNote: {
     fontSize: 9.5,
-    color: 'rgba(255, 255, 255, 0.85)',
-    lineHeight: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: theme.typography.weights.medium,
+  },
+  loyaltyCapBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(254, 240, 138, 0.35)',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+  },
+  loyaltyCapBadgeMax: {
+    backgroundColor: 'rgba(5, 150, 105, 0.25)',
+    borderColor: '#34D399',
+  },
+  loyaltyCapText: {
+    fontSize: 9.5,
+    fontWeight: theme.typography.weights.extraBold,
+    color: '#FEF08A',
+    letterSpacing: 0.2,
+  },
+  loyaltyCapTextMax: {
+    color: '#D1FAE5',
   },
   statsRow: {
     flexDirection: 'row',
