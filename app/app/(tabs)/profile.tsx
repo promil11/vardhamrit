@@ -813,9 +813,6 @@ export default function ProfileScreen() {
                     size={12}
                     color="#FFFFFF"
                   />
-                  <Text style={styles.referCopyText}>
-                    {copiedReferral ? 'Copied!' : 'Copy Code'}
-                  </Text>
                 </View>
               </TouchableOpacity>
 
