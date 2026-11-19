@@ -286,13 +286,32 @@ export default function ProfileScreen() {
   const userReferralCode = userProfile?.referral_code || user?.referral_code || '';
   const [copiedReferral, setCopiedReferral] = useState(false);
 
+  const resolveActiveReferralCode = async (): Promise<string | null> => {
+    if (userProfile?.referral_code) return userProfile.referral_code;
+    if (user?.referral_code) return user.referral_code;
+
+    try {
+      const prof = await fetchUserProfile();
+      if (prof?.referral_code) {
+        setUserProfile(prof);
+        return prof.referral_code;
+      }
+    } catch { }
+
+    return null;
+  };
+
   const getInviteMessage = (code: string) => {
     const inviteLink = `https://vardhamrit.onrender.com/auth/register?code=${code}`;
     return `Hey! ☕ I'm inviting you to try fresh single-estate Assam tea from *Vardhamrit*.\n\nUse my invite code *${code}* during signup to get *50 free Tea Coins (₹50 value)* on your account!\n\nOrder fresh from estate here:\n${inviteLink}`;
   };
 
   const handleCopyReferralCode = async () => {
-    const code = userReferralCode || 'VARDHAMRIT50';
+    const code = await resolveActiveReferralCode();
+    if (!code) {
+      Alert.alert('Loading Invite Code', 'Please wait a moment while your account invite code finishes loading.');
+      return;
+    }
     if (Platform.OS !== 'web') {
       try {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -310,7 +329,11 @@ export default function ProfileScreen() {
   };
 
   const handleWhatsAppShare = async () => {
-    const code = userReferralCode || 'VARDHAMRIT50';
+    const code = await resolveActiveReferralCode();
+    if (!code) {
+      Alert.alert('Loading Invite Code', 'Please wait a moment while your account invite code finishes loading.');
+      return;
+    }
     const message = getInviteMessage(code);
     const encoded = encodeURIComponent(message);
     const whatsappNativeUrl = `whatsapp://send?text=${encoded}`;
@@ -342,7 +365,8 @@ export default function ProfileScreen() {
   };
 
   const handleNativeShare = async () => {
-    const code = userReferralCode || 'VARDHAMRIT50';
+    const code = await resolveActiveReferralCode();
+    if (!code) return;
     const message = getInviteMessage(code);
     if (Platform.OS !== 'web') {
       try {
@@ -738,7 +762,7 @@ export default function ProfileScreen() {
             >
               <View style={styles.referCodeLeft}>
                 <Text style={styles.referCodeLabel}>Your Invite Code</Text>
-                <Text style={styles.referCodeText}>{userReferralCode || 'VARDHAMRIT50'}</Text>
+                <Text style={styles.referCodeText}>{userReferralCode || (loading ? 'Loading...' : 'CHAI50')}</Text>
               </View>
               <View style={[styles.referCopyPill, copiedReferral && styles.referCopyPillSuccess]}>
                 <Icon

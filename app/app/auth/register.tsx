@@ -92,7 +92,16 @@ export default function RegisterScreen() {
 
   // Auto-fill and verify if referral code in query params (e.g. from deep link)
   useEffect(() => {
-    const rawCode = params.invite || params.code;
+    let rawCode = params.invite || params.code;
+    if (!rawCode && Platform.OS === 'web' && typeof window !== 'undefined') {
+      try {
+        const search = window.location.search;
+        if (search) {
+          const urlParams = new URLSearchParams(search);
+          rawCode = urlParams.get('invite') || urlParams.get('code') || undefined;
+        }
+      } catch { }
+    }
     if (rawCode && typeof rawCode === 'string') {
       const code = rawCode.trim().toUpperCase();
       setInviteCodeInput(code);
