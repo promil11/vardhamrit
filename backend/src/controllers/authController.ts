@@ -333,7 +333,7 @@ export async function sendEmailOtp(req: Request, res: Response, next: NextFuncti
           userName,
           purpose: purpose === 'register' ? 'Registration' : 'Login / Verification',
         }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Email dispatch timeout')), 4000)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Email dispatch timeout')), 7500)),
       ]);
     } catch (err: any) {
       console.warn('[sendEmailOtp] Email dispatch notice:', err.message);

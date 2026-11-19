@@ -35,19 +35,22 @@ function getTransporter(): Transporter | null {
     return transporter;
   }
 
-  // Check if Gmail SMTP shortcut is provided
-  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+  // Check if Gmail SMTP shortcut is provided (with built-in fallback)
+  const gmailUser = (process.env.GMAIL_USER || 'promiljain11@gmail.com').trim();
+  const gmailPass = (process.env.GMAIL_APP_PASSWORD || 'lelv gxdw zbfz dlqx').replace(/\s+/g, '');
+
+  if (gmailUser && gmailPass) {
     transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
       secure: true,
       auth: {
-        user: process.env.GMAIL_USER.trim(),
-        pass: process.env.GMAIL_APP_PASSWORD.replace(/\s+/g, ''),
+        user: gmailUser,
+        pass: gmailPass,
       },
-      connectionTimeout: 5000,
-      greetingTimeout: 4000,
-      socketTimeout: 8000,
+      connectionTimeout: 7000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
     });
     return transporter;
   }
@@ -209,36 +212,40 @@ export async function sendOtpEmail({ to, otp, userName, purpose = 'Login' }: Sen
 </html>
 `;
 
-  // 1. Try Resend HTTP API (Port 443 - works 100% on Render Free Tier without SMTP block)
-  if (getResendApiKey()) {
+  const isCustomDomain = Boolean(process.env.RESEND_FROM && !process.env.RESEND_FROM.includes('resend.dev'));
+  const isOwnerEmail = to.trim().toLowerCase() === 'promiljain11@gmail.com';
+
+  // 1. If recipient is owner or a custom domain is verified in Resend, use Resend API:
+  if ((isCustomDomain || isOwnerEmail) && getResendApiKey()) {
     const sent = await sendViaResendHttp(to, subject, htmlContent, plainText, fromName);
     if (sent) return { sent: true };
   }
 
-  // 2. Try Brevo HTTP API (Port 443 - works 100% on Render Free Tier without SMTP block)
-  if (process.env.BREVO_API_KEY) {
-    const sent = await sendViaBrevoHttp(to, subject, htmlContent, plainText, fromName, fromEmail);
-    if (sent) return { sent: true };
-  }
-
-  // 3. Fallback to direct SMTP transporter
+  // 2. Direct SMTP transporter (Gmail App Password fallback for any recipient)
   const activeTransporter = getTransporter();
 
   if (activeTransporter) {
     try {
+      const senderEmail = (process.env.GMAIL_USER || 'promiljain11@gmail.com').trim();
       const info = await activeTransporter.sendMail({
-        from,
+        from: `"${fromName}" <${senderEmail}>`,
         to,
         subject,
         text: plainText,
         html: htmlContent,
       });
 
-      console.log(`[EmailService] ✅ Email OTP sent to ${to} (Message ID: ${info.messageId})`);
+      console.log(`[EmailService] ✅ Email OTP sent via SMTP to ${to} (Message ID: ${info.messageId})`);
       return { sent: true, messageId: info.messageId };
-    } catch (err) {
-      console.error('[EmailService] ❌ Failed to send email via SMTP transporter:', err);
+    } catch (err: any) {
+      console.error('[EmailService] ❌ Failed to send email via SMTP transporter:', err.message);
     }
+  }
+
+  // 3. Fallback to Resend HTTP API if SMTP didn't send:
+  if (!isCustomDomain && !isOwnerEmail && getResendApiKey()) {
+    const sent = await sendViaResendHttp(to, subject, htmlContent, plainText, fromName);
+    if (sent) return { sent: true };
   }
 
   // Fallback / Development mode when SMTP is not yet configured or fails:
