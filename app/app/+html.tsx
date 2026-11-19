@@ -13,12 +13,33 @@ export default function Root({ children }: PropsWithChildren) {
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta
           name="viewport"
-          content="width=device-width, initial-scale=1, shrink-to-fit=no"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover"
         />
         <ScrollViewStyleReset />
         <style
           dangerouslySetInnerHTML={{
             __html: `
+              /* 100% Prevent iOS Safari & Mobile Browser Auto-Zoom on Input Focus */
+              input,
+              textarea,
+              select,
+              [contenteditable],
+              .css-textinput-11aywtz,
+              input[type="text"],
+              input[type="number"],
+              input[type="email"],
+              input[type="tel"],
+              input[type="password"],
+              input[type="search"] {
+                font-size: 16px !important;
+                touch-action: manipulation !important;
+              }
+
+              /* Prevent double-tap to zoom on interactive elements */
+              input, textarea, select, button, [role="button"], a {
+                touch-action: manipulation !important;
+              }
+
               /* Remove ugly default browser focus outlines and border lines */
               *:focus,
               *:focus-visible,

@@ -871,7 +871,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   vpaInput: {
-    fontSize: 14,
+    fontSize: 16,
     color: theme.colors.textPrimary,
     fontWeight: '600',
   },

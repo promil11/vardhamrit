@@ -1179,7 +1179,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 12.5,
+    fontSize: 16,
     color: theme.colors.textPrimary,
     paddingVertical: 0,
     borderWidth: 0,

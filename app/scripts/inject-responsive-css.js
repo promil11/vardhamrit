@@ -11,6 +11,28 @@ if (!fs.existsSync(distHtmlPath)) {
 const responsiveCss = `
 <!-- Vardhamrit Universal Responsive Engine -->
 <style id="vardhamrit-responsive-engine">
+  /* 100% PREVENT AUTO-ZOOM ON INPUT FOCUS ACROSS ALL MOBILE BROWSERS */
+  input,
+  textarea,
+  select,
+  [contenteditable],
+  .css-textinput-11aywtz,
+  [data-focusable="true"],
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="search"] {
+    font-size: 16px !important;
+    touch-action: manipulation !important;
+  }
+
+  /* Prevent double-tap to zoom on interactive elements */
+  input, textarea, select, button, [role="button"], a {
+    touch-action: manipulation !important;
+  }
+
   /* Enable smooth in-app pull-to-refresh without full-page browser reload */
   html, body, #root {
     overscroll-behavior-y: contain !important;
@@ -217,6 +239,12 @@ const responsiveCss = `
 `;
 
 let html = fs.readFileSync(distHtmlPath, 'utf8');
+
+// Ensure viewport meta tag disables auto-zoom on mobile focus
+html = html.replace(
+  /<meta name="viewport"[^>]*>/i,
+  '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />'
+);
 
 // Replace existing injected block if present, or add before </head>
 if (html.includes('id="vardhamrit-responsive-engine"')) {

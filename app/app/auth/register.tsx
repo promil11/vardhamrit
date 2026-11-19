@@ -834,7 +834,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingHorizontal: 10,
-    fontSize: 13,
+    fontSize: 16,
     color: theme.colors.textPrimary,
     height: '100%',
     borderWidth: 0,
@@ -914,7 +914,7 @@ const styles = StyleSheet.create({
   unifiedInput: {
     flex: 1,
     paddingHorizontal: 10,
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '700',
     letterSpacing: 1.2,
     color: theme.colors.textPrimary,

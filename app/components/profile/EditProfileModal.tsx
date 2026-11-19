@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    fontSize: 14,
+    fontSize: 16,
     color: '#0F172A',
   },
   countryBox: {

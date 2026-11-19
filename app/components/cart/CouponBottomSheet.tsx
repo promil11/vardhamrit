@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm + 2,
-    fontSize: theme.typography.scale.xs + 2,
+    fontSize: 16,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
   },

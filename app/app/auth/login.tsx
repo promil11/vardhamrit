@@ -887,7 +887,7 @@ const styles = StyleSheet.create({
   phoneInput: {
     flex: 1,
     paddingHorizontal: 12,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
     height: '100%',

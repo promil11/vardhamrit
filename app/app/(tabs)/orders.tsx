@@ -1124,7 +1124,7 @@ export default function OrdersScreen() {
         <View style={[styles.searchBar, isTablet && { height: 46, paddingHorizontal: 16, borderRadius: 14 }]}>
           <Icon name="search" size={isTablet ? 17 : 13} color="#9CA3AF" />
           <TextInput
-            style={[styles.searchInput, isTablet && { fontSize: 15 }]}
+            style={[styles.searchInput, isTablet && { fontSize: 16 }]}
             placeholder="Search by Order ID or tea name..."
             placeholderTextColor="#9CA3AF"
             value={searchQuery}
@@ -1417,7 +1417,7 @@ export default function OrdersScreen() {
             </View>
 
             <TextInput
-              style={[styles.reviewInput, isTablet && { fontSize: 14.5, height: 96, padding: 14, borderRadius: 14 }]}
+              style={[styles.reviewInput, isTablet && { fontSize: 16, height: 96, padding: 14, borderRadius: 14 }]}
               placeholder="Tell other chai lovers how this batch brewed: aroma, color, boiling notes..."
               placeholderTextColor="#9CA3AF"
               value={reviewText}
@@ -1845,7 +1845,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 16,
     color: theme.colors.textPrimary,
     paddingVertical: 0,
     borderWidth: 0,
@@ -2569,7 +2569,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     borderRadius: 12,
     padding: 12,
-    fontSize: 11.5,
+    fontSize: 16,
     color: theme.colors.textPrimary,
     height: 80,
     textAlignVertical: 'top',

@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.sm,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm + 1,
-    fontSize: theme.typography.scale.xs + 2,
+    fontSize: 16,
     fontWeight: theme.typography.weights.medium,
     color: theme.colors.textPrimary,
     marginBottom: theme.spacing.sm + 2,
