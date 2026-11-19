@@ -317,15 +317,20 @@ export async function sendEmailOtp(req: Request, res: Response, next: NextFuncti
       [email, otp, purpose, expiresAt]
     );
 
-    // Dispatch email delivery in background (non-blocking so API never times out)
-    sendOtpEmail({
-      to: email,
-      otp,
-      userName,
-      purpose: purpose === 'register' ? 'Registration' : 'Login / Verification',
-    }).catch((err) => {
-      console.error('[sendEmailOtp] Failed to deliver OTP email:', err);
-    });
+    // Send email via Resend HTTP API (waits with 4s race so cloud container sends it reliably)
+    try {
+      await Promise.race([
+        sendOtpEmail({
+          to: email,
+          otp,
+          userName,
+          purpose: purpose === 'register' ? 'Registration' : 'Login / Verification',
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Email dispatch timeout')), 4000)),
+      ]);
+    } catch (err: any) {
+      console.warn('[sendEmailOtp] Email dispatch notice:', err.message);
+    }
 
     return sendSuccess(
       res,
