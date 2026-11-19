@@ -737,37 +737,60 @@ export default function ProfileScreen() {
 
           {/* 6. REFER & EARN ₹50 CARD */}
           <LinearGradient
-            colors={['#FEF3C7', '#FDE68A']}
+            colors={['#FFFDF7', '#FEF3C7', '#FDE68A']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.referCard}
           >
+            {/* Top Row: Icon + Title + Value Badge */}
             <View style={styles.referTopRow}>
-              <View style={styles.referIconCircle}>
-                <Icon name="sparkles" size={16} color="#B45309" />
-              </View>
+              <LinearGradient
+                colors={['#F59E0B', '#B45309']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.referIconCircle}
+              >
+                <Icon name="sparkles" size={18} color="#FFFFFF" />
+              </LinearGradient>
               <View style={{ flex: 1 }}>
-                <Text style={styles.referTitle}>Invite a Fellow Chai Lover</Text>
+                <View style={styles.referHeaderTitleRow}>
+                  <Text style={styles.referTitle}>Invite a Fellow Chai Lover</Text>
+                  <View style={styles.referRewardPill}>
+                    <Icon name="coins" size={10} color="#92400E" />
+                    <Text style={styles.referRewardPillText}>₹50 + ₹50</Text>
+                  </View>
+                </View>
                 <Text style={styles.referSubtitle}>
-                  They get 50 extra Tea Coins (₹50). You get 50 Tea Coins when they join!
+                  Give ₹50 in Tea Coins to friends & earn ₹50 when they join!
                 </Text>
               </View>
             </View>
 
-            {/* Referral Code Box with Tap-to-Copy */}
+            {/* Voucher Ticket Code Box */}
             <TouchableOpacity
-              activeOpacity={0.85}
+              activeOpacity={0.88}
               onPress={handleCopyReferralCode}
               style={styles.referCodeBtn}
             >
               <View style={styles.referCodeLeft}>
-                <Text style={styles.referCodeLabel}>Your Invite Code</Text>
-                <Text style={styles.referCodeText}>{userReferralCode || (loading ? 'Loading...' : 'CHAI50')}</Text>
+                <View style={styles.referCodeLabelRow}>
+                  <Icon name="ticket" size={10} color="#B45309" />
+                  <Text style={styles.referCodeLabel}>YOUR EXCLUSIVE INVITE CODE</Text>
+                </View>
+                <Text style={styles.referCodeText}>
+                  {userReferralCode || (loading ? 'Loading...' : 'CHAI50')}
+                </Text>
               </View>
-              <View style={[styles.referCopyPill, copiedReferral && styles.referCopyPillSuccess]}>
+
+              <View
+                style={[
+                  styles.referCopyPill,
+                  copiedReferral && styles.referCopyPillSuccess,
+                ]}
+              >
                 <Icon
                   name={copiedReferral ? 'check' : 'copy'}
-                  size={11}
+                  size={12}
                   color="#FFFFFF"
                 />
                 <Text style={styles.referCopyText}>
@@ -776,6 +799,19 @@ export default function ProfileScreen() {
               </View>
             </TouchableOpacity>
 
+            {/* Micro-Benefit Highlights */}
+            <View style={styles.referPerksRow}>
+              <View style={styles.referPerkItem}>
+                <Icon name="badge-check" size={12} color="#15803D" />
+                <Text style={styles.referPerkText}>50 Coins on Signup</Text>
+              </View>
+              <View style={styles.referPerkDivider} />
+              <View style={styles.referPerkItem}>
+                <Icon name="zap" size={12} color="#B45309" />
+                <Text style={styles.referPerkText}>Instant Wallet Credit</Text>
+              </View>
+            </View>
+
             {/* Sharing Action Buttons */}
             <View style={styles.referActionsRow}>
               <TouchableOpacity
@@ -783,7 +819,7 @@ export default function ProfileScreen() {
                 onPress={handleWhatsAppShare}
                 style={styles.referWhatsAppBtn}
               >
-                <Icon name="whatsapp" size={16} color="#FFFFFF" />
+                <Icon name="whatsapp" size={18} color="#FFFFFF" />
                 <Text style={styles.referWhatsAppText}>Share on WhatsApp</Text>
               </TouchableOpacity>
 
@@ -793,7 +829,7 @@ export default function ProfileScreen() {
                 style={styles.referOtherShareBtn}
                 accessibilityLabel="Share options"
               >
-                <Icon name="share" size={15} color="#92400E" />
+                <Icon name="share" size={16} color="#78350F" />
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -1542,86 +1578,167 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   referCard: {
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 20,
+    padding: 16,
     marginBottom: 14,
-    borderWidth: 1,
+    borderWidth: 1.2,
     borderColor: '#FCD34D',
+    shadowColor: '#B45309',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 4,
   },
   referTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
+    gap: 12,
+    marginBottom: 12,
   },
   referIconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#FFFFFF',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#B45309',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  referHeaderTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   referTitle: {
-    fontSize: 13.5,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.extraBold,
+    color: '#78350F',
+    flex: 1,
+  },
+  referRewardPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 12,
+  },
+  referRewardPillText: {
+    fontSize: 10,
     fontWeight: theme.typography.weights.extraBold,
     color: '#92400E',
+    letterSpacing: 0.3,
   },
   referSubtitle: {
-    fontSize: 10.5,
-    color: '#78350F',
-    marginTop: 2,
+    fontSize: 11,
+    color: '#92400E',
+    marginTop: 3,
     lineHeight: 15,
   },
   referCodeBtn: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#FCD34D',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#F59E0B',
     marginBottom: 10,
+    shadowColor: '#B45309',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   referCodeLeft: {
+    flexDirection: 'column',
+    gap: 2,
+  },
+  referCodeLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   referCodeLabel: {
-    fontSize: 11,
-    fontWeight: theme.typography.weights.bold,
-    color: '#78350F',
+    fontSize: 9,
+    fontWeight: theme.typography.weights.extraBold,
+    color: '#B45309',
+    letterSpacing: 0.8,
   },
   referCodeText: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: theme.typography.weights.extraBold,
-    color: '#92400E',
-    letterSpacing: 0.8,
+    color: '#78350F',
+    letterSpacing: 2,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    marginTop: 1,
   },
   referCopyPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#B45309',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    gap: 4,
+    backgroundColor: '#78350F',
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 5,
+    shadowColor: '#78350F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
   },
   referCopyPillSuccess: {
     backgroundColor: '#059669',
+    shadowColor: '#059669',
   },
   referCopyText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: theme.typography.weights.extraBold,
     color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  referPerksRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.2)',
+  },
+  referPerkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  referPerkText: {
+    fontSize: 10.5,
+    fontWeight: theme.typography.weights.bold,
+    color: '#78350F',
+  },
+  referPerkDivider: {
+    width: 1,
+    height: 12,
+    backgroundColor: '#FCD34D',
   },
   referActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   referWhatsAppBtn: {
     flex: 1,
@@ -1629,31 +1746,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#25D366',
-    borderRadius: 10,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-    gap: 7,
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    gap: 8,
     shadowColor: '#128C7E',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
   },
   referWhatsAppText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: theme.typography.weights.extraBold,
     color: '#FFFFFF',
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   referOtherShareBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 1.2,
     borderColor: '#FCD34D',
+    shadowColor: '#B45309',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   menuCard: {
     backgroundColor: '#FFFFFF',
