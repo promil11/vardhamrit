@@ -388,16 +388,6 @@ export default function RegisterScreen() {
                   size={11}
                   color={favoriteMorningCup ? '#059669' : '#DC2626'}
                 />
-                <Text
-                  style={[
-                    styles.tasteStatusBadgeText,
-                    favoriteMorningCup
-                      ? styles.tasteStatusBadgeTextSelected
-                      : styles.tasteStatusBadgeTextRequired,
-                  ]}
-                >
-                  {favoriteMorningCup ? 'SELECTED' : 'MANDATORY'}
-                </Text>
               </View>
             </View>
 
@@ -524,7 +514,7 @@ export default function RegisterScreen() {
                       Invited by <Text style={{ fontWeight: '700' }}>{appliedInvite.referrerName}</Text>
                     </Text>
                     <Text style={styles.appliedBonusHighlight}>
-                      ✨ 50 Welcome + 50 Bonus = 100 Tea Coins (₹100)
+                      50 Welcome + 50 Bonus = 100 Tea Coins (₹100)
                     </Text>
                   </View>
                 </View>

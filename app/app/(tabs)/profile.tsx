@@ -374,12 +374,16 @@ export default function ProfileScreen() {
       } catch { }
     }
     try {
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && !navigator.share) {
+        handleWhatsAppShare();
+        return;
+      }
       await Share.share({
         message,
         title: 'Invite a Friend to Vardhamrit Tea Club',
       });
     } catch {
-      handleCopyReferralCode();
+      handleWhatsAppShare();
     }
   };
 
@@ -753,51 +757,58 @@ export default function ProfileScreen() {
                 <Icon name="sparkles" size={18} color="#FFFFFF" />
               </LinearGradient>
               <View style={{ flex: 1 }}>
-                <View style={styles.referHeaderTitleRow}>
-                  <Text style={styles.referTitle}>Invite a Fellow Chai Lover</Text>
-                  <View style={styles.referRewardPill}>
-                    <Icon name="coins" size={10} color="#92400E" />
-                    <Text style={styles.referRewardPillText}>₹50 + ₹50</Text>
-                  </View>
-                </View>
+                <Text style={styles.referTitle} numberOfLines={1}>Invite a Fellow Chai Lover</Text>
                 <Text style={styles.referSubtitle}>
                   Give ₹50 in Tea Coins to friends & earn ₹50 when they join!
                 </Text>
               </View>
             </View>
 
-            {/* Voucher Ticket Code Box */}
-            <TouchableOpacity
-              activeOpacity={0.88}
-              onPress={handleCopyReferralCode}
-              style={styles.referCodeBtn}
-            >
-              <View style={styles.referCodeLeft}>
-                <View style={styles.referCodeLabelRow}>
-                  <Icon name="ticket" size={10} color="#B45309" />
-                  <Text style={styles.referCodeLabel}>YOUR EXCLUSIVE INVITE CODE</Text>
-                </View>
-                <Text style={styles.referCodeText}>
-                  {userReferralCode || (loading ? 'Loading...' : 'CHAI50')}
-                </Text>
-              </View>
-
-              <View
-                style={[
-                  styles.referCopyPill,
-                  copiedReferral && styles.referCopyPillSuccess,
-                ]}
+            {/* Voucher Ticket Code Box + Share Action Row */}
+            <View style={styles.referRow}>
+              <TouchableOpacity
+                activeOpacity={0.88}
+                onPress={handleCopyReferralCode}
+                style={styles.referCodeBtn}
+                accessibilityLabel="Copy invite code"
               >
-                <Icon
-                  name={copiedReferral ? 'check' : 'copy'}
-                  size={12}
-                  color="#FFFFFF"
-                />
-                <Text style={styles.referCopyText}>
-                  {copiedReferral ? 'Copied!' : 'Copy Code'}
-                </Text>
-              </View>
-            </TouchableOpacity>
+                <View style={styles.referCodeLeft}>
+                  <View style={styles.referCodeLabelRow}>
+                    <Icon name="ticket" size={10} color="#B45309" />
+                    <Text style={styles.referCodeLabel}>YOUR EXCLUSIVE INVITE CODE</Text>
+                  </View>
+                  <Text style={styles.referCodeText}>
+                    {userReferralCode || (loading ? 'Loading...' : 'CHAI50')}
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.referCopyPill,
+                    copiedReferral && styles.referCopyPillSuccess,
+                  ]}
+                >
+                  <Icon
+                    name={copiedReferral ? 'check' : 'copy'}
+                    size={12}
+                    color="#FFFFFF"
+                  />
+                  <Text style={styles.referCopyText}>
+                    {copiedReferral ? 'Copied!' : 'Copy Code'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleNativeShare}
+                style={styles.referOtherShareBtn}
+                accessibilityLabel="Share invite code with friends"
+              >
+                <Icon name="share" size={18} color="#78350F" />
+              </TouchableOpacity>
+            </View>
+
 
             {/* Micro-Benefit Highlights */}
             <View style={styles.referPerksRow}>
@@ -812,26 +823,6 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* Sharing Action Buttons */}
-            <View style={styles.referActionsRow}>
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={handleWhatsAppShare}
-                style={styles.referWhatsAppBtn}
-              >
-                <Icon name="whatsapp" size={18} color="#FFFFFF" />
-                <Text style={styles.referWhatsAppText}>Share on WhatsApp</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={handleNativeShare}
-                style={styles.referOtherShareBtn}
-                accessibilityLabel="Share options"
-              >
-                <Icon name="share" size={16} color="#78350F" />
-              </TouchableOpacity>
-            </View>
           </LinearGradient>
 
           {/* 7. QUICK SERVICES & SUPPORT MENU */}
@@ -1607,34 +1598,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  referHeaderTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
   referTitle: {
     fontSize: 14,
     fontWeight: theme.typography.weights.extraBold,
     color: '#78350F',
-    flex: 1,
-  },
-  referRewardPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#FCD34D',
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 12,
-  },
-  referRewardPillText: {
-    fontSize: 10,
-    fontWeight: theme.typography.weights.extraBold,
-    color: '#92400E',
-    letterSpacing: 0.3,
   },
   referSubtitle: {
     fontSize: 11,
@@ -1642,18 +1609,25 @@ const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 15,
   },
+  referRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
   referCodeBtn: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: '#F59E0B',
-    marginBottom: 10,
+    height: 52,
     shadowColor: '#B45309',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -1662,6 +1636,7 @@ const styles = StyleSheet.create({
   },
   referCodeLeft: {
     flexDirection: 'column',
+    justifyContent: 'center',
     gap: 2,
   },
   referCodeLabelRow: {
@@ -1670,16 +1645,16 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   referCodeLabel: {
-    fontSize: 9,
+    fontSize: 8.5,
     fontWeight: theme.typography.weights.extraBold,
     color: '#B45309',
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
   },
   referCodeText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: theme.typography.weights.extraBold,
     color: '#78350F',
-    letterSpacing: 2,
+    letterSpacing: 1.8,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     marginTop: 1,
   },
@@ -1687,10 +1662,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#78350F',
-    paddingHorizontal: 11,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    gap: 5,
+    gap: 4,
     shadowColor: '#78350F',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -1702,7 +1677,7 @@ const styles = StyleSheet.create({
     shadowColor: '#059669',
   },
   referCopyText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: theme.typography.weights.extraBold,
     color: '#FFFFFF',
     letterSpacing: 0.3,
@@ -1715,7 +1690,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    marginBottom: 12,
+    marginBottom: 2,
     gap: 12,
     borderWidth: 1,
     borderColor: 'rgba(245, 158, 11, 0.2)',
@@ -1735,45 +1710,18 @@ const styles = StyleSheet.create({
     height: 12,
     backgroundColor: '#FCD34D',
   },
-  referActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  referWhatsAppBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#25D366',
-    borderRadius: 12,
-    paddingVertical: 11,
-    paddingHorizontal: 16,
-    gap: 8,
-    shadowColor: '#128C7E',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  referWhatsAppText: {
-    fontSize: 13,
-    fontWeight: theme.typography.weights.extraBold,
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
   referOtherShareBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.2,
-    borderColor: '#FCD34D',
+    borderWidth: 1.5,
+    borderColor: '#F59E0B',
     shadowColor: '#B45309',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
   },
