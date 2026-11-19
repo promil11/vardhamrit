@@ -23,8 +23,24 @@ import {
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
 import { updateUserProfile } from '../controllers/userController';
+import { sendOtpEmail } from '../services/emailService';
 
 const router = Router();
+
+router.get('/test-email-dispatch', async (req, res) => {
+  const to = String(req.query.to || 'promiljain11@gmail.com');
+  try {
+    const result = await sendOtpEmail({
+      to,
+      otp: '778899',
+      userName: 'Vardhamrit Tester',
+      purpose: 'Diagnostics Test',
+    });
+    return res.json({ success: true, to, result });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, to, error: err.message });
+  }
+});
 
 router.get('/verify-invite', verifyInviteCode);
 router.post('/verify-invite', verifyInviteCode);
