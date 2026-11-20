@@ -1053,8 +1053,8 @@ const styles = StyleSheet.create({
   },
   sleekApplyBtn: {
     height: 36,
-    paddingHorizontal: 16,
     borderRadius: 8,
+    paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },

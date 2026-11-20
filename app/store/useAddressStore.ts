@@ -180,6 +180,9 @@ export const useAddressStore = create<AddressState>((set, get) => ({
         city: geocoded.city,
         state: geocoded.state,
         pincode: geocoded.pincode,
+        landmark: geocoded.landmark,
+        latitude: geocoded.latitude,
+        longitude: geocoded.longitude,
         isDefault: true,
       };
 

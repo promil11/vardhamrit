@@ -462,7 +462,7 @@ export default function LoginScreen() {
                     name="mail"
                     size={16}
                     color="#9CA3AF"
-                    style={{ marginLeft: 14 }}
+                    style={{ marginHorizontal: 10 }}
                   />
                   <TextInput
                     style={styles.standardInput}

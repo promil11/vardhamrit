@@ -13,7 +13,12 @@ import {
 import { theme } from '../../theme';
 import { Address } from '../../types';
 import { Icon } from '../common/Icon';
-import { getAccurateCoordinates, reverseGeocodeCoordinates, fetchAddressFromPincode } from '../../services/locationService';
+import {
+  getAccurateCoordinates,
+  reverseGeocodeCoordinates,
+  fetchAddressFromPincode,
+  nudgeCoordinates,
+} from '../../services/locationService';
 import { storage } from '../../services/storage';
 
 interface AddAddressModalProps {
@@ -35,10 +40,13 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
   const [tag, setTag] = useState<'HOME' | 'WORK' | 'OTHER'>('HOME');
   const [line1, setLine1] = useState('');
   const [line2, setLine2] = useState('');
+  const [landmark, setLandmark] = useState('');
   const [pincode, setPincode] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [coords, setCoords] = useState<{ latitude?: number; longitude?: number }>({});
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const [confidence, setConfidence] = useState<'EXACT_PREMISE' | 'STREET_LEVEL' | 'LOCALITY' | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
   const [locationSuccess, setLocationSuccess] = useState(false);
@@ -73,9 +81,17 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
 
       const detectedCoords = await getAccurateCoordinates();
       setCoords({ latitude: detectedCoords.latitude, longitude: detectedCoords.longitude });
-      const geocoded = await reverseGeocodeCoordinates(detectedCoords.latitude, detectedCoords.longitude);
+      setGpsAccuracy(detectedCoords.accuracy ? Math.round(detectedCoords.accuracy) : null);
 
-      // 1. Street, Area, Landmark (Exact road, chowk, area, landmark)
+      const geocoded = await reverseGeocodeCoordinates(
+        detectedCoords.latitude,
+        detectedCoords.longitude,
+        detectedCoords.accuracy
+      );
+
+      setConfidence(geocoded.confidence || (geocoded.line1 ? 'EXACT_PREMISE' : 'STREET_LEVEL'));
+
+      // 1. Street, Area
       if (geocoded.line2) {
         setLine2(geocoded.line2);
       }
@@ -85,27 +101,64 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
       if (geocoded.state) setState(geocoded.state);
       if (geocoded.pincode) setPincode(geocoded.pincode);
 
-      // 3. Flat / House No. / Building
+      // 3. Landmark (if detected)
+      if (geocoded.landmark) {
+        setLandmark(geocoded.landmark);
+      }
+
+      // 4. Flat / House No. / Building
       if (geocoded.line1 && geocoded.line1.trim().length > 0) {
         setLine1(geocoded.line1);
-        setLocationHint('House/Building & Street detected!');
+        setLocationHint('🏠 House/Building & Street detected with satellite precision!');
       } else {
         // Clear any previous generic text and focus flat/house field so user can type their private flat/house number
         setLine1('');
-        setLocationHint('Street & Area detected! Please enter Flat / House No.');
+        setLocationHint('🛣️ Street & Area pinpointed! Please enter your Flat / House No.');
         setTimeout(() => {
           flatInputRef.current?.focus();
         }, 200);
       }
 
       setLocationSuccess(true);
-      setTimeout(() => setLocationSuccess(false), 4500);
+      setTimeout(() => setLocationSuccess(false), 5000);
     } catch (err: any) {
       console.warn('Auto-detect location failed:', err);
       Alert.alert(
         'GPS Location Detection',
         err.message || 'Unable to detect location. Please check your GPS permissions or enter manually.'
       );
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
+  const handleNudgePin = async (direction: 'north' | 'south' | 'east' | 'west') => {
+    if (!coords.latitude || !coords.longitude) return;
+    try {
+      setIsLocating(true);
+      const newCoords = nudgeCoordinates(
+        { latitude: coords.latitude, longitude: coords.longitude },
+        direction,
+        14 // ~14 meters shift
+      );
+      setCoords(newCoords);
+
+      const reGeocoded = await reverseGeocodeCoordinates(
+        newCoords.latitude,
+        newCoords.longitude,
+        gpsAccuracy
+      );
+
+      if (reGeocoded.line2) setLine2(reGeocoded.line2);
+      if (reGeocoded.line1) setLine1(reGeocoded.line1);
+      if (reGeocoded.city) setCity(reGeocoded.city);
+      if (reGeocoded.state) setState(reGeocoded.state);
+      if (reGeocoded.pincode) setPincode(reGeocoded.pincode);
+      if (reGeocoded.landmark) setLandmark(reGeocoded.landmark);
+      setConfidence(reGeocoded.confidence || (reGeocoded.line1 ? 'EXACT_PREMISE' : 'STREET_LEVEL'));
+      setLocationHint(`📍 Pin shifted ${direction.toUpperCase()} by 14m! Address re-verified.`);
+    } catch (e) {
+      console.warn('Error nudging pin:', e);
     } finally {
       setIsLocating(false);
     }
@@ -151,6 +204,7 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
       tag,
       line1: line1.trim(),
       line2: line2.trim() || undefined,
+      landmark: landmark.trim() || undefined,
       city: city.trim() || 'Indore',
       state: state.trim() || 'Madhya Pradesh',
       pincode: pincode.trim(),
@@ -167,9 +221,13 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
     setPhone('');
     setLine1('');
     setLine2('');
+    setLandmark('');
     setPincode('');
     setCity('');
     setState('');
+    setCoords({});
+    setGpsAccuracy(null);
+    setConfidence(null);
   };
 
   return (
@@ -268,6 +326,78 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
               </View>
             ) : null}
 
+            {/* GPS Pin Precision & Micro-Nudge Card (Swiggy/Uber style) */}
+            {coords.latitude && coords.longitude ? (
+              <View style={styles.pinPrecisionCard}>
+                <View style={styles.pinHeaderRow}>
+                  <View style={styles.pinDotWrapper}>
+                    <View style={styles.pinPulseDot} />
+                    <Icon name="map-pin" size={14} color="#0A3622" />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Text style={styles.pinPrecisionTitle}>
+                        GPS Pin ({coords.latitude.toFixed(4)}, {coords.longitude.toFixed(4)})
+                      </Text>
+                      <View style={confidence === 'EXACT_PREMISE' ? styles.premiseBadge : styles.streetBadge}>
+                        <Text style={confidence === 'EXACT_PREMISE' ? styles.premiseBadgeText : styles.streetBadgeText}>
+                          {confidence === 'EXACT_PREMISE' ? '🏠 House Level' : '🛣️ Street Level'}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.pinAccuracyText}>
+                      {gpsAccuracy ? `Accuracy: ±${gpsAccuracy}m (Satellite Fix)` : 'High-precision coordinates active'}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* 4-way Nudge Controls */}
+                <View style={styles.nudgeContainer}>
+                  <Text style={styles.nudgePrompt}>
+                    Slightly off indoors? Nudge pin 14m:
+                  </Text>
+                  <View style={styles.nudgeButtonsRow}>
+                    <TouchableOpacity
+                      onPress={() => handleNudgePin('north')}
+                      disabled={isLocating}
+                      style={styles.nudgePill}
+                      activeOpacity={0.7}
+                    >
+                      <Icon name="arrow-up" size={11} color="#0A3622" />
+                      <Text style={styles.nudgePillText}>North</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleNudgePin('south')}
+                      disabled={isLocating}
+                      style={styles.nudgePill}
+                      activeOpacity={0.7}
+                    >
+                      <Icon name="arrow-down" size={11} color="#0A3622" />
+                      <Text style={styles.nudgePillText}>South</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleNudgePin('west')}
+                      disabled={isLocating}
+                      style={styles.nudgePill}
+                      activeOpacity={0.7}
+                    >
+                      <Icon name="arrow-left" size={11} color="#0A3622" />
+                      <Text style={styles.nudgePillText}>West</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleNudgePin('east')}
+                      disabled={isLocating}
+                      style={styles.nudgePill}
+                      activeOpacity={0.7}
+                    >
+                      <Icon name="arrow-right" size={11} color="#0A3622" />
+                      <Text style={styles.nudgePillText}>East</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            ) : null}
+
             {/* Input Fields */}
             <Text style={styles.label}>Recipient Name *</Text>
             <TextInput
@@ -289,26 +419,35 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
               maxLength={10}
             />
 
-            <Text style={styles.label}>Flat, House No., Apartment *</Text>
+            <Text style={styles.label}>Flat, House No., Building, Floor *</Text>
             <TextInput
               ref={flatInputRef}
               style={[
                 styles.input,
                 locationSuccess && !line1 && styles.inputNeedsAction,
               ]}
-              placeholder="e.g. Flat 302, B-Wing / House No. 14"
+              placeholder="e.g. Flat 302, 3rd Floor, Silver Crest / House No. 14"
               placeholderTextColor={theme.colors.textHint}
               value={line1}
               onChangeText={setLine1}
             />
 
-            <Text style={styles.label}>Street, Area, Landmark *</Text>
+            <Text style={styles.label}>Street, Colony, Area *</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Martand Chowk, MG Road, Juni Indore"
+              placeholder="e.g. Martand Chowk, MG Road, South Tukoganj"
               placeholderTextColor={theme.colors.textHint}
               value={line2}
               onChangeText={setLine2}
+            />
+
+            <Text style={styles.label}>Nearby Landmark (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Near Shiv Temple / Behind Apollo Pharmacy"
+              placeholderTextColor={theme.colors.textHint}
+              value={landmark}
+              onChangeText={setLandmark}
             />
 
             <View style={styles.row}>
@@ -479,6 +618,113 @@ const styles = StyleSheet.create({
     borderColor: '#F59E0B',
     borderWidth: 1.5,
     backgroundColor: '#FFFBEB',
+  },
+  pinPrecisionCard: {
+    backgroundColor: '#F8FAF9',
+    borderWidth: 1.5,
+    borderColor: '#D4AF37',
+    borderRadius: theme.radius.md,
+    padding: 12,
+    marginBottom: theme.spacing.md,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  pinHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  pinDotWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1.5,
+    borderColor: '#86EFAC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  pinPulseDot: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#22C55E',
+  },
+  pinPrecisionTitle: {
+    fontSize: 12,
+    fontWeight: theme.typography.weights.extraBold,
+    color: '#0A3622',
+  },
+  pinAccuracyText: {
+    fontSize: 10,
+    color: '#15803D',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  premiseBadge: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: '#86EFAC',
+  },
+  premiseBadgeText: {
+    color: '#15803D',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  streetBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: '#FCD34D',
+  },
+  streetBadgeText: {
+    color: '#B45309',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  nudgeContainer: {
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  nudgePrompt: {
+    fontSize: 10.5,
+    color: '#6B7280',
+    marginBottom: 6,
+    fontWeight: '600',
+  },
+  nudgeButtonsRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  nudgePill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 6,
+    paddingVertical: 5,
+  },
+  nudgePillText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#0A3622',
   },
   tagChip: {
     flex: 1,

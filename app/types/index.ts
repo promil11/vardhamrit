@@ -73,6 +73,7 @@ export interface Address {
   city: string;
   state: string;
   pincode: string;
+  landmark?: string;
   latitude?: number;
   longitude?: number;
   isDefault: boolean;

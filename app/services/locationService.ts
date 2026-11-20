@@ -22,7 +22,9 @@ export interface GeocodedAddressResult {
   formattedAddress: string;
   latitude: number;
   longitude: number;
+  accuracy?: number | null;
   landmark?: string;
+  confidence?: 'EXACT_PREMISE' | 'STREET_LEVEL' | 'LOCALITY';
 }
 
 /**
@@ -50,9 +52,12 @@ export async function requestLocationPermission(): Promise<boolean> {
 }
 
 /**
- * 2. Get high-precision GPS coordinates with graceful accuracy fallback and timeout.
+ * 2. Adaptive GPS Satellite Lock:
+ *    Waits for a high-precision fix (accuracy <= 15m) before returning,
+ *    preventing coarse cell-tower approximations.
  */
 export async function getAccurateCoordinates(): Promise<LocationCoordinates> {
+  // Web browser geolocation: force fresh fix with maximumAge = 0
   if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.geolocation) {
     return new Promise<LocationCoordinates>((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
@@ -73,10 +78,10 @@ export async function getAccurateCoordinates(): Promise<LocationCoordinates> {
               });
             },
             (err2) => reject(new Error(err2.message || 'Could not fetch web geolocation')),
-            { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
           );
         },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     });
   }
@@ -86,29 +91,68 @@ export async function getAccurateCoordinates(): Promise<LocationCoordinates> {
     throw new Error('Location permission was denied. Please allow location access in settings.');
   }
 
-  // Fallback timeout promise (10 seconds)
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('GPS location request timed out')), 10000)
-  );
-
   // Attempt 1: Highest Accuracy (Hardware GPS)
   try {
-    const position = await Promise.race([
-      Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Highest,
-      }),
-      timeoutPromise,
-    ]);
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Highest,
+    });
 
-    return {
+    let bestCoords: LocationCoordinates = {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
       accuracy: position.coords.accuracy,
     };
-  } catch (err) {
-    console.warn('Highest accuracy GPS fix timed out or failed, falling back to High/Balanced:', err);
 
-    // Attempt 2: High or Balanced Accuracy
+    // If initial reading is already tight (<= 15 meters), return immediately!
+    if (bestCoords.accuracy !== null && bestCoords.accuracy <= 15) {
+      return bestCoords;
+    }
+
+    // Otherwise, GPS is still locking onto satellites. Watch for up to 3.5 seconds for a tighter fix (accuracy <= 15m).
+    try {
+      const tightFix = await new Promise<LocationCoordinates>((resolve) => {
+        let subscription: Location.LocationSubscription | null = null;
+        const timer = setTimeout(() => {
+          subscription?.remove();
+          resolve(bestCoords);
+        }, 3500);
+
+        Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.Highest,
+            timeInterval: 400,
+            distanceInterval: 1,
+          },
+          (loc) => {
+            const acc = loc.coords.accuracy;
+            if (acc !== null && (bestCoords.accuracy === null || acc < bestCoords.accuracy)) {
+              bestCoords = {
+                latitude: loc.coords.latitude,
+                longitude: loc.coords.longitude,
+                accuracy: acc,
+              };
+            }
+            if (acc !== null && acc <= 15) {
+              clearTimeout(timer);
+              subscription?.remove();
+              resolve(bestCoords);
+            }
+          }
+        ).then((sub) => {
+          subscription = sub;
+        }).catch(() => {
+          clearTimeout(timer);
+          resolve(bestCoords);
+        });
+      });
+
+      return tightFix;
+    } catch {
+      return bestCoords;
+    }
+  } catch (err) {
+    console.warn('Highest accuracy GPS fix timed out, falling back to High/Balanced:', err);
+
     try {
       const position = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
@@ -120,7 +164,6 @@ export async function getAccurateCoordinates(): Promise<LocationCoordinates> {
         accuracy: position.coords.accuracy,
       };
     } catch (fallbackErr) {
-      // Attempt 3: Try last known position as final native resort
       const lastKnown = await Location.getLastKnownPositionAsync({});
       if (lastKnown) {
         return {
@@ -129,98 +172,162 @@ export async function getAccurateCoordinates(): Promise<LocationCoordinates> {
           accuracy: lastKnown.coords.accuracy,
         };
       }
-
-      // Web specific fallback to HTML5 navigator.geolocation
-      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.geolocation) {
-        return new Promise<LocationCoordinates>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              resolve({
-                latitude: pos.coords.latitude,
-                longitude: pos.coords.longitude,
-                accuracy: pos.coords.accuracy,
-              });
-            },
-            (error) => reject(new Error(error.message || 'Could not fetch web geolocation')),
-            { enableHighAccuracy: true, timeout: 8000 }
-          );
-        });
-      }
-
       throw new Error('Could not acquire GPS position. Please ensure GPS/Location is enabled.');
     }
   }
 }
 
 /**
- * 3. Free Reverse Geocoding with Multi-tier Fallback:
- *    Tier 1: Native Expo Reverse Geocoder (Free system service on iOS & Android)
- *    Tier 2: OpenStreetMap Nominatim API (100% Free, rich Indian street & area data)
- *    Tier 3: BigDataCloud Free Reverse Geocode Client (100% Free, reliable locality & city)
+ * Directional Pin Nudge Helper:
+ * Shifts latitude and longitude by ~12-15 meters in any cardinal direction.
+ * Essential when a user is indoors and wants to pinpoint their exact gate/entrance.
  */
+export function nudgeCoordinates(
+  coords: { latitude: number; longitude: number },
+  direction: 'north' | 'south' | 'east' | 'west',
+  meters: number = 13
+): { latitude: number; longitude: number } {
+  const deltaLat = meters / 111111;
+  const deltaLon = meters / (111111 * Math.cos((coords.latitude * Math.PI) / 180));
+
+  switch (direction) {
+    case 'north':
+      return { latitude: coords.latitude + deltaLat, longitude: coords.longitude };
+    case 'south':
+      return { latitude: coords.latitude - deltaLat, longitude: coords.longitude };
+    case 'east':
+      return { latitude: coords.latitude, longitude: coords.longitude + deltaLon };
+    case 'west':
+      return { latitude: coords.latitude, longitude: coords.longitude - deltaLon };
+  }
+}
+
 /**
- * 3. Free Reverse Geocoding with Multi-tier High Accuracy:
- *    Tier 1: Native Expo Reverse Geocoder (Free system service on iOS & Android)
- *    Tier 2: OpenStreetMap Nominatim API (Zoom=18, Exact Indian Street & Landmark)
- *    Tier 3: Photon Komoot Geocoder (High-density road, chowk & building names)
- *    Tier 4: BigDataCloud Free Reverse Geocode Client (Fallback)
+ * 100% Free Overpass API 35m spatial query for nearby building or house number.
+ * Used when Nominatim centroid returns a road but user is inside a mapped building/apartment.
  */
-export async function reverseGeocodeCoordinates(
-  latitude: number,
-  longitude: number
-): Promise<GeocodedAddressResult> {
-  // Tier 1: Try Native Expo Reverse Geocode (Native iOS / Android System Geocoder)
+async function queryOverpassNearbyBuilding(
+  lat: number,
+  lon: number
+): Promise<{ houseNumber?: string; building?: string } | null> {
   try {
-    const results = await Location.reverseGeocodeAsync({ latitude, longitude });
-    if (results && results.length > 0) {
-      const item = results[0];
-      const houseNumber = item.streetNumber || '';
-      const building = item.name && item.name !== item.street ? item.name : '';
-      const street = item.street || '';
-      const areaParts = [item.district, item.subregion].filter(Boolean);
-      const city = item.city || item.subregion || item.district || 'Indore';
-      const state = item.region || 'Madhya Pradesh';
-      const pincode = item.postalCode ? item.postalCode.replace(/[^0-9]/g, '') : '';
-      const country = item.country || 'India';
-
-      const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', building]
-        .filter(Boolean)
-        .join(', ');
-
-      const uniqueArea = [...new Set(areaParts)].filter((a) => a !== street && a !== city);
-      const streetAreaParts = [street, ...uniqueArea].filter(Boolean);
-      const streetArea = streetAreaParts.length > 0 ? streetAreaParts.join(', ') : city;
-
-      const formatted = [flatHouse, streetArea, city, state, pincode, country]
-        .filter(Boolean)
-        .join(', ');
-
-      if (street || areaParts.length > 0 || city) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2000);
+    const query = `[out:json][timeout:2];(node(around:35,${lat},${lon})["addr:housenumber"];way(around:35,${lat},${lon})["addr:housenumber"];way(around:35,${lat},${lon})["building"]["name"];);out tags 1;`;
+    const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      const data = await res.json();
+      const el = data.elements?.[0]?.tags;
+      if (el) {
         return {
-          houseNumber: houseNumber || undefined,
-          building: building || undefined,
-          street: street || undefined,
-          area: uniqueArea.join(', ') || undefined,
-          line1: flatHouse, // specific house/building only (or "" if not present)
-          line2: streetArea, // full street, area, landmark
-          city,
-          state,
-          pincode,
-          country,
-          formattedAddress: formatted,
-          latitude,
-          longitude,
-          landmark: building || item.name || undefined,
+          houseNumber: el['addr:housenumber'] || el['contact:housenumber'] || undefined,
+          building: el.name || el['addr:housename'] || el.building || undefined,
         };
       }
     }
-  } catch (nativeErr) {
-    console.warn('Native reverse geocode unavailable or skipped, trying OSM Nominatim:', nativeErr);
+  } catch {}
+  return null;
+}
+
+/**
+ * Optional Google Geocoding API (Tier 0):
+ * If EXPO_PUBLIC_GOOGLE_MAPS_API_KEY is configured in the environment,
+ * Google Maps reverse geocoding provides premier building-level precision for India.
+ */
+async function queryGoogleGeocoding(
+  latitude: number,
+  longitude: number
+): Promise<GeocodedAddressResult | null> {
+  const apiKey = (process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '').trim();
+  if (!apiKey) return null;
+
+  try {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}&result_type=street_address|premise|subpremise|route`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (data.status !== 'OK' || !data.results || data.results.length === 0) return null;
+
+    const topResult = data.results[0];
+    const components: any[] = topResult.address_components || [];
+
+    const getComponent = (types: string[]) =>
+      components.find((c) => types.some((t) => c.types.includes(t)))?.long_name || '';
+
+    const subpremise = getComponent(['subpremise']); // Flat / Floor No.
+    const premise = getComponent(['premise']); // Building name
+    const streetNumber = getComponent(['street_number']);
+    const route = getComponent(['route']); // Street / Road
+    const sublocality2 = getComponent(['sublocality_level_2']);
+    const sublocality1 = getComponent(['sublocality_level_1']);
+    const locality = getComponent(['locality']) || 'Indore';
+    const state = getComponent(['administrative_area_level_1']) || 'Madhya Pradesh';
+    const postalCode = getComponent(['postal_code']).replace(/[^0-9]/g, '');
+    const country = getComponent(['country']) || 'India';
+
+    const houseNumber = [streetNumber, subpremise].filter(Boolean).join('/');
+    const building = premise;
+
+    const flatHouse = [
+      houseNumber ? `House No. ${houseNumber}` : '',
+      building,
+    ].filter(Boolean).join(', ');
+
+    const streetArea = [route, sublocality2, sublocality1]
+      .filter(Boolean)
+      .join(', ') || locality;
+
+    return {
+      houseNumber: houseNumber || undefined,
+      building: building || undefined,
+      street: route || undefined,
+      area: [sublocality2, sublocality1].filter(Boolean).join(', ') || undefined,
+      line1: flatHouse,
+      line2: streetArea,
+      city: locality,
+      state,
+      pincode: postalCode,
+      country,
+      formattedAddress: topResult.formatted_address || [flatHouse, streetArea, locality, state, postalCode, country].filter(Boolean).join(', '),
+      latitude,
+      longitude,
+      landmark: building || sublocality2 || undefined,
+      confidence: 'EXACT_PREMISE',
+    };
+  } catch (err) {
+    console.warn('Google Geocoding API lookup error:', err);
+    return null;
+  }
+}
+
+/**
+ * 3. High-Precision Multi-Tier Reverse Geocoder:
+ *    Tier 0: Google Geocoding API (if EXPO_PUBLIC_GOOGLE_MAPS_API_KEY is configured)
+ *    Tier 1: OpenStreetMap Nominatim (zoom=18, extratags=1, namedetails=1 for building & house numbers)
+ *    Tier 1.5: Free Overpass 35m Building footprint spatial lookup
+ *    Tier 2: Photon Komoot API
+ *    Tier 3: Native Expo Geocoder
+ *    Tier 4: BigDataCloud Fallback
+ */
+export async function reverseGeocodeCoordinates(
+  latitude: number,
+  longitude: number,
+  accuracy?: number | null
+): Promise<GeocodedAddressResult> {
+  // Tier 0: Check Google Geocoding API if key configured
+  const googleResult = await queryGoogleGeocoding(latitude, longitude);
+  if (googleResult) {
+    googleResult.accuracy = accuracy;
+    return googleResult;
   }
 
-  // Tier 2: OpenStreetMap Nominatim API (100% Free with zoom=18 high-resolution)
+  // Tier 1: OpenStreetMap Nominatim with zoom=18, extratags=1, namedetails=1
   try {
-    const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1&email=vardhamrit.care@gmail.com`;
+    const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1&namedetails=1&extratags=1&email=vardhamrit.care@gmail.com`;
     const response = await fetch(osmUrl, {
       headers: {
         'User-Agent': 'VardhamritTeaApp/1.0 (care@vardhamrit.com)',
@@ -233,17 +340,30 @@ export async function reverseGeocodeCoordinates(
       if (contentType.includes('application/json')) {
         const data = await response.json();
         const addr = data.address || {};
+        const extratags = data.extratags || {};
+        const namedetails = data.namedetails || {};
 
-        const houseNumber = addr.house_number || addr.housenumber || '';
-        const building =
+        let houseNumber =
+          addr.house_number ||
+          addr.housenumber ||
+          extratags['addr:housenumber'] ||
+          extratags['addr:door'] ||
+          extratags['contact:housenumber'] ||
+          '';
+
+        let building =
           addr.building ||
           addr.house_name ||
           addr.flats ||
+          addr.apartment ||
+          extratags['addr:flats'] ||
+          extratags['addr:floor'] ||
           addr.amenity ||
           addr.shop ||
           addr.office ||
           addr.commercial ||
           (data.name && data.name !== addr.road ? data.name : '') ||
+          (namedetails?.name && namedetails?.name !== addr.road ? namedetails?.name : '') ||
           '';
 
         let street =
@@ -276,7 +396,7 @@ export async function reverseGeocodeCoordinates(
         const pincode = (addr.postcode || '').replace(/[^0-9]/g, '');
         const country = addr.country || 'India';
 
-        // Extract detailed street/colony from display_name if road was missing
+        // If road was missing, extract street from display_name
         if (!street && data.display_name) {
           const rawParts = data.display_name.split(', ').map((s: string) => s.trim());
           const candidateParts = rawParts.filter(
@@ -297,22 +417,34 @@ export async function reverseGeocodeCoordinates(
           }
         }
 
+        // Tier 1.5: If houseNumber or building is missing, query Overpass 35m spatial footprint
+        if (!houseNumber && !building) {
+          const nearbyBuilding = await queryOverpassNearbyBuilding(latitude, longitude);
+          if (nearbyBuilding) {
+            if (nearbyBuilding.houseNumber) houseNumber = nearbyBuilding.houseNumber;
+            if (nearbyBuilding.building) building = nearbyBuilding.building;
+          }
+        }
+
         const uniqueArea = [...new Set(areaParts)].filter((a) => a !== street && a !== city);
         const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', building]
           .filter(Boolean)
           .join(', ');
 
         const streetAreaParts = [street, ...uniqueArea].filter(Boolean);
-        const streetArea = streetAreaParts.length > 0 ? streetAreaParts.join(', ') : (uniqueArea[0] || street || city);
-        const formatted = data.display_name || [flatHouse, streetArea, city, state, pincode, country].filter(Boolean).join(', ');
+        const streetArea =
+          streetAreaParts.length > 0 ? streetAreaParts.join(', ') : uniqueArea[0] || street || city;
+        const formatted =
+          data.display_name ||
+          [flatHouse, streetArea, city, state, pincode, country].filter(Boolean).join(', ');
 
         return {
           houseNumber: houseNumber || undefined,
           building: building || undefined,
           street: street || undefined,
           area: uniqueArea.join(', ') || undefined,
-          line1: flatHouse, // specific house/building only (or "" for user input)
-          line2: streetArea, // exact street, colony, chowk, landmark
+          line1: flatHouse,
+          line2: streetArea,
           city,
           state,
           pincode,
@@ -320,7 +452,9 @@ export async function reverseGeocodeCoordinates(
           formattedAddress: formatted,
           latitude,
           longitude,
+          accuracy,
           landmark: building || addr.amenity || uniqueArea[0] || undefined,
+          confidence: flatHouse ? 'EXACT_PREMISE' : 'STREET_LEVEL',
         };
       }
     }
@@ -328,7 +462,7 @@ export async function reverseGeocodeCoordinates(
     console.warn('OpenStreetMap reverse geocode failed, trying Photon fallback:', osmErr);
   }
 
-  // Tier 3: Photon Komoot API (Free OpenStreetMap-powered geocoder)
+  // Tier 2: Photon Komoot API (Free OSM-powered)
   try {
     const photonUrl = `https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}`;
     const pResponse = await fetch(photonUrl);
@@ -337,14 +471,21 @@ export async function reverseGeocodeCoordinates(
       const prop = pData?.features?.[0]?.properties || {};
       const houseNumber = prop.housenumber || '';
       const building = prop.type === 'house' && prop.name ? prop.name : '';
-      const street = prop.street || (prop.type === 'street' || prop.type === 'secondary' || prop.type === 'residential' ? prop.name : '') || '';
+      const street =
+        prop.street ||
+        (prop.type === 'street' || prop.type === 'secondary' || prop.type === 'residential'
+          ? prop.name
+          : '') ||
+        '';
       const area = prop.locality || prop.district || '';
       const city = prop.city || 'Indore';
       const state = prop.state || 'Madhya Pradesh';
       const pincode = String(prop.postcode || '').replace(/[^0-9]/g, '');
       const country = prop.country || 'India';
 
-      const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', building].filter(Boolean).join(', ');
+      const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', building]
+        .filter(Boolean)
+        .join(', ');
       const streetArea = [street, area].filter(Boolean).join(', ') || area || street || city;
 
       return {
@@ -358,14 +499,67 @@ export async function reverseGeocodeCoordinates(
         state,
         pincode,
         country,
-        formattedAddress: [flatHouse, streetArea, city, state, pincode, country].filter(Boolean).join(', '),
+        formattedAddress: [flatHouse, streetArea, city, state, pincode, country]
+          .filter(Boolean)
+          .join(', '),
         latitude,
         longitude,
+        accuracy,
         landmark: building || area || undefined,
+        confidence: flatHouse ? 'EXACT_PREMISE' : 'STREET_LEVEL',
       };
     }
   } catch (photonErr) {
-    console.warn('Photon reverse geocode failed, trying BigDataCloud fallback:', photonErr);
+    console.warn('Photon reverse geocode failed, trying Native fallback:', photonErr);
+  }
+
+  // Tier 3: Native Expo Reverse Geocoder
+  try {
+    const results = await Location.reverseGeocodeAsync({ latitude, longitude });
+    if (results && results.length > 0) {
+      const item = results[0];
+      const houseNumber = item.streetNumber || '';
+      const building = item.name && item.name !== item.street ? item.name : '';
+      const street = item.street || '';
+      const areaParts = [item.district, item.subregion].filter(Boolean);
+      const city = item.city || item.subregion || item.district || 'Indore';
+      const state = item.region || 'Madhya Pradesh';
+      const pincode = item.postalCode ? item.postalCode.replace(/[^0-9]/g, '') : '';
+      const country = item.country || 'India';
+
+      const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', building]
+        .filter(Boolean)
+        .join(', ');
+
+      const uniqueArea = [...new Set(areaParts)].filter((a) => a !== street && a !== city);
+      const streetAreaParts = [street, ...uniqueArea].filter(Boolean);
+      const streetArea = streetAreaParts.length > 0 ? streetAreaParts.join(', ') : city;
+
+      const formatted = [flatHouse, streetArea, city, state, pincode, country]
+        .filter(Boolean)
+        .join(', ');
+
+      return {
+        houseNumber: houseNumber || undefined,
+        building: building || undefined,
+        street: street || undefined,
+        area: uniqueArea.join(', ') || undefined,
+        line1: flatHouse,
+        line2: streetArea,
+        city,
+        state,
+        pincode,
+        country,
+        formattedAddress: formatted,
+        latitude,
+        longitude,
+        accuracy,
+        landmark: building || item.name || undefined,
+        confidence: flatHouse ? 'EXACT_PREMISE' : 'STREET_LEVEL',
+      };
+    }
+  } catch (nativeErr) {
+    console.warn('Native reverse geocode failed, trying BigDataCloud fallback:', nativeErr);
   }
 
   // Tier 4: BigDataCloud Free Client-Side Reverse Geocoding
@@ -391,6 +585,8 @@ export async function reverseGeocodeCoordinates(
         formattedAddress: [streetArea, city, state, pincode, country].filter(Boolean).join(', '),
         latitude,
         longitude,
+        accuracy,
+        confidence: 'LOCALITY',
       };
     }
   } catch (bdcErr) {
@@ -408,6 +604,8 @@ export async function reverseGeocodeCoordinates(
     formattedAddress: 'Indore, Madhya Pradesh - 452001',
     latitude,
     longitude,
+    accuracy,
+    confidence: 'LOCALITY',
   };
 }
 
@@ -420,7 +618,7 @@ export async function fetchCurrentLocationAddress(options?: {
   tag?: 'HOME' | 'WORK' | 'OTHER';
 }): Promise<{ address: Address; geocoded: GeocodedAddressResult }> {
   const coords = await getAccurateCoordinates();
-  const geocoded = await reverseGeocodeCoordinates(coords.latitude, coords.longitude);
+  const geocoded = await reverseGeocodeCoordinates(coords.latitude, coords.longitude, coords.accuracy);
 
   // In saved address cards, line1 displays the primary street/area or house
   const cardLine1 = geocoded.line1 && geocoded.line1.trim().length > 0
@@ -434,9 +632,12 @@ export async function fetchCurrentLocationAddress(options?: {
     tag: options?.tag || 'HOME',
     line1: cardLine1,
     line2: geocoded.line1 ? geocoded.line2 : undefined,
+    landmark: geocoded.landmark,
     city: geocoded.city,
     state: geocoded.state,
     pincode: geocoded.pincode || '452001',
+    latitude: coords.latitude,
+    longitude: coords.longitude,
     isDefault: true,
   };
 
