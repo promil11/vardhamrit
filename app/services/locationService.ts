@@ -766,10 +766,101 @@ export interface PlaceSearchResult {
   city?: string;
   state?: string;
   source: 'INDORE_POI' | 'PHOTON' | 'NOMINATIM';
+  extractedHouseNo?: string;
 }
 
 export const INDORE_LANDMARKS: PlaceSearchResult[] = [
-  // 1. Electronic Complex & Sukhlia Zone
+  // 1. Scheme 71 & Gumasta Nagar Zone
+  {
+    id: 'indore-s71-1',
+    title: 'Scheme No. 71',
+    subtitle: 'Gumasta Nagar / Footi Kothi, Indore • 452009',
+    latitude: 22.7044,
+    longitude: 75.8287,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-s71-2',
+    title: 'Scheme 71 Sector A & B',
+    subtitle: 'Gumasta Nagar, Dhar Road, Indore • 452009',
+    latitude: 22.7040,
+    longitude: 75.8280,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-s71-3',
+    title: 'Scheme 71 Sector C & D',
+    subtitle: 'Near Chandan Nagar, Indore • 452009',
+    latitude: 22.7050,
+    longitude: 75.8260,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-gumasta-1',
+    title: 'Gumasta Nagar',
+    subtitle: 'Scheme 71 / Footi Kothi, Indore • 452009',
+    latitude: 22.7080,
+    longitude: 75.8300,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-footi-1',
+    title: 'Footi Kothi',
+    subtitle: 'Dhar Road / Ring Road, Indore • 452009',
+    latitude: 22.7020,
+    longitude: 75.8280,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-sudama-1',
+    title: 'Sudama Nagar',
+    subtitle: 'Sector E & D, Footi Kothi, Indore • 452009',
+    latitude: 22.6950,
+    longitude: 75.8450,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-ushnagar-1',
+    title: 'Usha Nagar',
+    subtitle: 'Annapurna Road, Indore • 452009',
+    latitude: 22.6980,
+    longitude: 75.8340,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-vaishali-1',
+    title: 'Vaishali Nagar',
+    subtitle: 'Near Annapurna / Gumasta Nagar, Indore • 452009',
+    latitude: 22.6840,
+    longitude: 75.8290,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+
+  // 2. Electronic Complex & Sukhlia Zone
   {
     id: 'indore-ec-1',
     title: 'Electronic Complex',
@@ -1604,39 +1695,90 @@ export function isInsideIndore(lat: number, lon: number): boolean {
 }
 
 /**
+ * Parses user input to separate private premise numbers (e.g., "750 B", "Flat 402", "Plot 12")
+ * from the geographical landmark / street / colony query (e.g., "Scheme No. 71 Gumasta Nagar").
+ */
+export function parseAddressQuery(input: string): { houseNo: string; locationQuery: string } {
+  const clean = input.trim();
+  const housePattern = /^(\b(flat|house|plot|h\.?no|door|shop|block|room)?\s*([0-9]+[a-zA-Z]?(\/[0-9]+)?(\s+[a-zA-Z])?)\b)\s*(.*)$/i;
+  const match = clean.match(housePattern);
+  if (match) {
+    const rawHouse = match[1].trim();
+    const rest = match[6].trim();
+    // Normalize format: e.g. "750 b" -> "750 B"
+    const houseNo = rawHouse.replace(/\b([a-z])\b/g, (c) => c.toUpperCase());
+    return {
+      houseNo,
+      locationQuery: rest || clean,
+    };
+  }
+  return { houseNo: '', locationQuery: clean };
+}
+
+function scorePlaceMatch(text: string, queryWords: string[]): number {
+  if (queryWords.length === 0) return 0;
+  const normText = text.toLowerCase();
+  let score = 0;
+  for (const w of queryWords) {
+    if (normText.includes(w)) {
+      score += w.length >= 3 ? 3 : 2;
+    }
+  }
+  return score;
+}
+
+/**
  * Intelligent Indore-Only Location Search Engine:
- * 1. Checks Instant Local Indore Landmark Database (0ms response) with multi-token fuzzy search
- * 2. Queries Photon Geocoding API with strict Indore bounding box
- * 3. Queries OpenStreetMap Nominatim with bounded=1 Indore viewbox
+ * 1. Automatically parses house/flat number (e.g. "750 B") and extracts colony/street ("Scheme 71 Gumasta Nagar")
+ * 2. Multi-token scoring against Local Indore Landmark Database (0ms delay)
+ * 3. Queries Photon & Nominatim with clean location terms & strict Indore bounding box
  * 4. STRICT FILTER: Discards any location outside Indore!
  */
 export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> {
-  const clean = query.trim().toLowerCase();
+  const clean = query.trim();
   if (clean.length < 2) return [];
 
-  const tokens = clean.split(/\s+/).filter(Boolean);
+  const { houseNo, locationQuery } = parseAddressQuery(clean);
+  const searchWords = (locationQuery || clean)
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 0 && !['no', 'in', 'at', 'near', 'the', 'of'].includes(w));
+
   const results: PlaceSearchResult[] = [];
   const seenKeys = new Set<string>();
 
-  // 1. Instant Match from Local Indore Landmarks Database (0ms delay)
-  const localMatches = INDORE_LANDMARKS.filter((item) => {
-    const searchableText = `${item.title} ${item.subtitle} ${item.pincode || ''}`.toLowerCase();
-    return tokens.every((tok) => searchableText.includes(tok));
-  });
+  // 1. Match from Local Indore Landmarks Database with intelligent scoring
+  const scoredLocal = INDORE_LANDMARKS.map((item) => {
+    const searchable = `${item.title} ${item.subtitle} ${item.pincode || ''}`;
+    const score = scorePlaceMatch(searchable, searchWords);
+    return { item, score };
+  })
+    .filter((entry) => entry.score >= 2)
+    .sort((a, b) => b.score - a.score);
 
-  for (const m of localMatches) {
-    const key = `${m.latitude.toFixed(4)},${m.longitude.toFixed(4)}`;
+  for (const { item } of scoredLocal) {
+    const key = `${item.latitude.toFixed(4)},${item.longitude.toFixed(4)}`;
     if (!seenKeys.has(key)) {
       seenKeys.add(key);
-      results.push(m);
+
+      // Prepend house number to title if user typed one
+      const displayTitle = houseNo ? `${houseNo}, ${item.title}` : item.title;
+
+      results.push({
+        ...item,
+        title: displayTitle,
+        extractedHouseNo: houseNo || undefined,
+      });
     }
   }
 
-  // 2. Query Live Online Autocomplete API (Photon with STRICT Indore Bbox: 75.70,22.58,76.05,22.86)
+  // 2. Query Live Online Autocomplete API (Photon with cleaned query & STRICT Indore Bbox)
+  const apiQuery = locationQuery.length >= 2 ? locationQuery : clean;
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 2500);
-    const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=75.70,22.58,76.05,22.86&limit=8`;
+    const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(apiQuery)}&bbox=75.70,22.58,76.05,22.86&limit=8`;
     const res = await fetch(photonUrl, { signal: controller.signal });
     clearTimeout(timeout);
 
@@ -1656,13 +1798,14 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> 
             if (!seenKeys.has(key)) {
               seenKeys.add(key);
               const p = f.properties || {};
-              const title = p.name || p.street || 'Indore Landmark';
+              const rawTitle = p.name || p.street || 'Indore Landmark';
+              const displayTitle = houseNo ? `${houseNo}, ${rawTitle}` : rawTitle;
               const parts = [p.district || p.suburb, p.city || 'Indore', p.postcode].filter(Boolean);
               const subtitle = parts.join(', ') || 'Indore, Madhya Pradesh';
 
               results.push({
                 id: `photon-${lat}-${lon}`,
-                title,
+                title: displayTitle,
                 subtitle,
                 latitude: lat,
                 longitude: lon,
@@ -1670,6 +1813,7 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> 
                 city: 'Indore',
                 state: 'Madhya Pradesh',
                 source: 'PHOTON',
+                extractedHouseNo: houseNo || undefined,
               });
             }
           }
@@ -1685,7 +1829,7 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> 
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 2500);
-      const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&bounded=1&viewbox=75.70,22.86,76.05,22.58&countrycodes=in&q=${encodeURIComponent(query + ' Indore')}`;
+      const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&bounded=1&viewbox=75.70,22.86,76.05,22.58&countrycodes=in&q=${encodeURIComponent(apiQuery + ' Indore')}`;
       const res = await fetch(nomUrl, {
         headers: { 'User-Agent': 'VardhamritIndoreApp/1.0' },
         signal: controller.signal,
@@ -1706,13 +1850,14 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> 
             if (!seenKeys.has(key)) {
               seenKeys.add(key);
               const addr = item.address || {};
-              const title = item.name || addr.road || addr.suburb || item.display_name.split(',')[0];
+              const rawTitle = item.name || addr.road || addr.suburb || item.display_name.split(',')[0];
+              const displayTitle = houseNo ? `${houseNo}, ${rawTitle}` : rawTitle;
               const parts = [addr.suburb || addr.neighbourhood, 'Indore', addr.postcode].filter(Boolean);
               const subtitle = parts.join(', ') || 'Indore, Madhya Pradesh';
 
               results.push({
                 id: `nom-${lat}-${lon}`,
-                title,
+                title: displayTitle,
                 subtitle,
                 latitude: lat,
                 longitude: lon,
@@ -1720,6 +1865,7 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> 
                 city: 'Indore',
                 state: 'Madhya Pradesh',
                 source: 'NOMINATIM',
+                extractedHouseNo: houseNo || undefined,
               });
             }
           }

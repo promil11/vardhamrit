@@ -167,9 +167,14 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
 
   const handleMapLocationChange = async (
     newCoords: { latitude: number; longitude: number },
-    placeHint?: string
+    placeHint?: string,
+    extractedHouseNo?: string
   ) => {
     setCoords(newCoords);
+    if (extractedHouseNo) {
+      setLine1(extractedHouseNo);
+    }
+
     try {
       setIsLocating(true);
       const geocoded = await reverseGeocodeCoordinates(
@@ -186,7 +191,10 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
       if (geocoded.pincode) setPincode(geocoded.pincode);
       if (geocoded.landmark) setLandmark(geocoded.landmark);
 
-      if (geocoded.line1 && geocoded.line1.trim().length > 0) {
+      if (extractedHouseNo) {
+        setLine1(extractedHouseNo);
+        setLocationHint(`🎯 Pin positioned: ${extractedHouseNo}, ${geocoded.line2 || placeHint || geocoded.city}`);
+      } else if (geocoded.line1 && geocoded.line1.trim().length > 0) {
         setLine1(geocoded.line1);
         setLocationHint(`🎯 Pin set: ${geocoded.line1}, ${geocoded.line2 || geocoded.city}`);
       } else {

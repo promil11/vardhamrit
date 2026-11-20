@@ -16,7 +16,11 @@ interface InteractiveUberMapPickerProps {
   latitude?: number;
   longitude?: number;
   accuracy?: number | null;
-  onLocationChange: (coords: { latitude: number; longitude: number }, placeHint?: string) => void;
+  onLocationChange: (
+    coords: { latitude: number; longitude: number },
+    placeHint?: string,
+    extractedHouseNo?: string
+  ) => void;
   onRequestLocateMe?: () => void;
   isLocating?: boolean;
 }
@@ -100,7 +104,8 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
 
     onLocationChange(
       { latitude: place.latitude, longitude: place.longitude },
-      `${place.title}, ${place.subtitle}`
+      `${place.title}, ${place.subtitle}`,
+      place.extractedHouseNo
     );
   };
 
