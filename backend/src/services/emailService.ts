@@ -274,7 +274,9 @@ export async function sendOtpEmail({ to, otp, userName, purpose = 'Login' }: Sen
   }
 
   // 4. Direct SMTP transporter (Gmail App Password fallback for any recipient)
-  const activeTransporter = getTransporter();
+  // Note: Render blocks ports 25, 465, 587 by default. Only attempt SMTP if not on Render or if explicit SMTP_HOST is set.
+  const isRenderWithoutCustomSmtp = Boolean(process.env.RENDER && !process.env.SMTP_HOST);
+  const activeTransporter = isRenderWithoutCustomSmtp ? null : getTransporter();
 
   if (activeTransporter) {
     try {
@@ -292,6 +294,8 @@ export async function sendOtpEmail({ to, otp, userName, purpose = 'Login' }: Sen
     } catch (err: any) {
       console.error('[EmailService] ❌ Failed to send email via SMTP transporter:', err.message);
     }
+  } else if (isRenderWithoutCustomSmtp) {
+    console.log('[EmailService] ℹ️ Render environment blocks direct SMTP ports (465/587). Using HTTP API delivery services.');
   }
 
   // 3. Fallback to Resend HTTP API if SMTP didn't send:
