@@ -203,6 +203,22 @@ export function nudgeCoordinates(
 }
 
 /**
+ * Checks if a string is a public landmark or amenity (temple, bank, school, hospital, shop, park, etc.)
+ */
+function isAmenityOrLandmark(name: string): boolean {
+  if (!name) return false;
+  return /temple|mandir|masjid|mosque|church|gurdwara|ashram|dargah|school|college|university|vidyalaya|hospital|clinic|dispensary|pharmacy|bank|atm|hotel|restaurant|cafe|dhaba|garden|park|stadium|ground|mall|bazaar|market|square|circle|chauraha|chowk|police|thana|petrol|fuel|complex|station|theatre|cinema/i.test(name);
+}
+
+/**
+ * Checks if a name indicates a residential building, apartment, or society
+ */
+function isResidentialPremise(name: string): boolean {
+  if (!name) return false;
+  return /apartment|residency|heights|enclave|tower|villa|bhavan|niwas|kunj|mansion|society|house|cottage|block|floor|flat/i.test(name);
+}
+
+/**
  * 100% Free Overpass API 35m spatial query for nearby building or house number.
  * Used when Nominatim centroid returns a road but user is inside a mapped building/apartment.
  */
@@ -351,20 +367,42 @@ export async function reverseGeocodeCoordinates(
           extratags['contact:housenumber'] ||
           '';
 
-        let building =
-          addr.building ||
+        // Check if there is an explicit residential building / apartment / flat name
+        let residentialBuilding =
           addr.house_name ||
           addr.flats ||
           addr.apartment ||
           extratags['addr:flats'] ||
           extratags['addr:floor'] ||
+          extratags['addr:unit'] ||
+          '';
+
+        // POI, Amenity or Landmark name from Nominatim (e.g. Ranjeet Hanuman Temple, Apollo Hospital)
+        const candidatePoi =
           addr.amenity ||
           addr.shop ||
+          addr.tourism ||
           addr.office ||
+          addr.leisure ||
           addr.commercial ||
           (data.name && data.name !== addr.road ? data.name : '') ||
           (namedetails?.name && namedetails?.name !== addr.road ? namedetails?.name : '') ||
           '';
+
+        let detectedLandmark = '';
+        if (candidatePoi) {
+          if (isAmenityOrLandmark(candidatePoi)) {
+            // It's a public landmark (temple, bank, hospital, etc.) - ALWAYS a landmark, NEVER home/flat!
+            detectedLandmark = candidatePoi.toLowerCase().startsWith('near')
+              ? candidatePoi
+              : `Near ${candidatePoi}`;
+          } else if (!residentialBuilding && isResidentialPremise(candidatePoi)) {
+            residentialBuilding = candidatePoi;
+          } else {
+            // General business / landmark
+            detectedLandmark = `Near ${candidatePoi}`;
+          }
+        }
 
         let street =
           addr.road ||
@@ -393,7 +431,7 @@ export async function reverseGeocodeCoordinates(
           addr.county ||
           'Indore';
         const state = addr.state || 'Madhya Pradesh';
-        const pincode = (addr.postcode || '').replace(/[^0-9]/g, '');
+        let pincode = (addr.postcode || '').replace(/[^0-9]/g, '');
         const country = addr.country || 'India';
 
         // If road was missing, extract street from display_name
@@ -417,17 +455,36 @@ export async function reverseGeocodeCoordinates(
           }
         }
 
-        // Tier 1.5: If houseNumber or building is missing, query Overpass 35m spatial footprint
-        if (!houseNumber && !building) {
+        // Tier 1.5: If houseNumber or residentialBuilding is missing, query Overpass 35m spatial footprint
+        if (!houseNumber && !residentialBuilding) {
           const nearbyBuilding = await queryOverpassNearbyBuilding(latitude, longitude);
           if (nearbyBuilding) {
             if (nearbyBuilding.houseNumber) houseNumber = nearbyBuilding.houseNumber;
-            if (nearbyBuilding.building) building = nearbyBuilding.building;
+            if (nearbyBuilding.building && isResidentialPremise(nearbyBuilding.building)) {
+              residentialBuilding = nearbyBuilding.building;
+            }
+          }
+        }
+
+        // Enrich with nearest Indore colony/scheme if street or area is vague
+        const nearestIndore = findNearestIndoreLandmark(latitude, longitude, 1200);
+        if (nearestIndore) {
+          if (!street || street === 'Indore City' || street === 'Indore') {
+            street = nearestIndore.title;
+          }
+          if (!areaParts.includes(nearestIndore.title)) {
+            areaParts.unshift(nearestIndore.title);
+          }
+          if (!pincode && nearestIndore.pincode) {
+            pincode = nearestIndore.pincode;
+          }
+          if (!detectedLandmark && nearestIndore.title !== street) {
+            detectedLandmark = `Near ${nearestIndore.title}`;
           }
         }
 
         const uniqueArea = [...new Set(areaParts)].filter((a) => a !== street && a !== city);
-        const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', building]
+        const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', residentialBuilding]
           .filter(Boolean)
           .join(', ');
 
@@ -440,7 +497,7 @@ export async function reverseGeocodeCoordinates(
 
         return {
           houseNumber: houseNumber || undefined,
-          building: building || undefined,
+          building: residentialBuilding || undefined,
           street: street || undefined,
           area: uniqueArea.join(', ') || undefined,
           line1: flatHouse,
@@ -453,7 +510,7 @@ export async function reverseGeocodeCoordinates(
           latitude,
           longitude,
           accuracy,
-          landmark: building || addr.amenity || uniqueArea[0] || undefined,
+          landmark: detectedLandmark || uniqueArea[0] || undefined,
           confidence: flatHouse ? 'EXACT_PREMISE' : 'STREET_LEVEL',
         };
       }
@@ -470,7 +527,11 @@ export async function reverseGeocodeCoordinates(
       const pData = await pResponse.json();
       const prop = pData?.features?.[0]?.properties || {};
       const houseNumber = prop.housenumber || '';
-      const building = prop.type === 'house' && prop.name ? prop.name : '';
+      let residentialBuilding = prop.type === 'house' && prop.name && isResidentialPremise(prop.name) ? prop.name : '';
+      let detectedLandmark = '';
+      if (prop.name && isAmenityOrLandmark(prop.name)) {
+        detectedLandmark = prop.name.toLowerCase().startsWith('near') ? prop.name : `Near ${prop.name}`;
+      }
       const street =
         prop.street ||
         (prop.type === 'street' || prop.type === 'secondary' || prop.type === 'residential'
@@ -480,17 +541,25 @@ export async function reverseGeocodeCoordinates(
       const area = prop.locality || prop.district || '';
       const city = prop.city || 'Indore';
       const state = prop.state || 'Madhya Pradesh';
-      const pincode = String(prop.postcode || '').replace(/[^0-9]/g, '');
+      let pincode = String(prop.postcode || '').replace(/[^0-9]/g, '');
       const country = prop.country || 'India';
 
-      const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', building]
+      const nearestIndore = findNearestIndoreLandmark(latitude, longitude, 1200);
+      if (nearestIndore) {
+        if (!pincode && nearestIndore.pincode) pincode = nearestIndore.pincode;
+        if (!detectedLandmark && nearestIndore.title !== street) {
+          detectedLandmark = `Near ${nearestIndore.title}`;
+        }
+      }
+
+      const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', residentialBuilding]
         .filter(Boolean)
         .join(', ');
       const streetArea = [street, area].filter(Boolean).join(', ') || area || street || city;
 
       return {
         houseNumber: houseNumber || undefined,
-        building: building || undefined,
+        building: residentialBuilding || undefined,
         street: street || undefined,
         area: area || undefined,
         line1: flatHouse,
@@ -505,7 +574,7 @@ export async function reverseGeocodeCoordinates(
         latitude,
         longitude,
         accuracy,
-        landmark: building || area || undefined,
+        landmark: detectedLandmark || area || undefined,
         confidence: flatHouse ? 'EXACT_PREMISE' : 'STREET_LEVEL',
       };
     }
@@ -519,15 +588,27 @@ export async function reverseGeocodeCoordinates(
     if (results && results.length > 0) {
       const item = results[0];
       const houseNumber = item.streetNumber || '';
-      const building = item.name && item.name !== item.street ? item.name : '';
+      let residentialBuilding = item.name && item.name !== item.street && isResidentialPremise(item.name) ? item.name : '';
+      let detectedLandmark = '';
+      if (item.name && isAmenityOrLandmark(item.name)) {
+        detectedLandmark = item.name.toLowerCase().startsWith('near') ? item.name : `Near ${item.name}`;
+      }
       const street = item.street || '';
       const areaParts = [item.district, item.subregion].filter(Boolean);
       const city = item.city || item.subregion || item.district || 'Indore';
       const state = item.region || 'Madhya Pradesh';
-      const pincode = item.postalCode ? item.postalCode.replace(/[^0-9]/g, '') : '';
+      let pincode = item.postalCode ? item.postalCode.replace(/[^0-9]/g, '') : '';
       const country = item.country || 'India';
 
-      const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', building]
+      const nearestIndore = findNearestIndoreLandmark(latitude, longitude, 1200);
+      if (nearestIndore) {
+        if (!pincode && nearestIndore.pincode) pincode = nearestIndore.pincode;
+        if (!detectedLandmark && nearestIndore.title !== street) {
+          detectedLandmark = `Near ${nearestIndore.title}`;
+        }
+      }
+
+      const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', residentialBuilding]
         .filter(Boolean)
         .join(', ');
 
@@ -541,7 +622,7 @@ export async function reverseGeocodeCoordinates(
 
       return {
         houseNumber: houseNumber || undefined,
-        building: building || undefined,
+        building: residentialBuilding || undefined,
         street: street || undefined,
         area: uniqueArea.join(', ') || undefined,
         line1: flatHouse,
@@ -554,7 +635,7 @@ export async function reverseGeocodeCoordinates(
         latitude,
         longitude,
         accuracy,
-        landmark: building || item.name || undefined,
+        landmark: detectedLandmark || item.name || undefined,
         confidence: flatHouse ? 'EXACT_PREMISE' : 'STREET_LEVEL',
       };
     }
@@ -1692,6 +1773,37 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
  */
 export function isInsideIndore(lat: number, lon: number): boolean {
   return lat >= 22.50 && lat <= 22.88 && lon >= 75.68 && lon <= 76.08;
+}
+
+/**
+ * Finds the nearest known Indore locality, scheme, or landmark from INDORE_LANDMARKS.
+ * Used to enrich reverse-geocoded addresses with exact local colony/scheme details.
+ */
+export function findNearestIndoreLandmark(
+  lat: number,
+  lon: number,
+  maxDistanceMeters = 1500
+): PlaceSearchResult | null {
+  let nearest: PlaceSearchResult | null = null;
+  let minDistance = Infinity;
+
+  for (const item of INDORE_LANDMARKS) {
+    const dLat = (item.latitude - lat) * (Math.PI / 180);
+    const dLon = (item.longitude - lon) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat * (Math.PI / 180)) * Math.cos(item.latitude * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const dist = 6371000 * c;
+
+    if (dist < minDistance && dist <= maxDistanceMeters) {
+      minDistance = dist;
+      nearest = item;
+    }
+  }
+
+  return nearest;
 }
 
 /**

@@ -150,14 +150,16 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
         gpsAccuracy
       );
 
+      // Preserve existing user-entered house number if available
+      const homeNumber = line1 && line1.trim().length > 0 ? line1.trim() : reGeocoded.line1;
+      if (homeNumber) setLine1(homeNumber);
       if (reGeocoded.line2) setLine2(reGeocoded.line2);
-      if (reGeocoded.line1) setLine1(reGeocoded.line1);
       if (reGeocoded.city) setCity(reGeocoded.city);
       if (reGeocoded.state) setState(reGeocoded.state);
       if (reGeocoded.pincode) setPincode(reGeocoded.pincode);
       if (reGeocoded.landmark) setLandmark(reGeocoded.landmark);
-      setConfidence(reGeocoded.confidence || (reGeocoded.line1 ? 'EXACT_PREMISE' : 'STREET_LEVEL'));
-      setLocationHint(`📍 Pin shifted ${direction.toUpperCase()} by 14m! Address re-verified.`);
+      setConfidence(reGeocoded.confidence || (homeNumber ? 'EXACT_PREMISE' : 'STREET_LEVEL'));
+      setLocationHint(`📍 Pin shifted ${direction.toUpperCase()} by 14m! ${homeNumber ? homeNumber + ', ' : ''}${reGeocoded.line2 || reGeocoded.city}`);
     } catch (e) {
       console.warn('Error nudging pin:', e);
     } finally {
@@ -171,8 +173,14 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
     extractedHouseNo?: string
   ) => {
     setCoords(newCoords);
-    if (extractedHouseNo) {
-      setLine1(extractedHouseNo);
+
+    // 1. Determine best house/flat number: keep existing or use extracted
+    let homeNumber = extractedHouseNo;
+    if (!homeNumber && line1 && line1.trim().length > 0) {
+      homeNumber = line1.trim();
+    }
+    if (homeNumber) {
+      setLine1(homeNumber);
     }
 
     try {
@@ -183,25 +191,28 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
         gpsAccuracy
       );
 
-      setConfidence(geocoded.confidence || (geocoded.line1 ? 'EXACT_PREMISE' : 'STREET_LEVEL'));
+      // 2. Only use geocoded.line1 if user doesn't already have a house number
+      if (!homeNumber && geocoded.line1 && geocoded.line1.trim().length > 0) {
+        homeNumber = geocoded.line1.trim();
+        setLine1(homeNumber);
+      }
 
+      // 3. Update street/colony/area, city, state, pincode, landmark
       if (geocoded.line2) setLine2(geocoded.line2);
       if (geocoded.city) setCity(geocoded.city);
       if (geocoded.state) setState(geocoded.state);
       if (geocoded.pincode) setPincode(geocoded.pincode);
       if (geocoded.landmark) setLandmark(geocoded.landmark);
 
-      if (extractedHouseNo) {
-        setLine1(extractedHouseNo);
-        setLocationHint(`🎯 Pin positioned: ${extractedHouseNo}, ${geocoded.line2 || placeHint || geocoded.city}`);
-      } else if (geocoded.line1 && geocoded.line1.trim().length > 0) {
-        setLine1(geocoded.line1);
-        setLocationHint(`🎯 Pin set: ${geocoded.line1}, ${geocoded.line2 || geocoded.city}`);
+      setConfidence(geocoded.confidence || (homeNumber ? 'EXACT_PREMISE' : 'STREET_LEVEL'));
+
+      if (homeNumber) {
+        setLocationHint(`🎯 Pin set: ${homeNumber}, ${geocoded.line2 || placeHint || geocoded.city}`);
       } else {
         setLocationHint(
           placeHint
-            ? `🎯 Pin set to: ${placeHint}`
-            : `🎯 Pin set to: ${geocoded.line2 || `${newCoords.latitude.toFixed(4)}, ${newCoords.longitude.toFixed(4)}`}`
+            ? `🎯 Pin set: ${placeHint}`
+            : `🎯 Pin set: ${geocoded.line2 || `${newCoords.latitude.toFixed(4)}, ${newCoords.longitude.toFixed(4)}`}`
         );
       }
     } catch (e) {

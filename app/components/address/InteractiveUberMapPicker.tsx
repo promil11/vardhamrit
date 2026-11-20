@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { theme } from '../../theme';
 import { Icon } from '../common/Icon';
-import { PlaceSearchResult, searchPlaces } from '../../services/locationService';
+import { PlaceSearchResult, searchPlaces, parseAddressQuery } from '../../services/locationService';
 
 interface InteractiveUberMapPickerProps {
   latitude?: number;
@@ -51,15 +51,21 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
   const [isPinHovering, setIsPinHovering] = useState(false);
   const searchTimeoutRef = useRef<any>(null);
   const iframeRef = useRef<any>(null);
+  const rememberedHouseNoRef = useRef<string | undefined>(undefined);
 
   const activeLat = latitude || 22.7196;
   const activeLon = longitude || 75.8577;
 
-  // Search input handler with 200ms debounce
+  // Search input handler with 180ms debounce
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
+    }
+
+    const { houseNo } = parseAddressQuery(text);
+    if (houseNo) {
+      rememberedHouseNoRef.current = houseNo;
     }
 
     if (text.trim().length < 2) {
@@ -89,6 +95,10 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     setShowDropdown(false);
     setSearchResults([]);
 
+    if (place.extractedHouseNo) {
+      rememberedHouseNoRef.current = place.extractedHouseNo;
+    }
+
     // Fly map to new coordinates
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
@@ -105,7 +115,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     onLocationChange(
       { latitude: place.latitude, longitude: place.longitude },
       `${place.title}, ${place.subtitle}`,
-      place.extractedHouseNo
+      place.extractedHouseNo || rememberedHouseNoRef.current
     );
   };
 
@@ -155,7 +165,11 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
         setIsPinHovering(false);
         const { lat, lon } = e.data;
         if (typeof lat === 'number' && typeof lon === 'number') {
-          onLocationChange({ latitude: lat, longitude: lon });
+          onLocationChange(
+            { latitude: lat, longitude: lon },
+            undefined,
+            rememberedHouseNoRef.current
+          );
         }
       }
     };
