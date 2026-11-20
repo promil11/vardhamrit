@@ -164,12 +164,13 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     return () => window.removeEventListener('message', handleMessage);
   }, [onLocationChange]);
 
-  // Self-contained, responsive Leaflet HTML template with CartoDB Voyager 2x Retina, Satellite toggle & Famous Landmark pins
+  // Self-contained, responsive Leaflet HTML template with OpenStreetMap & Esri layers, Satellite toggle & Famous Landmark pins
   const leafletHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="referrer" content="origin" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -329,16 +330,21 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
       inertiaDeceleration: 3000
     });
 
-    // 1. CartoDB Voyager 2x Retina Layer (Ultra-crisp streets, building outlines, contrast labels)
-    var isRetina = window.devicePixelRatio > 1;
-    var streetLayer = L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}' + (isRetina ? '@2x.png' : '.png'),
-      {
-        subdomains: 'abcd',
-        maxZoom: 20,
-        crossOrigin: true
+    // 1. Street Layer (OpenStreetMap with high-detail local Indore schemes & streets)
+    var streetLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      crossOrigin: true
+    });
+
+    // Seamless fallback to Esri World Street Map if an OSM tile request fails
+    streetLayer.on('tileerror', function(error) {
+      if (error && error.coords && error.tile) {
+        var c = error.coords;
+        error.tile.src = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/' + c.z + '/' + c.y + '/' + c.x;
       }
-    ).addTo(map);
+    });
+
+    streetLayer.addTo(map);
 
     // 2. High-Res Satellite Layer (Esri World Imagery)
     var satLayer = L.tileLayer(
