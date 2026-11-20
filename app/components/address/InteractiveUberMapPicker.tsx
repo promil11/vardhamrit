@@ -164,7 +164,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     return () => window.removeEventListener('message', handleMessage);
   }, [onLocationChange]);
 
-  // Self-contained, responsive Leaflet HTML template with Uber-style floating bounce pin
+  // Self-contained, responsive Leaflet HTML template with CartoDB Voyager 2x Retina, Satellite toggle & Famous Landmark pins
   const leafletHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -193,7 +193,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     .pin-graphic {
       width: 40px;
       height: 48px;
-      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.32));
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.35));
     }
 
     /* Floating Shadow underneath pin */
@@ -204,7 +204,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
       transform: translate(-50%, -50%);
       width: 18px;
       height: 7px;
-      background: rgba(10, 54, 34, 0.35);
+      background: rgba(10, 54, 34, 0.38);
       border-radius: 50%;
       z-index: 999;
       pointer-events: none;
@@ -233,10 +233,75 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
       0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0.9; }
       100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
     }
+
+    /* Layer Switch Button (Street vs Satellite) */
+    .layer-toggle-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 800;
+      background: #FFFFFF;
+      border: 1.5px solid #D1D5DB;
+      border-radius: 8px;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #1F2937;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      transition: all 0.15s ease;
+    }
+    .layer-toggle-btn:hover, .layer-toggle-btn:active {
+      background: #F3F4F6;
+      border-color: #0A3622;
+      color: #0A3622;
+      transform: scale(1.02);
+    }
+
+    /* Famous Landmark Map Badges */
+    .famous-poi-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #FFFFFF;
+      padding: 3.5px 8px;
+      border-radius: 14px;
+      border: 1.5px solid #0A3622;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.24);
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      user-select: none;
+    }
+    .famous-poi-badge:hover, .famous-poi-badge:active {
+      transform: scale(1.1);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.38);
+      border-color: #15803D;
+      background: #F0FDF4;
+    }
+    .famous-poi-badge .poi-icon {
+      font-size: 12px;
+    }
+    .famous-poi-badge .poi-name {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #0A3622;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
+
+  <!-- Layer Switcher: Street vs Satellite -->
+  <button id="layer-btn" class="layer-toggle-btn" onclick="toggleMapLayer()">
+    <span>🛰️</span>
+    <span id="layer-btn-text">Satellite</span>
+  </button>
 
   <!-- Centered Interactive Uber Pin -->
   <div id="center-pin" class="uber-pin-anchor">
@@ -264,10 +329,86 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
       inertiaDeceleration: 3000
     });
 
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      crossOrigin: true
-    }).addTo(map);
+    // 1. CartoDB Voyager 2x Retina Layer (Ultra-crisp streets, building outlines, contrast labels)
+    var isRetina = window.devicePixelRatio > 1;
+    var streetLayer = L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}' + (isRetina ? '@2x.png' : '.png'),
+      {
+        subdomains: 'abcd',
+        maxZoom: 20,
+        crossOrigin: true
+      }
+    ).addTo(map);
+
+    // 2. High-Res Satellite Layer (Esri World Imagery)
+    var satLayer = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 19,
+        crossOrigin: true
+      }
+    );
+
+    var currentLayer = 'street';
+    function toggleMapLayer() {
+      var btnText = document.getElementById('layer-btn-text');
+      var btn = document.getElementById('layer-btn');
+      if (currentLayer === 'street') {
+        map.removeLayer(streetLayer);
+        satLayer.addTo(map);
+        currentLayer = 'satellite';
+        btn.innerHTML = '<span>🗺️</span><span id="layer-btn-text">Street</span>';
+      } else {
+        map.removeLayer(satLayer);
+        streetLayer.addTo(map);
+        currentLayer = 'street';
+        btn.innerHTML = '<span>🛰️</span><span id="layer-btn-text">Satellite</span>';
+      }
+    }
+
+    // 3. Famous Landmarks in Indore directly pinned on map
+    var famousLandmarks = [
+      { name: 'Scheme 71 Park', icon: '🌳', lat: 22.7044, lon: 75.8287 },
+      { name: 'Gumasta Nagar', icon: '🏡', lat: 22.7080, lon: 75.8300 },
+      { name: 'Electronic Complex', icon: '💻', lat: 22.7523, lon: 75.8687 },
+      { name: 'Sukhlia / Bapat', icon: '🚏', lat: 22.7615, lon: 75.8690 },
+      { name: 'Vijay Nagar Sq.', icon: '🌟', lat: 22.7511, lon: 75.8955 },
+      { name: '56 Dukan', icon: '🍲', lat: 22.7242, lon: 75.8821 },
+      { name: 'Rajwada Palace', icon: '🏛️', lat: 22.7180, lon: 75.8548 },
+      { name: 'Apollo DB City', icon: '🏢', lat: 22.7680, lon: 75.9180 },
+      { name: 'Khajrana Ganesh', icon: '🕉️', lat: 22.7350, lon: 75.9200 },
+      { name: 'Crystal IT Park', icon: '🎓', lat: 22.6845, lon: 75.8642 },
+      { name: 'C21 Mall', icon: '🛍️', lat: 22.7480, lon: 75.8930 },
+      { name: 'Bhawarkua Sq.', icon: '📍', lat: 22.6919, lon: 75.8669 },
+      { name: 'Annapurna Mandir', icon: '🌺', lat: 22.6948, lon: 75.8389 },
+      { name: 'Bombay Hospital', icon: '🏥', lat: 22.7590, lon: 75.8970 },
+      { name: 'Indore Airport', icon: '✈️', lat: 22.7230, lon: 75.8080 },
+      { name: 'Sarafa Bazaar', icon: '🍛', lat: 22.7170, lon: 75.8530 },
+      { name: 'Sudama Nagar', icon: '📍', lat: 22.6950, lon: 75.8450 },
+      { name: 'Pardesipura', icon: '📍', lat: 22.7485, lon: 75.8750 }
+    ];
+
+    famousLandmarks.forEach(function(poi) {
+      var badgeHtml = '<div class="famous-poi-badge" title="Tap to move pin here">' +
+        '<span class="poi-icon">' + poi.icon + '</span>' +
+        '<span class="poi-name">' + poi.name + '</span>' +
+        '</div>';
+
+      var poiIcon = L.divIcon({
+        html: badgeHtml,
+        className: 'custom-poi-marker',
+        iconSize: [null, null],
+        iconAnchor: [35, 14]
+      });
+
+      var marker = L.marker([poi.lat, poi.lon], { icon: poiIcon, zIndexOffset: 200 }).addTo(map);
+
+      // Tapping any famous landmark pin smoothly flies camera right to it
+      marker.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
+        map.flyTo([poi.lat, poi.lon], 17, { animate: true, duration: 0.9 });
+      });
+    });
 
     var pinEl = document.getElementById('center-pin');
 
