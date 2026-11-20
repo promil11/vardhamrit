@@ -41,15 +41,25 @@ export const PINCODE_COORDINATES: Record<string, { lat: number; lon: number }> =
   '452002': { lat: 22.7100, lon: 75.8600 }, // Chhatribagh (~1.1 km)
   '452003': { lat: 22.7300, lon: 75.8700 }, // Vallabh Nagar (~1.7 km)
   '452004': { lat: 22.7150, lon: 75.8850 }, // Tilak Nagar (~2.9 km)
+  '452005': { lat: 22.7230, lon: 75.8080 }, // Aerodrome / Airport (~5.2 km)
+  '452006': { lat: 22.7220, lon: 75.8420 }, // Bada Ganpati (~1.7 km)
   '452007': { lat: 22.6950, lon: 75.8450 }, // Sudama Nagar (~3.1 km)
+  '452008': { lat: 22.6980, lon: 75.8340 }, // Usha Nagar / Annapurna (~3.4 km)
   '452009': { lat: 22.7080, lon: 75.8300 }, // Gumasta Nagar (~3.1 km)
   '452010': { lat: 22.7533, lon: 75.8937 }, // Vijay Nagar (~5.3 km)
-  '452011': { lat: 22.7650, lon: 75.9100 }, // Nanda Nagar (~6.8 km)
+  '452011': { lat: 22.7450, lon: 75.8750 }, // Nanda Nagar / Pardesipura (~3.3 km)
   '452012': { lat: 22.7350, lon: 75.9200 }, // Khajrana (~6.7 km)
-  '452014': { lat: 22.7480, lon: 75.8900 }, // LIG Colony (~4.2 km)
-  '452016': { lat: 22.7750, lon: 75.9300 }, // MR-10 / Bhawrasla (~8.9 km)
-  '452020': { lat: 22.7800, lon: 75.9400 }, // Nipania (~9.4 km)
+  '452013': { lat: 22.7200, lon: 75.8880 }, // Palasia (~3.1 km)
+  '452014': { lat: 22.7380, lon: 75.8870 }, // LIG Colony / MIG (~3.7 km)
+  '452015': { lat: 22.6850, lon: 75.8270 }, // Rajendra Nagar (~5.1 km)
+  '452016': { lat: 22.7750, lon: 75.9300 }, // MR-10 / Bhawrasla (~9.6 km)
+  '452018': { lat: 22.7610, lon: 75.8980 }, // Scheme 78 / Vijay Nagar Ext (~6.1 km)
+  '452020': { lat: 22.7680, lon: 75.9180 }, // Nipania / Mahalaxmi Nagar (~8.2 km)
+  '453111': { lat: 22.7950, lon: 75.7250 }, // Hatod (> 15 km - Exceeds 10 km!)
+  '453112': { lat: 22.6850, lon: 75.5800 }, // Betma (> 28 km - Exceeds 10 km!)
+  '453441': { lat: 22.5530, lon: 75.7600 }, // Mhow (> 20 km - Exceeds 10 km!)
   '453555': { lat: 22.8600, lon: 75.9900 }, // Sanwer (> 18 km - Exceeds 10 km!)
+  '453771': { lat: 22.6350, lon: 75.8050 }, // Rau (> 11 km - Exceeds 10 km!)
 };
 
 /**
@@ -73,14 +83,19 @@ export function calculateHaversineDistanceKm(lat1: number, lon1: number, lat2: n
  * Resolve coordinates from an address object (GPS lat/lon, or pincode lookup, or default fallback)
  */
 export function resolveAddressCoordinates(address: any): { lat: number; lon: number; isEstimated: boolean } {
-  if (address?.latitude && address?.longitude) {
+  const lat = address?.latitude !== undefined && address?.latitude !== null && address?.latitude !== '' ? Number(address.latitude) : NaN;
+  const lon = address?.longitude !== undefined && address?.longitude !== null && address?.longitude !== '' ? Number(address.longitude) : NaN;
+
+  // 1. Exact GPS coordinates from satellite lock or pinned location
+  if (!isNaN(lat) && !isNaN(lon) && Math.abs(lat) > 0.001 && Math.abs(lon) > 0.001) {
     return {
-      lat: Number(address.latitude),
-      lon: Number(address.longitude),
+      lat,
+      lon,
       isEstimated: false,
     };
   }
 
+  // 2. Exact pincode centroid lookup
   const rawPincode = String(address?.pincode || '').replace(/[^0-9]/g, '');
   if (rawPincode && PINCODE_COORDINATES[rawPincode]) {
     return {
@@ -90,10 +105,22 @@ export function resolveAddressCoordinates(address: any): { lat: number; lon: num
     };
   }
 
-  // Fallback to base delivery zone (~400m from hub)
+  // 3. Fallback for unlisted Indore addresses (city is Indore or pincode starts with 452)
+  const city = String(address?.city || '').toLowerCase();
+  const isIndore = city.includes('indore') || rawPincode.startsWith('452');
+  if (isIndore) {
+    return {
+      lat: DISTANCE_CONFIG.STORE_LAT + 0.02,
+      lon: DISTANCE_CONFIG.STORE_LON + 0.02, // ~3.1 km from central hub
+      isEstimated: true,
+    };
+  }
+
+  // 4. Outside Indore service zone (e.g. non-Indore pincode without GPS)
+  // Positioned far outside 10 km limit so it is flagged unserviceable rather than falsely returning 0.4 km
   return {
-    lat: DISTANCE_CONFIG.STORE_LAT + 0.003,
-    lon: DISTANCE_CONFIG.STORE_LON + 0.003,
+    lat: DISTANCE_CONFIG.STORE_LAT + 0.5,
+    lon: DISTANCE_CONFIG.STORE_LON + 0.5,
     isEstimated: true,
   };
 }

@@ -15,6 +15,9 @@ export async function fetchUserAddresses(): Promise<Address[]> {
         city: a.city,
         state: a.state,
         pincode: a.pincode,
+        landmark: a.landmark || undefined,
+        latitude: a.latitude != null ? Number(a.latitude) : undefined,
+        longitude: a.longitude != null ? Number(a.longitude) : undefined,
         isDefault: Boolean(a.is_default),
       }));
     }
@@ -36,6 +39,9 @@ export async function saveUserAddress(addr: Omit<Address, 'id'> | Address): Prom
       city: addr.city,
       state: addr.state,
       pincode: addr.pincode,
+      landmark: addr.landmark || undefined,
+      latitude: addr.latitude != null ? Number(addr.latitude) : undefined,
+      longitude: addr.longitude != null ? Number(addr.longitude) : undefined,
       isDefault: Boolean(addr.isDefault),
     });
 
@@ -51,6 +57,9 @@ export async function saveUserAddress(addr: Omit<Address, 'id'> | Address): Prom
         city: a.city,
         state: a.state,
         pincode: a.pincode,
+        landmark: a.landmark || undefined,
+        latitude: a.latitude != null ? Number(a.latitude) : undefined,
+        longitude: a.longitude != null ? Number(a.longitude) : undefined,
         isDefault: Boolean(a.is_default),
       };
     }

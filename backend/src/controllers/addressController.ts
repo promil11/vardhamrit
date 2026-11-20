@@ -6,13 +6,15 @@ import { sendSuccess, sendError } from '../utils/response';
 export const addressSchema = z.object({
   name: z.string().min(2, 'Recipient name is required'),
   phone: z.string().min(10, 'Valid 10-digit phone number is required').max(15),
-  tag: z.enum(['HOME', 'WORK', 'OTHER']).optional().default('HOME'),
-  line1: z.string().min(3, 'Address line 1 is required'),
+  tag: z.enum(['HOME', 'WORK', 'OTHER']).or(z.string()).optional().default('HOME'),
+  line1: z.string().min(1, 'Address line 1 is required'),
   line2: z.string().optional().nullable(),
   city: z.string().min(2, 'City is required'),
   state: z.string().min(2, 'State is required'),
   pincode: z.string().regex(/^\d{6}$/, 'PIN code must be a 6-digit number'),
   landmark: z.string().optional().nullable(),
+  latitude: z.union([z.number(), z.string().regex(/^-?\d+(\.\d+)?$/).transform(Number)]).optional().nullable(),
+  longitude: z.union([z.number(), z.string().regex(/^-?\d+(\.\d+)?$/).transform(Number)]).optional().nullable(),
   isDefault: z.boolean().optional().default(false),
 });
 
@@ -28,7 +30,7 @@ export async function getAddresses(req: Request, res: Response, next: NextFuncti
     }
 
     const [addresses]: any = await pool.query(
-      `SELECT id, user_id, name, phone, tag, line1, line2, city, state, pincode, landmark, is_default, created_at, updated_at
+      `SELECT id, user_id, name, phone, tag, line1, line2, city, state, pincode, landmark, latitude, longitude, is_default, created_at, updated_at
        FROM addresses
        WHERE user_id = ?
        ORDER BY is_default DESC, created_at DESC`,
@@ -49,7 +51,7 @@ export async function createAddress(req: Request, res: Response, next: NextFunct
       connection.release();
       return sendError(res, 'Authentication required', 401);
     }
-    const { name, phone, tag, line1, line2, city, state, pincode, landmark, isDefault } = req.body;
+    const { name, phone, tag, line1, line2, city, state, pincode, landmark, latitude, longitude, isDefault } = req.body;
 
     await connection.beginTransaction();
 
@@ -70,10 +72,13 @@ export async function createAddress(req: Request, res: Response, next: NextFunct
       );
     }
 
+    const parsedLat = latitude !== undefined && latitude !== null && latitude !== '' ? Number(latitude) : null;
+    const parsedLon = longitude !== undefined && longitude !== null && longitude !== '' ? Number(longitude) : null;
+
     const [result]: any = await connection.query(
-      `INSERT INTO addresses (user_id, name, phone, tag, line1, line2, city, state, pincode, landmark, is_default)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId, name, phone, tag || 'HOME', line1, line2 || null, city, state, pincode, landmark || null, shouldBeDefault]
+      `INSERT INTO addresses (user_id, name, phone, tag, line1, line2, city, state, pincode, landmark, latitude, longitude, is_default)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, name, phone, tag || 'HOME', line1, line2 || null, city, state, pincode, landmark || null, parsedLat, parsedLon, shouldBeDefault]
     );
 
     await connection.commit();
@@ -101,7 +106,7 @@ export async function updateAddress(req: Request, res: Response, next: NextFunct
       return sendError(res, 'Authentication required', 401);
     }
     const addressId = Number(req.params.id);
-    const { name, phone, tag, line1, line2, city, state, pincode, landmark, isDefault } = req.body;
+    const { name, phone, tag, line1, line2, city, state, pincode, landmark, latitude, longitude, isDefault } = req.body;
 
     await connection.beginTransaction();
 
@@ -122,11 +127,14 @@ export async function updateAddress(req: Request, res: Response, next: NextFunct
       );
     }
 
+    const parsedLat = latitude !== undefined && latitude !== null && latitude !== '' ? Number(latitude) : null;
+    const parsedLon = longitude !== undefined && longitude !== null && longitude !== '' ? Number(longitude) : null;
+
     await connection.query(
       `UPDATE addresses 
-       SET name = ?, phone = ?, tag = ?, line1 = ?, line2 = ?, city = ?, state = ?, pincode = ?, landmark = ?, is_default = ?
+       SET name = ?, phone = ?, tag = ?, line1 = ?, line2 = ?, city = ?, state = ?, pincode = ?, landmark = ?, latitude = ?, longitude = ?, is_default = ?
        WHERE id = ? AND user_id = ?`,
-      [name, phone, tag || 'HOME', line1, line2 || null, city, state, pincode, landmark || null, Boolean(isDefault), addressId, userId]
+      [name, phone, tag || 'HOME', line1, line2 || null, city, state, pincode, landmark || null, parsedLat, parsedLon, Boolean(isDefault), addressId, userId]
     );
 
     await connection.commit();

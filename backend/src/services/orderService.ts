@@ -65,6 +65,8 @@ export async function createOrder(params: CreateOrderParams) {
           state: addr.state,
           pincode: addr.pincode,
           landmark: addr.landmark,
+          latitude: addr.latitude != null ? Number(addr.latitude) : undefined,
+          longitude: addr.longitude != null ? Number(addr.longitude) : undefined,
         };
       }
     }
