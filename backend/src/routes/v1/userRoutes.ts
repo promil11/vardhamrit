@@ -5,6 +5,8 @@ import {
   getCoinHistory,
   updateUserPreferences,
   claimScratchCard,
+  uploadAvatar,
+  avatarUploadMiddleware,
 } from '../../controllers/userController';
 import { authenticate, optionalAuthenticate } from '../../middleware/auth';
 
@@ -13,6 +15,7 @@ const router = Router();
 router.get('/profile', optionalAuthenticate, getUserProfile);
 router.put('/profile', authenticate, updateUserProfile);
 router.patch('/profile', authenticate, updateUserProfile);
+router.post('/avatar', optionalAuthenticate, avatarUploadMiddleware, uploadAvatar);
 router.get('/coins', optionalAuthenticate, getCoinHistory);
 router.put('/preferences', authenticate, updateUserPreferences);
 router.patch('/preferences', authenticate, updateUserPreferences);

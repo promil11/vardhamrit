@@ -6,6 +6,7 @@ export interface UserProfile {
   email: string;
   phone: string;
   role: string;
+  avatar_url?: string | null;
   member_since: string;
   tier: string;
   referral_code?: string;
@@ -77,6 +78,8 @@ export async function updateUserProfile(data: {
   phone?: string;
   preferredBlend?: string;
   favoriteMorningCup?: string;
+  avatarUrl?: string | null;
+  avatar_url?: string | null;
 }): Promise<{ success: boolean; user?: UserProfile; message?: string }> {
   try {
     const res = await api.put('/api/v1/user/profile', data);
@@ -90,6 +93,51 @@ export async function updateUserProfile(data: {
     return { success: false, message: res.data?.error || 'Update failed' };
   } catch (err: any) {
     const msg = err.response?.data?.error || err.message || 'Failed to update profile';
+    throw new Error(msg);
+  }
+}
+
+/**
+ * Uploads user profile avatar image via Base64 or FormData multipart.
+ * Returns the relative image URL (e.g. /uploads/avatars/avatar-xxx.jpg).
+ */
+export async function uploadAvatarImage(imageUri: string, base64Data?: string | null): Promise<string> {
+  try {
+    // 1. If base64 data is present, send JSON payload (fast & reliable across web/mobile)
+    if (base64Data && base64Data.length > 20) {
+      const formattedBase64 = base64Data.startsWith('data:')
+        ? base64Data
+        : `data:image/jpeg;base64,${base64Data}`;
+      const res = await api.post('/api/v1/user/avatar', { base64: formattedBase64 });
+      if (res.data?.success && res.data?.data?.url) {
+        return res.data.data.url;
+      }
+    }
+
+    // 2. Otherwise send multipart FormData
+    const formData = new FormData();
+    const filename = imageUri.split('/').pop() || 'avatar.jpg';
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+    formData.append('avatar', {
+      uri: imageUri,
+      name: filename,
+      type,
+    } as any);
+
+    const res = await api.post('/api/v1/user/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (res.data?.success && res.data?.data?.url) {
+      return res.data.data.url;
+    }
+    throw new Error(res.data?.error || 'Failed to upload profile image');
+  } catch (err: any) {
+    const msg = err.response?.data?.error || err.message || 'Failed to upload profile image';
     throw new Error(msg);
   }
 }

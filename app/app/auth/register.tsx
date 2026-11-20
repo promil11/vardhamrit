@@ -16,7 +16,9 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { useAuth } from '../../store/authContext';
 import { Icon } from '../../components/common/Icon';
-import { verifyInviteCode, InviteVerificationResult } from '../../services/userClientService';
+import { verifyInviteCode, InviteVerificationResult, uploadAvatarImage } from '../../services/userClientService';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 
 const MORNING_CUP_OPTIONS = [
   {
@@ -66,8 +68,55 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState(params.email ? String(params.email).trim().toLowerCase() : '');
   const [phone, setPhone] = useState(params.phone ? String(params.phone).replace(/[^0-9]/g, '') : '');
   const [favoriteMorningCup, setFavoriteMorningCup] = useState<string>('');
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handlePickAvatar = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission Needed', 'Please allow photo gallery access to upload a profile picture.');
+          return;
+        }
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setAvatarUri(asset.uri);
+        if (asset.base64) {
+          setAvatarBase64(asset.base64);
+        }
+        if (Platform.OS !== 'web') {
+          try {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          } catch { }
+        }
+      }
+    } catch (err: any) {
+      console.warn('Image picker error:', err);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarUri(null);
+    setAvatarBase64(null);
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch { }
+    }
+  };
 
   // Auto-fill phone from navigation param
   useEffect(() => {
@@ -181,13 +230,24 @@ export default function RegisterScreen() {
       setLoading(true);
       setErrorMessage(null);
 
+      // Upload avatar first if user selected one
+      let uploadedAvatarUrl: string | undefined = undefined;
+      if (avatarUri) {
+        try {
+          uploadedAvatarUrl = await uploadAvatarImage(avatarUri, avatarBase64);
+        } catch (uploadErr) {
+          console.warn('Avatar upload failed during register:', uploadErr);
+        }
+      }
+
       const activeInvite = appliedInvite ? appliedInvite.code : (inviteCodeInput.trim() || undefined);
       const res = await register(
         name.trim(),
         email.trim(),
         phone.trim(),
         activeInvite,
-        favoriteMorningCup
+        favoriteMorningCup,
+        uploadedAvatarUrl
       );
 
       if (res?.inviteBonusAwarded) {
@@ -281,6 +341,69 @@ export default function RegisterScreen() {
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
           ) : null}
+
+          {/* Avatar Photo Picker */}
+          <View style={styles.avatarPickerContainer}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handlePickAvatar}
+              style={styles.avatarPickerTouchable}
+            >
+              <View style={styles.avatarCircle}>
+                {avatarUri ? (
+                  <Image
+                    source={{ uri: avatarUri }}
+                    style={styles.avatarPickedImage}
+                    contentFit="cover"
+                    transition={200}
+                  />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Icon name="user" size={32} color="#0A3622" strokeWidth={1.8} />
+                  </View>
+                )}
+                <View style={styles.avatarBadge}>
+                  <Icon
+                    name={avatarUri ? 'edit-2' : 'camera'}
+                    size={12}
+                    color="#FFFFFF"
+                    strokeWidth={2.2}
+                  />
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.avatarTextContainer}>
+              <Text style={styles.avatarTitle}>Profile Picture</Text>
+              <Text style={styles.avatarSubtitle}>
+                {avatarUri
+                  ? 'Photo selected! Tap to change or remove'
+                  : 'Add a photo to personalize your profile (Optional)'}
+              </Text>
+              <View style={styles.avatarActionButtonsRow}>
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={handlePickAvatar}
+                  style={styles.avatarActionPill}
+                >
+                  <Icon name="upload-cloud" size={12} color="#0A3622" />
+                  <Text style={styles.avatarActionPillText}>
+                    {avatarUri ? 'Change Photo' : 'Upload Photo'}
+                  </Text>
+                </TouchableOpacity>
+                {avatarUri ? (
+                  <TouchableOpacity
+                    activeOpacity={0.75}
+                    onPress={handleRemoveAvatar}
+                    style={styles.avatarRemovePill}
+                  >
+                    <Icon name="trash-2" size={12} color="#DC2626" />
+                    <Text style={styles.avatarRemovePillText}>Remove</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            </View>
+          </View>
 
           {/* Full Name */}
           <View style={styles.fieldGroup}>
@@ -1302,5 +1425,114 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: theme.typography.weights.bold,
     color: '#4B5563',
+  },
+  avatarPickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAF9',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 18,
+    gap: 14,
+  },
+  avatarPickerTouchable: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    borderWidth: 2.5,
+    borderColor: '#D4AF37',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    position: 'relative',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  avatarPickedImage: {
+    width: 69,
+    height: 69,
+    borderRadius: 35,
+  },
+  avatarPlaceholder: {
+    width: 69,
+    height: 69,
+    borderRadius: 35,
+    backgroundColor: '#E8F5E9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarBadge: {
+    position: 'absolute',
+    bottom: -1,
+    right: -1,
+    width: 25,
+    height: 25,
+    borderRadius: 13,
+    backgroundColor: '#0A3622',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarTextContainer: {
+    flex: 1,
+  },
+  avatarTitle: {
+    fontSize: 13.5,
+    fontWeight: theme.typography.weights.bold,
+    color: '#111827',
+    marginBottom: 2,
+  },
+  avatarSubtitle: {
+    fontSize: 11,
+    color: '#6B7280',
+    lineHeight: 15,
+    marginBottom: 8,
+  },
+  avatarActionButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  avatarActionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#E6F4EA',
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  avatarActionPillText: {
+    fontSize: 11,
+    fontWeight: theme.typography.weights.bold,
+    color: '#0A3622',
+  },
+  avatarRemovePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FEF2F2',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  avatarRemovePillText: {
+    fontSize: 11,
+    fontWeight: theme.typography.weights.bold,
+    color: '#DC2626',
   },
 });

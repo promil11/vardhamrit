@@ -22,4 +22,14 @@ export function getFullImageUrl(url?: string | null): string {
   return `${API_BASE_URL}/${url.replace(/^\/+/, '')}`;
 }
 
+/**
+ * Resolves avatar image URL or returns null if not set (to render initials fallback).
+ */
+export function getAvatarUrl(url?: string | null): string | null {
+  if (!url || typeof url !== 'string' || url.trim() === '') {
+    return null;
+  }
+  return getFullImageUrl(url);
+}
+
 export default getFullImageUrl;

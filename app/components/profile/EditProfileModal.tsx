@@ -12,9 +12,13 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 import { theme } from '../../theme';
 import { Icon } from '../common/Icon';
 import { User } from '../../store/authContext';
+import { getAvatarUrl } from '../../utils/imageUtils';
+import { uploadAvatarImage } from '../../services/userClientService';
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -25,6 +29,7 @@ interface EditProfileModalProps {
     email: string;
     phone: string;
     favoriteMorningCup: string;
+    avatarUrl?: string | null;
   }) => Promise<void>;
 }
 
@@ -45,6 +50,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [favoriteMorningCup, setFavoriteMorningCup] = useState('Normal Chai');
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
+  const [avatarChanged, setAvatarChanged] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -57,9 +66,61 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       const phone10 = cleanPhone.length > 10 ? cleanPhone.slice(-10) : cleanPhone;
       setPhone(phone10);
       setFavoriteMorningCup(user.preferred_blend || user.favorite_morning_cup || 'Normal Chai');
+      setAvatarUri(user.avatar_url ? getAvatarUrl(user.avatar_url) : null);
+      setAvatarBase64(null);
+      setAvatarChanged(false);
       setErrorMsg(null);
     }
   }, [visible, user]);
+
+  const handlePickAvatar = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          setErrorMsg('Permission to access photos was denied.');
+          return;
+        }
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setAvatarUri(asset.uri);
+        if (asset.base64) {
+          setAvatarBase64(asset.base64);
+        }
+        setAvatarChanged(true);
+        setErrorMsg(null);
+        if (Platform.OS !== 'web') {
+          try {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          } catch { }
+        }
+      }
+    } catch (err: any) {
+      console.warn('Image picker error in modal:', err);
+      setErrorMsg('Could not open image picker.');
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarUri(null);
+    setAvatarBase64(null);
+    setAvatarChanged(true);
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch { }
+    }
+  };
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -94,11 +155,31 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     }
 
     try {
+      let finalAvatarUrl: string | null | undefined = undefined;
+
+      if (avatarChanged) {
+        if (avatarUri) {
+          setUploadingImage(true);
+          try {
+            finalAvatarUrl = await uploadAvatarImage(avatarUri, avatarBase64);
+          } catch (uploadErr: any) {
+            console.warn('Failed to upload avatar in modal:', uploadErr);
+            setErrorMsg('Failed to upload photo. Please try a different image.');
+            setLoading(false);
+            setUploadingImage(false);
+            return;
+          }
+        } else {
+          finalAvatarUrl = null;
+        }
+      }
+
       await onSave({
         name: name.trim(),
         email: email.trim().toLowerCase(),
         phone: phone.trim(),
         favoriteMorningCup,
+        ...(avatarChanged ? { avatarUrl: finalAvatarUrl } : {}),
       });
 
       if (Platform.OS !== 'web') {
@@ -111,6 +192,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       setErrorMsg(err.message || 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
+      setUploadingImage(false);
     }
   };
 
@@ -164,16 +246,59 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollBody}
           >
-            {/* Avatar Preview */}
+            {/* Avatar Row */}
             <View style={styles.avatarRow}>
-              <View style={styles.avatarBorder}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handlePickAvatar}
+                style={styles.avatarBorder}
+              >
                 <View style={styles.avatarInner}>
-                  <Text style={styles.avatarText}>{getInitials()}</Text>
+                  {avatarUri ? (
+                    <Image
+                      source={{ uri: avatarUri }}
+                      style={styles.avatarImage}
+                      contentFit="cover"
+                      transition={200}
+                    />
+                  ) : (
+                    <Text style={styles.avatarText}>{getInitials()}</Text>
+                  )}
+                  {uploadingImage && (
+                    <View style={styles.avatarLoadingOverlay}>
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    </View>
+                  )}
                 </View>
-              </View>
+                <View style={styles.cameraIconBadge}>
+                  <Icon name="camera" size={11} color="#0A3622" strokeWidth={2.4} />
+                </View>
+              </TouchableOpacity>
+
               <View style={styles.avatarInfo}>
                 <Text style={styles.avatarName}>{name || 'Your Name'}</Text>
-                <Text style={styles.avatarTier}>Royal Connoisseur Club Member</Text>
+                <View style={styles.avatarButtonsRow}>
+                  <TouchableOpacity
+                    onPress={handlePickAvatar}
+                    activeOpacity={0.75}
+                    style={styles.photoPillBtn}
+                  >
+                    <Icon name="upload-cloud" size={11} color="#0A3622" />
+                    <Text style={styles.photoPillBtnText}>
+                      {avatarUri ? 'Change Photo' : 'Upload Photo'}
+                    </Text>
+                  </TouchableOpacity>
+                  {avatarUri ? (
+                    <TouchableOpacity
+                      onPress={handleRemoveAvatar}
+                      activeOpacity={0.75}
+                      style={styles.removePillBtn}
+                    >
+                      <Icon name="trash-2" size={11} color="#DC2626" />
+                      <Text style={styles.removePillBtnText}>Remove</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
               </View>
             </View>
 
@@ -399,24 +524,49 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F8FAFC',
   },
   avatarBorder: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     borderWidth: 2,
     borderColor: '#D4AF37',
     padding: 2,
     marginRight: 14,
+    position: 'relative',
   },
   avatarInner: {
     flex: 1,
     backgroundColor: '#0A3622',
-    borderRadius: 24,
+    borderRadius: 29,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraIconBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#D4AF37',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
   },
   avatarInfo: {
@@ -427,11 +577,43 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0F172A',
   },
-  avatarTier: {
+  avatarButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+  },
+  photoPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#E6F4EA',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  photoPillBtnText: {
     fontSize: 11,
-    color: '#0D9488',
-    fontWeight: '600',
-    marginTop: 2,
+    fontWeight: '700',
+    color: '#0A3622',
+  },
+  removePillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#FEF2F2',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  removePillBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#DC2626',
   },
   errorBanner: {
     flexDirection: 'row',

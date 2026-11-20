@@ -14,6 +14,7 @@ export interface User {
   email: string | null;
   phone: string | null;
   role: 'customer' | 'admin';
+  avatar_url?: string | null;
   pushToken?: string | null;
   coins_balance?: number;
   referral_code?: string;
@@ -38,7 +39,8 @@ interface AuthContextType {
     email: string,
     phone: string,
     inviteCode?: string,
-    preferredBlend?: string
+    preferredBlend?: string,
+    avatarUrl?: string
   ) => Promise<{ inviteBonusAwarded?: boolean; user?: User; message?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -48,6 +50,8 @@ interface AuthContextType {
     phone?: string;
     preferred_blend?: string;
     favorite_morning_cup?: string;
+    avatar_url?: string | null;
+    avatarUrl?: string | null;
   }) => Promise<User>;
   setCoinsBalance: (coins: number) => void;
   setPreferredBlend: (blend: string) => void;
@@ -230,7 +234,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     phone: string,
     inviteCode?: string,
-    preferredBlend?: string
+    preferredBlend?: string,
+    avatarUrl?: string
   ) => {
     const res = await api.post('/auth/register', {
       name,
@@ -239,6 +244,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       inviteCode: inviteCode && inviteCode.trim() ? inviteCode.trim().toUpperCase() : undefined,
       preferredBlend: preferredBlend || 'Upper Assam Kadak',
       favoriteMorningCup: preferredBlend || 'Upper Assam Kadak',
+      avatarUrl: avatarUrl || undefined,
     });
     if (res.data?.success) {
       const { user: userData, accessToken, refreshToken, inviteBonusAwarded } = res.data.data;
@@ -306,6 +312,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     phone?: string;
     preferred_blend?: string;
     favorite_morning_cup?: string;
+    avatar_url?: string | null;
+    avatarUrl?: string | null;
   }) => {
     const res = await api.put('/api/v1/user/profile', {
       name: data.name,
@@ -313,6 +321,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       phone: data.phone,
       preferredBlend: data.preferred_blend || data.favorite_morning_cup,
       favoriteMorningCup: data.favorite_morning_cup || data.preferred_blend,
+      avatarUrl: data.avatar_url || data.avatarUrl,
     });
     if (res.data?.success && res.data?.data?.user) {
       const updatedUser = res.data.data.user;

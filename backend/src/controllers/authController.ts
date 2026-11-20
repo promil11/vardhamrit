@@ -16,6 +16,8 @@ export const registerSchema = z.object({
   inviteCode: z.string().trim().optional().nullable(),
   preferredBlend: z.string().trim().max(100).optional().nullable(),
   favoriteMorningCup: z.string().trim().max(100).optional().nullable(),
+  avatarUrl: z.string().trim().optional().nullable(),
+  avatar_url: z.string().trim().optional().nullable(),
 }).refine((data) => data.email || data.phone, {
   message: 'Either email or phone must be provided',
   path: ['email'],
@@ -143,8 +145,11 @@ export async function register(req: Request, res: Response, next: NextFunction) 
       inviteCode,
       preferredBlend,
       favoriteMorningCup,
+      avatarUrl,
+      avatar_url,
     } = req.body;
     const morningCup = (favoriteMorningCup || preferredBlend || '').trim();
+    const finalAvatarUrl = avatarUrl || avatar_url || null;
     if (!morningCup) {
       return sendError(res, 'Please select your Favorite Morning Cup to complete registration', 400);
     }
@@ -188,9 +193,9 @@ export async function register(req: Request, res: Response, next: NextFunction) 
     const initialCoins = referrer ? 100 : 50;
 
     const [result]: any = await connection.query(
-      `INSERT INTO users (name, email, phone, role, coins_balance, referral_code, referred_by, preferred_blend)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, email || null, phone || null, role, initialCoins, newReferralCode, referrer ? referrer.id : null, morningCup]
+      `INSERT INTO users (name, email, phone, role, coins_balance, referral_code, referred_by, preferred_blend, avatar_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, email || null, phone || null, role, initialCoins, newReferralCode, referrer ? referrer.id : null, morningCup, finalAvatarUrl]
     );
 
     const userId = result.insertId;
@@ -253,6 +258,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
           email,
           phone,
           role,
+          avatar_url: finalAvatarUrl,
           coins_balance: initialCoins,
           referral_code: newReferralCode,
           referred_by: referrer ? referrer.id : null,
@@ -382,7 +388,7 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
 
     // Check if user exists
     const [users]: any = await connection.query(
-      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, status FROM users WHERE email = ? LIMIT 1',
+      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, status FROM users WHERE email = ? LIMIT 1',
       [email]
     );
 
@@ -431,6 +437,7 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
         referral_code: referralCode,
         referred_by: null,
         preferred_blend: preferredBlend,
+        avatar_url: null,
         push_token: null,
       };
     }
@@ -454,6 +461,7 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
           email: user.email,
           phone: user.phone,
           role: user.role,
+          avatar_url: user.avatar_url || null,
           coins_balance: Number(user.coins_balance) || 0,
           referral_code: user.referral_code,
           referred_by: user.referred_by,
@@ -563,7 +571,7 @@ export async function verifyOtp(req: Request, res: Response, next: NextFunction)
     const variants = getPhoneVariants(phone || rawTarget);
 
     const [users]: any = await pool.query(
-      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, status FROM users WHERE phone IN (?, ?, ?, ?) LIMIT 1',
+      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, avatar_url, status FROM users WHERE phone IN (?, ?, ?, ?) LIMIT 1',
       variants
     );
 
@@ -616,6 +624,7 @@ export async function verifyOtp(req: Request, res: Response, next: NextFunction)
           email: user.email,
           phone: user.phone,
           role: user.role,
+          avatar_url: user.avatar_url || null,
           coins_balance: Number(user.coins_balance) || 0,
           referral_code: user.referral_code,
           referred_by: user.referred_by,
@@ -642,7 +651,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
     // Query by email OR phone
     const [users]: any = await pool.query(
-      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, status FROM users WHERE email = ? OR phone IN (?, ?, ?, ?) LIMIT 1',
+      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, status FROM users WHERE email = ? OR phone IN (?, ?, ?, ?) LIMIT 1',
       [identifier, ...phoneVariants]
     );
 
@@ -697,6 +706,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          avatar_url: user.avatar_url || null,
           coins_balance: Number(user.coins_balance) || 0,
           referral_code: user.referral_code,
           referred_by: user.referred_by,
@@ -765,7 +775,7 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
     }
 
     const [users]: any = await pool.query(
-      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, created_at FROM users WHERE id = ? LIMIT 1',
+      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, created_at FROM users WHERE id = ? LIMIT 1',
       [req.user.userId]
     );
 
@@ -811,7 +821,7 @@ export async function firebasePhoneLogin(req: Request, res: Response, next: Next
 
     const variants = getPhoneVariants(cleanPhone);
     const [users]: any = await pool.query(
-      'SELECT id, name, email, phone, role, status, coins_balance, referral_code, preferred_blend FROM users WHERE phone IN (?, ?, ?, ?) LIMIT 1',
+      'SELECT id, name, email, phone, role, status, coins_balance, referral_code, preferred_blend, avatar_url FROM users WHERE phone IN (?, ?, ?, ?) LIMIT 1',
       variants
     );
 
@@ -850,6 +860,7 @@ export async function firebasePhoneLogin(req: Request, res: Response, next: Next
         coins_balance: 50,
         referral_code: referralCode,
         preferred_blend: favoriteMorningCup || 'Normal Chai',
+        avatar_url: null,
       };
     }
 

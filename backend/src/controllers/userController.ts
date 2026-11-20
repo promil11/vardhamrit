@@ -1,6 +1,107 @@
 import { Request, Response, NextFunction } from 'express';
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
+import multer from 'multer';
 import pool from '../config/db';
 import { sendSuccess, sendError } from '../utils/response';
+
+// Ensure avatars directory exists
+const avatarsDir = path.join(__dirname, '../../uploads/avatars');
+if (!fs.existsSync(avatarsDir)) {
+  fs.mkdirSync(avatarsDir, { recursive: true });
+}
+
+// Multer storage for avatars
+const avatarStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, avatarsDir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+    const cleanExt = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext) ? ext : '.jpg';
+    const uniqueSuffix = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    cb(null, `avatar-${uniqueSuffix}${cleanExt}`);
+  },
+});
+
+const avatarMulter = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+}).any();
+
+export const avatarUploadMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.includes('multipart/form-data')) {
+    avatarMulter(req, res, (err: any) => {
+      if (err) {
+        return sendError(res, err.message || 'File upload failed', 400);
+      }
+      next();
+    });
+  } else {
+    next();
+  }
+};
+
+/**
+ * POST /api/v1/user/avatar
+ * Supports multipart/form-data file uploads and base64 payloads.
+ * Automatically saves image to /uploads/avatars/ and updates user avatar if authenticated.
+ */
+export async function uploadAvatar(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.userId || (req as any).user?.id;
+    let avatarUrl: string | null = null;
+
+    // 1. Check if multipart file uploaded
+    const files = req.files as Express.Multer.File[] | undefined;
+    if (files && files.length > 0) {
+      avatarUrl = `/uploads/avatars/${files[0].filename}`;
+    } else if ((req as any).file) {
+      avatarUrl = `/uploads/avatars/${(req as any).file.filename}`;
+    }
+
+    // 2. Check if Base64 string payload provided
+    const base64Data = (req.body?.imageBase64 || req.body?.base64 || req.body?.image || req.body?.avatar || '').trim();
+    if (!avatarUrl && base64Data) {
+      let ext = '.jpg';
+      let cleanBase64 = base64Data;
+      const match = base64Data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+      if (match) {
+        const rawExt = match[1].toLowerCase();
+        ext = rawExt === 'jpeg' ? '.jpg' : `.${rawExt}`;
+        cleanBase64 = match[2];
+      }
+      const buffer = Buffer.from(cleanBase64, 'base64');
+      const filename = `avatar-${Date.now()}-${crypto.randomBytes(4).toString('hex')}${ext}`;
+      const filepath = path.join(avatarsDir, filename);
+      await fs.promises.writeFile(filepath, buffer);
+      avatarUrl = `/uploads/avatars/${filename}`;
+    }
+
+    if (!avatarUrl) {
+      return sendError(res, 'No image file or base64 data provided', 400);
+    }
+
+    // 3. If authenticated, update user's avatar_url in database
+    if (userId) {
+      await pool.query('UPDATE users SET avatar_url = ? WHERE id = ?', [avatarUrl, userId]);
+    }
+
+    return sendSuccess(
+      res,
+      {
+        url: avatarUrl,
+        avatar_url: avatarUrl,
+        userId: userId || null,
+      },
+      'Profile image uploaded successfully'
+    );
+  } catch (err) {
+    return next(err);
+  }
+}
 
 /**
  * GET /api/v1/user/profile
@@ -14,7 +115,7 @@ export async function getUserProfile(req: Request, res: Response, next: NextFunc
     }
 
     const [users]: any = await pool.query(
-      `SELECT id, name, email, phone, role, coins_balance, referral_code, referred_by, preferred_blend, created_at FROM users WHERE id = ?`,
+      `SELECT id, name, email, phone, role, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, created_at FROM users WHERE id = ?`,
       [userId]
     );
 
@@ -66,6 +167,7 @@ export async function getUserProfile(req: Request, res: Response, next: NextFunc
         email: user.email,
         phone: user.phone,
         role: user.role,
+        avatar_url: user.avatar_url || null,
         coins_balance: coinsBalance,
         referral_code: user.referral_code,
         referred_by: user.referred_by,
@@ -270,10 +372,10 @@ export async function updateUserProfile(req: Request, res: Response, next: NextF
       return sendError(res, 'Authentication required', 401);
     }
 
-    const { name, email, phone, preferredBlend, favoriteMorningCup } = req.body;
+    const { name, email, phone, preferredBlend, favoriteMorningCup, avatarUrl, avatar_url } = req.body;
 
     const [currentUsers]: any = await pool.query(
-      'SELECT id, name, email, phone, role, coins_balance, referral_code, preferred_blend FROM users WHERE id = ?',
+      'SELECT id, name, email, phone, role, coins_balance, referral_code, preferred_blend, avatar_url FROM users WHERE id = ?',
       [userId]
     );
 
@@ -286,6 +388,7 @@ export async function updateUserProfile(req: Request, res: Response, next: NextF
     let newEmail = email !== undefined ? String(email).trim().toLowerCase() : currentUser.email;
     let newPhone = phone !== undefined ? String(phone).trim() : currentUser.phone;
     const newBlend = (favoriteMorningCup || (preferredBlend !== undefined ? preferredBlend : currentUser.preferred_blend))?.trim();
+    const newAvatar = avatarUrl !== undefined ? avatarUrl : (avatar_url !== undefined ? avatar_url : currentUser.avatar_url);
 
     if (newName && newName.length < 2) {
       return sendError(res, 'Name must be at least 2 characters long', 400);
@@ -327,8 +430,8 @@ export async function updateUserProfile(req: Request, res: Response, next: NextF
     }
 
     await pool.query(
-      'UPDATE users SET name = ?, email = ?, phone = ?, preferred_blend = ? WHERE id = ?',
-      [newName || currentUser.name, newEmail || null, newPhone || null, newBlend || 'Normal Chai', userId]
+      'UPDATE users SET name = ?, email = ?, phone = ?, preferred_blend = ?, avatar_url = ? WHERE id = ?',
+      [newName || currentUser.name, newEmail || null, newPhone || null, newBlend || 'Normal Chai', newAvatar || null, userId]
     );
 
     const updatedUser = {
@@ -336,6 +439,7 @@ export async function updateUserProfile(req: Request, res: Response, next: NextF
       name: newName || currentUser.name,
       email: newEmail || null,
       phone: newPhone || null,
+      avatar_url: newAvatar || null,
       preferred_blend: newBlend || 'Normal Chai',
       favorite_morning_cup: newBlend || 'Normal Chai',
     };

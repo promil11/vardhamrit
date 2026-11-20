@@ -31,6 +31,8 @@ import { useAuth } from '../../store/authContext';
 import { useWishlistStore } from '../../store/useWishlistStore';
 import { useAddressStore } from '../../store/useAddressStore';
 import { useResponsive } from '../../utils/responsive';
+import { Image } from 'expo-image';
+import { getAvatarUrl } from '../../utils/imageUtils';
 
 const PROFILE_FLAVOURS = [
   { id: 'Normal Chai', label: 'Normal Chai', emoji: '' },
@@ -255,6 +257,7 @@ export default function ProfileScreen() {
     email: string;
     phone: string;
     favoriteMorningCup: string;
+    avatarUrl?: string | null;
   }) => {
     await updateUserProfile({
       name: updatedData.name,
@@ -262,6 +265,7 @@ export default function ProfileScreen() {
       phone: updatedData.phone,
       favorite_morning_cup: updatedData.favoriteMorningCup,
       preferred_blend: updatedData.favoriteMorningCup,
+      avatarUrl: updatedData.avatarUrl,
     });
     setPreferredBlend(updatedData.favoriteMorningCup);
     await loadProfile();
@@ -468,20 +472,36 @@ export default function ProfileScreen() {
           >
             <View style={styles.memberTopRow}>
               {/* Avatar Disc */}
-              <View style={styles.avatarBorder}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => setEditProfileModalVisible(true)}
+                style={styles.avatarBorder}
+              >
                 <View style={styles.avatarInner}>
-                  <Text style={styles.avatarInitials}>
-                    {user?.name
-                      ? user.name
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2)
-                      : 'AS'}
-                  </Text>
+                  {getAvatarUrl(user?.avatar_url) ? (
+                    <Image
+                      source={{ uri: getAvatarUrl(user?.avatar_url)! }}
+                      style={styles.avatarImage}
+                      contentFit="cover"
+                      transition={200}
+                    />
+                  ) : (
+                    <Text style={styles.avatarInitials}>
+                      {user?.name
+                        ? user.name
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')
+                          .toUpperCase()
+                          .slice(0, 2)
+                        : 'AS'}
+                    </Text>
+                  )}
                 </View>
-              </View>
+                <View style={styles.avatarCameraBadge}>
+                  <Icon name="camera" size={10} color="#0A3622" strokeWidth={2.4} />
+                </View>
+              </TouchableOpacity>
 
               {/* Member Details */}
               <View style={styles.memberDetailsCol}>
@@ -1194,20 +1214,40 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   avatarBorder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: '#D4AF37',
     padding: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   avatarInner: {
     width: '100%',
     height: '100%',
-    borderRadius: 28,
+    borderRadius: 29,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarCameraBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#D4AF37',
+    borderWidth: 1.5,
+    borderColor: '#0A3622',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -21,8 +21,8 @@ import {
   firebasePhoneLogin,
 } from '../controllers/authController';
 import { validate } from '../middleware/validate';
-import { authenticate } from '../middleware/auth';
-import { updateUserProfile } from '../controllers/userController';
+import { authenticate, optionalAuthenticate } from '../middleware/auth';
+import { updateUserProfile, uploadAvatar, avatarUploadMiddleware } from '../controllers/userController';
 
 const router = Router();
 
@@ -34,6 +34,7 @@ router.post('/firebase-login', firebasePhoneLogin);
 router.post('/send-email-otp', validate({ body: sendEmailOtpSchema }), sendEmailOtp);
 router.post('/verify-email-otp', validate({ body: verifyEmailOtpSchema }), verifyEmailOtp);
 router.post('/register', validate({ body: registerSchema }), register);
+router.post('/avatar', optionalAuthenticate, avatarUploadMiddleware, uploadAvatar);
 router.post('/login', validate({ body: loginSchema }), login);
 router.post('/refresh', validate({ body: refreshSchema }), refresh);
 router.get('/me', authenticate, getMe);
