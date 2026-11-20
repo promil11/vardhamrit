@@ -20,6 +20,7 @@ import {
   nudgeCoordinates,
 } from '../../services/locationService';
 import { storage } from '../../services/storage';
+import { InteractiveUberMapPicker } from '../address/InteractiveUberMapPicker';
 
 interface AddAddressModalProps {
   visible: boolean;
@@ -164,6 +165,44 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
     }
   };
 
+  const handleMapLocationChange = async (
+    newCoords: { latitude: number; longitude: number },
+    placeHint?: string
+  ) => {
+    setCoords(newCoords);
+    try {
+      setIsLocating(true);
+      const geocoded = await reverseGeocodeCoordinates(
+        newCoords.latitude,
+        newCoords.longitude,
+        gpsAccuracy
+      );
+
+      setConfidence(geocoded.confidence || (geocoded.line1 ? 'EXACT_PREMISE' : 'STREET_LEVEL'));
+
+      if (geocoded.line2) setLine2(geocoded.line2);
+      if (geocoded.city) setCity(geocoded.city);
+      if (geocoded.state) setState(geocoded.state);
+      if (geocoded.pincode) setPincode(geocoded.pincode);
+      if (geocoded.landmark) setLandmark(geocoded.landmark);
+
+      if (geocoded.line1 && geocoded.line1.trim().length > 0) {
+        setLine1(geocoded.line1);
+        setLocationHint(`🎯 Pin set: ${geocoded.line1}, ${geocoded.line2 || geocoded.city}`);
+      } else {
+        setLocationHint(
+          placeHint
+            ? `🎯 Pin set to: ${placeHint}`
+            : `🎯 Pin set to: ${geocoded.line2 || `${newCoords.latitude.toFixed(4)}, ${newCoords.longitude.toFixed(4)}`}`
+        );
+      }
+    } catch (e) {
+      console.warn('Error reverse geocoding map location change:', e);
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
   // Auto-fill city/state accurately based on Indian PIN code
   const handlePincodeChange = async (text: string) => {
     const clean = text.replace(/[^0-9]/g, '').slice(0, 6);
@@ -245,7 +284,7 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 460 }}>
+          <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 560 }}>
             {/* Tag Selection Chips */}
             <View style={styles.tagRow}>
               {(['HOME', 'WORK', 'OTHER'] as const).map((t) => {
@@ -270,6 +309,16 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
                 );
               })}
             </View>
+
+            {/* Uber-Style Moving Map & Location Search Picker */}
+            <InteractiveUberMapPicker
+              latitude={coords.latitude}
+              longitude={coords.longitude}
+              accuracy={gpsAccuracy}
+              isLocating={isLocating}
+              onRequestLocateMe={handleAutoDetectLocation}
+              onLocationChange={handleMapLocationChange}
+            />
 
             {/* 1-Tap Free & Accurate GPS Location Button */}
             <TouchableOpacity
