@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --watch src -e ts --exec ts-node src/index.ts",
     "build": "tsc && cp -r src/migrations/*.sql dist/migrations/ 2>/dev/null || true && npm run build:frontends",
-    "build:frontends": "node -e \"const {execSync}=require('child_process'); console.log('Building frontends for Render...'); execSync('cd .. && npm install --include=dev && npm --workspace=admin run build && npm --workspace=app run export:web', {stdio:'inherit'});\"",
+    "build:frontends": "node -e \"const fs=require('fs'); if(process.env.RENDER || !fs.existsSync('../app/dist') || !fs.existsSync('../admin/dist')){ const {execSync}=require('child_process'); console.log('Building frontends for Render...'); execSync('cd .. && npm install --include=dev && npm --workspace=admin run build && npm --workspace=app run export:web', {stdio:'inherit'}); }\"",
     "start": "node dist/index.js",
     "migrate": "ts-node src/migrations/runMigrations.ts",
     "seed": "ts-node src/seeds/002_production_seed.ts",
