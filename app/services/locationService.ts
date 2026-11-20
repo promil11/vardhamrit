@@ -484,9 +484,16 @@ export async function reverseGeocodeCoordinates(
         }
 
         const uniqueArea = [...new Set(areaParts)].filter((a) => a !== street && a !== city);
-        const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', residentialBuilding]
+        let flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', residentialBuilding]
           .filter(Boolean)
           .join(', ');
+
+        // If no explicit house door number or residential building tag exists in OSM,
+        // construct an accurate premise/building descriptor so line1 is never blank on pin scroll
+        if (!flatHouse) {
+          const premiseColony = nearestIndore ? nearestIndore.title : (uniqueArea[0] || street || 'Indore');
+          flatHouse = `Building / Plot, ${premiseColony}`;
+        }
 
         const streetAreaParts = [street, ...uniqueArea].filter(Boolean);
         const streetArea =
@@ -511,7 +518,7 @@ export async function reverseGeocodeCoordinates(
           longitude,
           accuracy,
           landmark: detectedLandmark || uniqueArea[0] || undefined,
-          confidence: flatHouse ? 'EXACT_PREMISE' : 'STREET_LEVEL',
+          confidence: houseNumber || residentialBuilding ? 'EXACT_PREMISE' : 'STREET_LEVEL',
         };
       }
     }
@@ -552,9 +559,14 @@ export async function reverseGeocodeCoordinates(
         }
       }
 
-      const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', residentialBuilding]
+      let flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', residentialBuilding]
         .filter(Boolean)
         .join(', ');
+
+      if (!flatHouse) {
+        const premiseColony = nearestIndore ? nearestIndore.title : (area || street || 'Indore');
+        flatHouse = `Building / Plot, ${premiseColony}`;
+      }
       const streetArea = [street, area].filter(Boolean).join(', ') || area || street || city;
 
       return {
@@ -575,7 +587,7 @@ export async function reverseGeocodeCoordinates(
         longitude,
         accuracy,
         landmark: detectedLandmark || area || undefined,
-        confidence: flatHouse ? 'EXACT_PREMISE' : 'STREET_LEVEL',
+        confidence: houseNumber || residentialBuilding ? 'EXACT_PREMISE' : 'STREET_LEVEL',
       };
     }
   } catch (photonErr) {
@@ -608,9 +620,14 @@ export async function reverseGeocodeCoordinates(
         }
       }
 
-      const flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', residentialBuilding]
+      let flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', residentialBuilding]
         .filter(Boolean)
         .join(', ');
+
+      if (!flatHouse) {
+        const premiseColony = nearestIndore ? nearestIndore.title : (uniqueArea[0] || street || 'Indore');
+        flatHouse = `Building / Plot, ${premiseColony}`;
+      }
 
       const uniqueArea = [...new Set(areaParts)].filter((a) => a !== street && a !== city);
       const streetAreaParts = [street, ...uniqueArea].filter(Boolean);
@@ -636,7 +653,7 @@ export async function reverseGeocodeCoordinates(
         longitude,
         accuracy,
         landmark: detectedLandmark || item.name || undefined,
-        confidence: flatHouse ? 'EXACT_PREMISE' : 'STREET_LEVEL',
+        confidence: houseNumber || residentialBuilding ? 'EXACT_PREMISE' : 'STREET_LEVEL',
       };
     }
   } catch (nativeErr) {
@@ -656,18 +673,23 @@ export async function reverseGeocodeCoordinates(
       const country = bdcData.countryName || 'India';
       const streetArea = locality ? `${locality} Area` : 'Indore Area';
 
+      const nearestIndore = findNearestIndoreLandmark(latitude, longitude, 1200);
+      const premiseColony = nearestIndore ? nearestIndore.title : (locality || 'Indore');
+      const flatHouse = `Building / Plot, ${premiseColony}`;
+
       return {
-        line1: '',
-        line2: streetArea,
+        line1: flatHouse,
+        line2: nearestIndore ? nearestIndore.title : streetArea,
         city,
         state,
-        pincode,
+        pincode: pincode || (nearestIndore?.pincode) || '452001',
         country,
-        formattedAddress: [streetArea, city, state, pincode, country].filter(Boolean).join(', '),
+        formattedAddress: [flatHouse, streetArea, city, state, pincode, country].filter(Boolean).join(', '),
         latitude,
         longitude,
         accuracy,
-        confidence: 'LOCALITY',
+        landmark: nearestIndore ? `Near ${nearestIndore.title}` : undefined,
+        confidence: 'STREET_LEVEL',
       };
     }
   } catch (bdcErr) {
@@ -675,9 +697,11 @@ export async function reverseGeocodeCoordinates(
   }
 
   // Ultimate fallback
+  const nearestIndore = findNearestIndoreLandmark(latitude, longitude, 1500);
+  const fallbackColony = nearestIndore ? nearestIndore.title : 'Indore';
   return {
-    line1: '',
-    line2: 'Current Location',
+    line1: `Building / Plot, ${fallbackColony}`,
+    line2: fallbackColony,
     city: 'Indore',
     state: 'Madhya Pradesh',
     pincode: '452001',
