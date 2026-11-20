@@ -769,10 +769,11 @@ export interface PlaceSearchResult {
 }
 
 export const INDORE_LANDMARKS: PlaceSearchResult[] = [
+  // 1. Electronic Complex & Sukhlia Zone
   {
     id: 'indore-ec-1',
     title: 'Electronic Complex',
-    subtitle: 'Pardesipura / Sukhlia, Indore • 452010',
+    subtitle: 'Sukhlia / Pardesipura, Indore • 452010',
     latitude: 22.7523,
     longitude: 75.8687,
     pincode: '452010',
@@ -792,6 +793,28 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
     source: 'INDORE_POI',
   },
   {
+    id: 'indore-sukhlia-1',
+    title: 'Sukhlia Square',
+    subtitle: 'MR-10 / Bapat Square Road, Indore • 452010',
+    latitude: 22.7607,
+    longitude: 75.8645,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-bapat-1',
+    title: 'Bapat Square',
+    subtitle: 'Sukhlia, MR-10, Indore • 452010',
+    latitude: 22.7615,
+    longitude: 75.8690,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
     id: 'indore-pardesi-1',
     title: 'Pardesipura Square',
     subtitle: 'Nanda Nagar / Sukhlia Road, Indore • 452011',
@@ -802,6 +825,30 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
     state: 'Madhya Pradesh',
     source: 'INDORE_POI',
   },
+  {
+    id: 'indore-nanda-1',
+    title: 'Nanda Nagar',
+    subtitle: 'Pardesipura, Indore • 452011',
+    latitude: 22.7530,
+    longitude: 75.8750,
+    pincode: '452011',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-clerk-1',
+    title: 'Clerk Colony',
+    subtitle: 'Pardesipura, Indore • 452011',
+    latitude: 22.7560,
+    longitude: 75.8710,
+    pincode: '452011',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+
+  // 2. Vijay Nagar & Schemes
   {
     id: 'indore-vn-1',
     title: 'Vijay Nagar Square',
@@ -814,11 +861,233 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
     source: 'INDORE_POI',
   },
   {
+    id: 'indore-s54-1',
+    title: 'Scheme 54',
+    subtitle: 'Vijay Nagar, Near C21 Mall, Indore • 452010',
+    latitude: 22.7490,
+    longitude: 75.8920,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-s78-1',
+    title: 'Scheme 78',
+    subtitle: 'Part 2, Vijay Nagar, Indore • 452010',
+    latitude: 22.7610,
+    longitude: 75.8980,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-s74-1',
+    title: 'Scheme 74',
+    subtitle: 'Vijay Nagar, Indore • 452010',
+    latitude: 22.7580,
+    longitude: 75.8910,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-s114-1',
+    title: 'Scheme 114',
+    subtitle: 'Near Part 1 & 2, Indore • 452010',
+    latitude: 22.7720,
+    longitude: 75.8960,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-s140-1',
+    title: 'Scheme 140',
+    subtitle: 'Pipliyahana / Ring Road, Indore • 452016',
+    latitude: 22.7090,
+    longitude: 75.9120,
+    pincode: '452016',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-mahalaxmi-1',
+    title: 'Mahalaxmi Nagar',
+    subtitle: 'Bombay Hospital Road, Indore • 452010',
+    latitude: 22.7620,
+    longitude: 75.9080,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-apollo-1',
+    title: 'Apollo DB City',
+    subtitle: 'Nipania Main Road, Indore • 452020',
+    latitude: 22.7680,
+    longitude: 75.9180,
+    pincode: '452020',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-nipania-1',
+    title: 'Nipania',
+    subtitle: 'Near DPS / Bypass, Indore • 452020',
+    latitude: 22.7710,
+    longitude: 75.9250,
+    pincode: '452020',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-bombay-1',
+    title: 'Bombay Hospital Square',
+    subtitle: 'Ring Road, Scheme 94, Indore • 452010',
+    latitude: 22.7590,
+    longitude: 75.8970,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-c21-1',
+    title: 'C21 Mall',
+    subtitle: 'AB Road, Scheme 54, Vijay Nagar, Indore • 452010',
+    latitude: 22.7480,
+    longitude: 75.8930,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-malhar-1',
+    title: 'Malhar Mega Mall',
+    subtitle: 'AB Road, Vijay Nagar, Indore • 452010',
+    latitude: 22.7490,
+    longitude: 75.8940,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-brilliant-1',
+    title: 'Brilliant Convention Centre',
+    subtitle: 'Scheme 78, Part II, Vijay Nagar, Indore • 452010',
+    latitude: 22.7640,
+    longitude: 75.8950,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-medanta-1',
+    title: 'Medanta Hospital',
+    subtitle: 'MR-10, Sector B, Indore • 452010',
+    latitude: 22.7570,
+    longitude: 75.8820,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+
+  // 3. Central & Palasia Zone
+  {
     id: 'indore-c56-1',
     title: 'Chhappan Dukan (56 Dukan)',
     subtitle: 'New Palasia, Indore • 452001',
     latitude: 22.7242,
     longitude: 75.8821,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-palasia-1',
+    title: 'Palasia Square',
+    subtitle: 'Old Palasia, AB Road, Indore • 452018',
+    latitude: 22.7237,
+    longitude: 75.8867,
+    pincode: '452018',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-opalasia-1',
+    title: 'Old Palasia',
+    subtitle: 'Manoramaganj Road, Indore • 452018',
+    latitude: 22.7250,
+    longitude: 75.8890,
+    pincode: '452018',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-npalasia-1',
+    title: 'New Palasia',
+    subtitle: 'Near 56 Dukan, Indore • 452001',
+    latitude: 22.7260,
+    longitude: 75.8810,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-geeta-1',
+    title: 'Geeta Bhawan Square',
+    subtitle: 'AB Road, Manoramaganj, Indore • 452001',
+    latitude: 22.7181,
+    longitude: 75.8874,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-manorama-1',
+    title: 'Manoramaganj',
+    subtitle: 'Near Navneet Tower, Indore • 452001',
+    latitude: 22.7210,
+    longitude: 75.8840,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-stukoganj-1',
+    title: 'South Tukoganj',
+    subtitle: 'MG Road, Near TI Mall, Indore • 452001',
+    latitude: 22.7200,
+    longitude: 75.8790,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-ti-1',
+    title: 'Treasure Island Mall (TI Mall)',
+    subtitle: 'MG Road, South Tukoganj, Indore • 452001',
+    latitude: 22.7215,
+    longitude: 75.8770,
     pincode: '452001',
     city: 'Indore',
     state: 'Madhya Pradesh',
@@ -838,7 +1107,7 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
   {
     id: 'indore-sarafa-1',
     title: 'Sarafa Bazaar',
-    subtitle: 'Night Food Market, Rajwada, Indore • 452001',
+    subtitle: 'Night Food Street, Rajwada, Indore • 452001',
     latitude: 22.7170,
     longitude: 75.8530,
     pincode: '452001',
@@ -847,20 +1116,66 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
     source: 'INDORE_POI',
   },
   {
-    id: 'indore-palasia-1',
-    title: 'Old Palasia / Palasia Square',
-    subtitle: 'AB Road / Greater Kailash Hospital, Indore • 452013',
-    latitude: 22.7237,
-    longitude: 75.8867,
-    pincode: '452013',
+    id: 'indore-badaganpati-1',
+    title: 'Bada Ganpati',
+    subtitle: 'Malharganj, Indore • 452006',
+    latitude: 22.7220,
+    longitude: 75.8420,
+    pincode: '452006',
     city: 'Indore',
     state: 'Madhya Pradesh',
     source: 'INDORE_POI',
   },
   {
+    id: 'indore-malharganj-1',
+    title: 'Malharganj',
+    subtitle: 'Near Jinsi, Indore • 452006',
+    latitude: 22.7250,
+    longitude: 75.8450,
+    pincode: '452006',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-khajrana-1',
+    title: 'Khajrana Ganesh Mandir',
+    subtitle: 'Khajrana Road, Indore • 452012',
+    latitude: 22.7350,
+    longitude: 75.9200,
+    pincode: '452012',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-bengali-1',
+    title: 'Bengali Square',
+    subtitle: 'Ring Road, Kanadiya Road, Indore • 452016',
+    latitude: 22.7150,
+    longitude: 75.9050,
+    pincode: '452016',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-pipliyahana-1',
+    title: 'Pipliyahana Square (World Cup)',
+    subtitle: 'Ring Road, Indore • 452016',
+    latitude: 22.7090,
+    longitude: 75.9020,
+    pincode: '452016',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+
+  // 4. Bhawarkua & South Zone
+  {
     id: 'indore-bhawar-1',
     title: 'Bhawarkua Square',
-    subtitle: 'Holkar Science College / AB Road, Indore • 452001',
+    subtitle: 'AB Road, Near Holkar College, Indore • 452001',
     latitude: 22.6919,
     longitude: 75.8669,
     pincode: '452001',
@@ -880,6 +1195,39 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
     source: 'INDORE_POI',
   },
   {
+    id: 'indore-sapna-1',
+    title: 'Sapna Sangeeta Road',
+    subtitle: 'Snehnagar, Indore • 452001',
+    latitude: 22.7020,
+    longitude: 75.8680,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-tower-1',
+    title: 'Tower Square',
+    subtitle: 'Khatiwala Tank, Sapna Sangeeta, Indore • 452001',
+    latitude: 22.7000,
+    longitude: 75.8650,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-vishnupuri-1',
+    title: 'Vishnupuri Colony',
+    subtitle: 'Bhawarkua, AB Road, Indore • 452001',
+    latitude: 22.6880,
+    longitude: 75.8670,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
     id: 'indore-annapurna-1',
     title: 'Annapurna Mandir',
     subtitle: 'Annapurna Road, Usha Nagar, Indore • 452009',
@@ -891,9 +1239,20 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
     source: 'INDORE_POI',
   },
   {
+    id: 'indore-annapurna-rd-1',
+    title: 'Annapurna Road',
+    subtitle: 'Dravid Nagar / Usha Nagar, Indore • 452009',
+    latitude: 22.6970,
+    longitude: 75.8360,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
     id: 'indore-sudama-1',
     title: 'Sudama Nagar',
-    subtitle: 'Footi Kothi Road, Indore • 452009',
+    subtitle: 'Sector E & D, Footi Kothi, Indore • 452009',
     latitude: 22.6950,
     longitude: 75.8450,
     pincode: '452009',
@@ -913,129 +1272,52 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
     source: 'INDORE_POI',
   },
   {
-    id: 'indore-khajrana-1',
-    title: 'Khajrana Ganesh Mandir',
-    subtitle: 'Khajrana Road, Indore • 452012',
-    latitude: 22.7350,
-    longitude: 75.9200,
+    id: 'indore-footi-1',
+    title: 'Footi Kothi',
+    subtitle: 'Dhar Road / Ring Road, Indore • 452009',
+    latitude: 22.7020,
+    longitude: 75.8280,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-rajendra-1',
+    title: 'Rajendra Nagar',
+    subtitle: 'Near IPS Academy / AB Road, Indore • 452012',
+    latitude: 22.6780,
+    longitude: 75.8280,
     pincode: '452012',
     city: 'Indore',
     state: 'Madhya Pradesh',
     source: 'INDORE_POI',
   },
   {
-    id: 'indore-bombay-1',
-    title: 'Bombay Hospital Square',
-    subtitle: 'Ring Road, Scheme 94, Indore • 452010',
-    latitude: 22.7590,
-    longitude: 75.8970,
-    pincode: '452010',
+    id: 'indore-silicon-1',
+    title: 'Silicon City',
+    subtitle: 'Rau, AB Road, Indore • 452012',
+    latitude: 22.6280,
+    longitude: 75.8110,
+    pincode: '452012',
     city: 'Indore',
     state: 'Madhya Pradesh',
     source: 'INDORE_POI',
   },
   {
-    id: 'indore-c21-1',
-    title: 'C21 Mall / Malhar Mega Mall',
-    subtitle: 'AB Road, Scheme 54, Vijay Nagar, Indore • 452010',
-    latitude: 22.7480,
-    longitude: 75.8930,
-    pincode: '452010',
-    city: 'Indore',
-    state: 'Madhya Pradesh',
-    source: 'INDORE_POI',
-  },
-  {
-    id: 'indore-ti-1',
-    title: 'Treasure Island Mall (TI Mall)',
-    subtitle: 'MG Road, South Tukoganj, Indore • 452001',
-    latitude: 22.7215,
-    longitude: 75.8770,
-    pincode: '452001',
-    city: 'Indore',
-    state: 'Madhya Pradesh',
-    source: 'INDORE_POI',
-  },
-  {
-    id: 'indore-nipania-1',
-    title: 'Apollo DB City / Nipania',
-    subtitle: 'Nipania Main Road, Indore • 452020',
-    latitude: 22.7680,
-    longitude: 75.9180,
-    pincode: '452020',
-    city: 'Indore',
-    state: 'Madhya Pradesh',
-    source: 'INDORE_POI',
-  },
-  {
-    id: 'indore-super-1',
-    title: 'Super Corridor (TCS & Infosys)',
-    subtitle: 'Airport Road, Indore • 452005',
-    latitude: 22.7750,
-    longitude: 75.8050,
-    pincode: '452005',
-    city: 'Indore',
-    state: 'Madhya Pradesh',
-    source: 'INDORE_POI',
-  },
-  {
-    id: 'indore-airport-1',
-    title: 'Devi Ahilyabai Holkar Airport',
-    subtitle: 'Depalpur Road, Indore • 452005',
-    latitude: 22.7230,
-    longitude: 75.8080,
-    pincode: '452005',
-    city: 'Indore',
-    state: 'Madhya Pradesh',
-    source: 'INDORE_POI',
-  },
-  {
-    id: 'indore-railway-1',
-    title: 'Indore Junction Railway Station',
-    subtitle: 'Chhoti Gwaltoli / Siyaganj, Indore • 452001',
-    latitude: 22.7160,
-    longitude: 75.8670,
-    pincode: '452001',
-    city: 'Indore',
-    state: 'Madhya Pradesh',
-    source: 'INDORE_POI',
-  },
-  {
-    id: 'indore-lig-1',
-    title: 'LIG Colony / Square',
-    subtitle: 'AB Road, MIG Colony, Indore • 452011',
-    latitude: 22.7380,
-    longitude: 75.8870,
-    pincode: '452011',
-    city: 'Indore',
-    state: 'Madhya Pradesh',
-    source: 'INDORE_POI',
-  },
-  {
-    id: 'indore-geeta-1',
-    title: 'Geeta Bhawan Square',
-    subtitle: 'AB Road, Manoramaganj, Indore • 452001',
-    latitude: 22.7181,
-    longitude: 75.8874,
-    pincode: '452001',
-    city: 'Indore',
-    state: 'Madhya Pradesh',
-    source: 'INDORE_POI',
-  },
-  {
-    id: 'indore-mr10-1',
-    title: 'MR-10 Square / Bhawrasla',
-    subtitle: 'Ujjain Road / Bypass, Indore • 452016',
-    latitude: 22.7750,
-    longitude: 75.9300,
-    pincode: '452016',
+    id: 'indore-tfantasy-1',
+    title: 'Treasure Fantasy',
+    subtitle: 'Rau, CAT Road, Indore • 453331',
+    latitude: 22.6410,
+    longitude: 75.8020,
+    pincode: '453331',
     city: 'Indore',
     state: 'Madhya Pradesh',
     source: 'INDORE_POI',
   },
   {
     id: 'indore-rau-1',
-    title: 'Rau Circle',
+    title: 'Rau Circle / Rau Bypass',
     subtitle: 'AB Road / Pithampur Road, Indore • 453771',
     latitude: 22.6350,
     longitude: 75.8050,
@@ -1045,12 +1327,267 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
     source: 'INDORE_POI',
   },
   {
-    id: 'indore-bengali-1',
-    title: 'Bengali Square',
-    subtitle: 'Ring Road / Kanadiya Road, Indore • 452016',
+    id: 'indore-cat-1',
+    title: 'CAT Road / RRCAT',
+    subtitle: 'Rajendra Nagar, Indore • 452013',
+    latitude: 22.6580,
+    longitude: 75.8150,
+    pincode: '452013',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-hawa-1',
+    title: 'Hawa Bangla',
+    subtitle: 'CAT Road, Choithram Hospital, Indore • 452009',
+    latitude: 22.6720,
+    longitude: 75.8320,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-choithram-1',
+    title: 'Choithram Hospital',
+    subtitle: 'Manik Bagh Road, Indore • 452014',
+    latitude: 22.6880,
+    longitude: 75.8450,
+    pincode: '452014',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+
+  // 5. Airport, Super Corridor & Transport
+  {
+    id: 'indore-super-1',
+    title: 'Super Corridor',
+    subtitle: 'Airport to TCS / Infosys, Indore • 452005',
+    latitude: 22.7750,
+    longitude: 75.8050,
+    pincode: '452005',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-tcs-1',
+    title: 'TCS Campus',
+    subtitle: 'Super Corridor, Indore • 452005',
+    latitude: 22.7810,
+    longitude: 75.8020,
+    pincode: '452005',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-infosys-1',
+    title: 'Infosys Campus',
+    subtitle: 'Super Corridor, Indore • 452005',
+    latitude: 22.7850,
+    longitude: 75.8000,
+    pincode: '452005',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-airport-1',
+    title: 'Indore Airport (IDR)',
+    subtitle: 'Depalpur Road, Aerodrome, Indore • 452005',
+    latitude: 22.7230,
+    longitude: 75.8080,
+    pincode: '452005',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-aerodrome-1',
+    title: 'Aerodrome Road',
+    subtitle: 'Bijasan Road, Indore • 452005',
+    latitude: 22.7280,
+    longitude: 75.8120,
+    pincode: '452005',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-kalani-1',
+    title: 'Kalani Nagar',
+    subtitle: 'Airport Road, Indore • 452005',
+    latitude: 22.7350,
+    longitude: 75.8200,
+    pincode: '452005',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-railway-1',
+    title: 'Indore Junction Railway Station',
+    subtitle: 'Chhoti Gwaltoli, Siyaganj, Indore • 452001',
+    latitude: 22.7160,
+    longitude: 75.8670,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-sarwate-1',
+    title: 'Sarwate Bus Stand',
+    subtitle: 'Near Railway Station, Indore • 452001',
+    latitude: 22.7130,
+    longitude: 75.8670,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-gangwal-1',
+    title: 'Gangwal Bus Stand',
+    subtitle: 'Dhar Road, Malharganj, Indore • 452002',
     latitude: 22.7150,
-    longitude: 75.9050,
+    longitude: 75.8420,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-mr9-1',
+    title: 'MR 9 Square',
+    subtitle: 'Ring Road, Malviya Nagar, Indore • 452010',
+    latitude: 22.7420,
+    longitude: 75.8970,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-mr10-1',
+    title: 'MR 10 Square',
+    subtitle: 'Bhawrasla / Sukhlia, Indore • 452016',
+    latitude: 22.7750,
+    longitude: 75.9300,
     pincode: '452016',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-radisson-1',
+    title: 'Radisson Square',
+    subtitle: 'Ring Road / AB Road, Indore • 452010',
+    latitude: 22.7485,
+    longitude: 75.9020,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-lig-1',
+    title: 'LIG Colony',
+    subtitle: 'AB Road, Indore • 452011',
+    latitude: 22.7380,
+    longitude: 75.8870,
+    pincode: '452011',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-mig-1',
+    title: 'MIG Colony',
+    subtitle: 'Near LIG Colony, Indore • 452011',
+    latitude: 22.7390,
+    longitude: 75.8850,
+    pincode: '452011',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-tilak-1',
+    title: 'Tilak Nagar',
+    subtitle: 'Kanadiya Road, Indore • 452004',
+    latitude: 22.7150,
+    longitude: 75.8850,
+    pincode: '452004',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-saket-1',
+    title: 'Saket Nagar',
+    subtitle: 'Old Palasia Road, Indore • 452018',
+    latitude: 22.7210,
+    longitude: 75.8960,
+    pincode: '452018',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-kanadiya-1',
+    title: 'Kanadiya',
+    subtitle: 'Bypass Road, Indore • 452016',
+    latitude: 22.7180,
+    longitude: 75.9350,
+    pincode: '452016',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-bypass-1',
+    title: 'Bypass Road',
+    subtitle: 'Indore Bypass Highway, Indore • 452016',
+    latitude: 22.7350,
+    longitude: 75.9450,
+    pincode: '452016',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-mhow-1',
+    title: 'Mhow (Dr. Ambedkar Nagar)',
+    subtitle: 'Indore District • 453441',
+    latitude: 22.5530,
+    longitude: 75.7600,
+    pincode: '453441',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-sanwer-1',
+    title: 'Sanwer',
+    subtitle: 'Indore-Ujjain Highway • 453555',
+    latitude: 22.8600,
+    longitude: 75.9900,
+    pincode: '453555',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+  },
+  {
+    id: 'indore-hatod-1',
+    title: 'Hatod',
+    subtitle: 'Airport Road Outer, Indore • 453111',
+    latitude: 22.7950,
+    longitude: 75.7250,
+    pincode: '453111',
     city: 'Indore',
     state: 'Madhya Pradesh',
     source: 'INDORE_POI',
@@ -1058,24 +1595,33 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
 ];
 
 /**
- * Intelligent Multi-Source Location Search:
- * 1. Checks Instant Local Indore Landmark Database (0ms response)
- * 2. Queries Photon Geocoding API with proximity bias
- * 3. Fallback to OpenStreetMap Nominatim
+ * Strict boundary validator:
+ * Checks whether coordinates fall strictly within Indore metropolitan limits.
+ * West lon: 75.68, North lat: 22.88, East lon: 76.08, South lat: 22.50
+ */
+export function isInsideIndore(lat: number, lon: number): boolean {
+  return lat >= 22.50 && lat <= 22.88 && lon >= 75.68 && lon <= 76.08;
+}
+
+/**
+ * Intelligent Indore-Only Location Search Engine:
+ * 1. Checks Instant Local Indore Landmark Database (0ms response) with multi-token fuzzy search
+ * 2. Queries Photon Geocoding API with strict Indore bounding box
+ * 3. Queries OpenStreetMap Nominatim with bounded=1 Indore viewbox
+ * 4. STRICT FILTER: Discards any location outside Indore!
  */
 export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> {
   const clean = query.trim().toLowerCase();
   if (clean.length < 2) return [];
 
+  const tokens = clean.split(/\s+/).filter(Boolean);
   const results: PlaceSearchResult[] = [];
   const seenKeys = new Set<string>();
 
-  // 1. Instant Match from Local Indore Landmarks Database
+  // 1. Instant Match from Local Indore Landmarks Database (0ms delay)
   const localMatches = INDORE_LANDMARKS.filter((item) => {
-    const titleMatch = item.title.toLowerCase().includes(clean);
-    const subMatch = item.subtitle.toLowerCase().includes(clean);
-    const pinMatch = item.pincode ? item.pincode.includes(clean) : false;
-    return titleMatch || subMatch || pinMatch;
+    const searchableText = `${item.title} ${item.subtitle} ${item.pincode || ''}`.toLowerCase();
+    return tokens.every((tok) => searchableText.includes(tok));
   });
 
   for (const m of localMatches) {
@@ -1086,11 +1632,11 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> 
     }
   }
 
-  // 2. Query Live Online Autocomplete API (Photon with Indore Lat/Lon Proximity Bias)
+  // 2. Query Live Online Autocomplete API (Photon with STRICT Indore Bbox: 75.70,22.58,76.05,22.86)
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2800);
-    const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=22.7196&lon=75.8577&limit=6`;
+    const timeout = setTimeout(() => controller.abort(), 2500);
+    const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=75.70,22.58,76.05,22.86&limit=8`;
     const res = await fetch(photonUrl, { signal: controller.signal });
     clearTimeout(timeout);
 
@@ -1102,13 +1648,17 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> 
           if (Array.isArray(coords) && coords.length >= 2) {
             const lon = coords[0];
             const lat = coords[1];
+
+            // STRICT FILTER: Discard any result outside Indore
+            if (!isInsideIndore(lat, lon)) continue;
+
             const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
             if (!seenKeys.has(key)) {
               seenKeys.add(key);
               const p = f.properties || {};
-              const title = p.name || p.street || 'Located Place';
-              const parts = [p.district, p.city, p.state, p.postcode].filter(Boolean);
-              const subtitle = parts.join(', ') || 'Madhya Pradesh, India';
+              const title = p.name || p.street || 'Indore Landmark';
+              const parts = [p.district || p.suburb, p.city || 'Indore', p.postcode].filter(Boolean);
+              const subtitle = parts.join(', ') || 'Indore, Madhya Pradesh';
 
               results.push({
                 id: `photon-${lat}-${lon}`,
@@ -1117,8 +1667,8 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> 
                 latitude: lat,
                 longitude: lon,
                 pincode: p.postcode,
-                city: p.city || 'Indore',
-                state: p.state || 'Madhya Pradesh',
+                city: 'Indore',
+                state: 'Madhya Pradesh',
                 source: 'PHOTON',
               });
             }
@@ -1127,8 +1677,58 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> 
       }
     }
   } catch (e) {
-    // photon timeout or offline, keep local matches
+    // network timeout, fall through
   }
 
-  return results.slice(0, 8);
+  // 3. Query OpenStreetMap Nominatim with bounded=1 strict viewbox for Indore
+  if (results.length < 5) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2500);
+      const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&bounded=1&viewbox=75.70,22.86,76.05,22.58&countrycodes=in&q=${encodeURIComponent(query + ' Indore')}`;
+      const res = await fetch(nomUrl, {
+        headers: { 'User-Agent': 'VardhamritIndoreApp/1.0' },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          for (const item of data) {
+            const lat = Number(item.lat);
+            const lon = Number(item.lon);
+
+            // STRICT FILTER: Discard any result outside Indore
+            if (!isInsideIndore(lat, lon)) continue;
+
+            const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+            if (!seenKeys.has(key)) {
+              seenKeys.add(key);
+              const addr = item.address || {};
+              const title = item.name || addr.road || addr.suburb || item.display_name.split(',')[0];
+              const parts = [addr.suburb || addr.neighbourhood, 'Indore', addr.postcode].filter(Boolean);
+              const subtitle = parts.join(', ') || 'Indore, Madhya Pradesh';
+
+              results.push({
+                id: `nom-${lat}-${lon}`,
+                title,
+                subtitle,
+                latitude: lat,
+                longitude: lon,
+                pincode: addr.postcode,
+                city: 'Indore',
+                state: 'Madhya Pradesh',
+                source: 'NOMINATIM',
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  return results.slice(0, 10);
 }

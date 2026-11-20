@@ -21,6 +21,17 @@ interface InteractiveUberMapPickerProps {
   isLocating?: boolean;
 }
 
+const POPULAR_INDORE_CHIPS = [
+  { label: 'Electronic Complex', query: 'Electronic Complex' },
+  { label: 'Vijay Nagar', query: 'Vijay Nagar' },
+  { label: 'Sukhlia', query: 'Sukhlia' },
+  { label: 'Palasia', query: 'Palasia' },
+  { label: '56 Dukan', query: 'Chhappan Dukan' },
+  { label: 'Bhawarkua', query: 'Bhawarkua' },
+  { label: 'Sudama Nagar', query: 'Sudama Nagar' },
+  { label: 'Apollo DB City', query: 'Apollo DB City' },
+];
+
 export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> = ({
   latitude,
   longitude,
@@ -40,7 +51,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
   const activeLat = latitude || 22.7196;
   const activeLon = longitude || 75.8577;
 
-  // Search input handler with 250ms debounce
+  // Search input handler with 200ms debounce
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
     if (searchTimeoutRef.current) {
@@ -66,7 +77,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
       } finally {
         setIsSearching(false);
       }
-    }, 220);
+    }, 180);
   };
 
   const handleSelectPlace = (place: PlaceSearchResult) => {
@@ -91,6 +102,18 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
       { latitude: place.latitude, longitude: place.longitude },
       `${place.title}, ${place.subtitle}`
     );
+  };
+
+  const handleChipPress = async (query: string) => {
+    setSearchQuery(query);
+    setIsSearching(true);
+    setShowDropdown(true);
+    const results = await searchPlaces(query);
+    setSearchResults(results);
+    setIsSearching(false);
+    if (results.length > 0) {
+      handleSelectPlace(results[0]);
+    }
   };
 
   const handleClearSearch = () => {
@@ -287,13 +310,22 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
 
   return (
     <View style={styles.container}>
+      {/* Indore Service Zone Header */}
+      <View style={styles.zoneHeaderRow}>
+        <View style={styles.zoneHeaderBadge}>
+          <Icon name="check" size={11} color="#15803D" />
+          <Text style={styles.zoneHeaderBadgeText}>INDORE ONLY</Text>
+        </View>
+        <Text style={styles.zoneHeaderTitle}>Fast 48-hr Doorstep Delivery</Text>
+      </View>
+
       {/* 1. Uber-Style Location Search Bar */}
       <View style={styles.searchBarWrapper}>
         <View style={styles.searchBar}>
           <Icon name="search" size={16} color={theme.colors.primary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search area, landmark, street, colony..."
+            placeholder="Search Indore area, colony, street (e.g. Sukhlia, Vijay Nagar)..."
             placeholderTextColor="#6B7280"
             value={searchQuery}
             onChangeText={handleSearchChange}
@@ -310,11 +342,25 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
           ) : null}
         </View>
 
+        {/* Quick Tap Indore Chips */}
+        <View style={styles.quickChipsRow}>
+          {POPULAR_INDORE_CHIPS.map((c) => (
+            <TouchableOpacity
+              key={c.label}
+              activeOpacity={0.75}
+              onPress={() => handleChipPress(c.query)}
+              style={styles.quickChip}
+            >
+              <Text style={styles.quickChipText}>{c.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* Search Results Dropdown Card */}
         {showDropdown && searchResults.length > 0 ? (
           <View style={styles.dropdownCard}>
             <View style={styles.dropdownHeader}>
-              <Text style={styles.dropdownHeaderText}>SELECT EXACT LOCATION PIN</Text>
+              <Text style={styles.dropdownHeaderText}>INDORE LOCATIONS ({searchResults.length})</Text>
               <TouchableOpacity onPress={() => setShowDropdown(false)}>
                 <Text style={styles.dropdownCloseText}>Close</Text>
               </TouchableOpacity>
@@ -436,6 +482,53 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     position: 'relative',
     zIndex: 50,
+  },
+  zoneHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  zoneHeaderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  zoneHeaderBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#15803D',
+    letterSpacing: 0.4,
+  },
+  zoneHeaderTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#064E3B',
+  },
+  quickChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+    marginTop: 6,
+  },
+  quickChip: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  quickChipText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#374151',
   },
   searchBarWrapper: {
     position: 'relative',
