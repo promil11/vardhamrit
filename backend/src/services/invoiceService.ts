@@ -22,8 +22,9 @@ if (!fs.existsSync(INVOICE_STORAGE_DIR)) {
 export async function generateInvoicePDF(orderId: number): Promise<{ filePath: string; invoiceNumber: string }> {
   // 1. Fetch order details with user & items
   const [orders]: any = await pool.query(
-    `SELECT o.*, u.name as user_name, u.email as user_email, u.phone as user_phone
+    `SELECT o.*, c.code as coupon_code, u.name as user_name, u.email as user_email, u.phone as user_phone
      FROM orders o
+     LEFT JOIN coupons c ON o.coupon_id = c.id
      JOIN users u ON o.user_id = u.id
      WHERE o.id = ?`,
     [orderId]
@@ -141,14 +142,16 @@ export async function generateInvoicePDF(orderId: number): Promise<{ filePath: s
 
     // Calculation Breakdown
     let totalY = currentY + 15;
-    const subtotal = Number(order.subtotal);
-    const discount = Number(order.discount_amount);
-    const taxable = Math.max(0, subtotal - discount);
-    const delivery = Number(order.delivery_fee);
-    const tax = Number(order.tax_amount);
+    const subtotal = Number(order.subtotal || order.total || 0);
+    const discount = Number(order.discount_amount || 0);
+    const coinsDiscount = Number(order.coins_discount || order.coins_redeemed || 0);
+    const coinsRedeemed = Number(order.coins_redeemed || 0);
+    const taxable = Math.max(0, subtotal - discount - coinsDiscount);
+    const delivery = Number(order.delivery_fee || 0);
+    const tax = Number(order.tax_amount || 0);
     const cgst = (tax / 2).toFixed(2);
     const sgst = (tax / 2).toFixed(2);
-    const grandTotal = Number(order.total).toFixed(2);
+    const grandTotal = Number(order.total || order.total_amount).toFixed(2);
 
     const rightLabelX = 350;
     const rightValX = 475;
@@ -161,6 +164,13 @@ export async function generateInvoicePDF(orderId: number): Promise<{ filePath: s
     if (discount > 0) {
       doc.text(`Coupon Discount (${order.coupon_code || 'PROMO'}):`, rightLabelX, totalY);
       doc.fillColor('#b71c1c').text(`- Rs. ${discount.toFixed(2)}`, rightValX, totalY, { width: 75, align: 'right' });
+      doc.fillColor('#444444');
+      totalY += 15;
+    }
+
+    if (coinsDiscount > 0) {
+      doc.text(`Wallet Coins (${coinsRedeemed} Coins):`, rightLabelX, totalY);
+      doc.fillColor('#b71c1c').text(`- Rs. ${coinsDiscount.toFixed(2)}`, rightValX, totalY, { width: 75, align: 'right' });
       doc.fillColor('#444444');
       totalY += 15;
     }

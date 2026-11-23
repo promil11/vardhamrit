@@ -385,11 +385,17 @@ export async function createOrder(params: CreateOrderParams) {
 }
 
 export async function getOrderById(orderId: number, userId?: number) {
-  let query = 'SELECT * FROM orders WHERE id = ?';
+  let query = `
+    SELECT o.*, c.code as coupon_code, u.name as customer_name, u.email as customer_email, u.phone as customer_phone
+    FROM orders o
+    LEFT JOIN coupons c ON o.coupon_id = c.id
+    LEFT JOIN users u ON o.user_id = u.id
+    WHERE o.id = ?
+  `;
   const params: any[] = [orderId];
 
   if (userId) {
-    query += ' AND user_id = ?';
+    query += ' AND o.user_id = ?';
     params.push(userId);
   }
 

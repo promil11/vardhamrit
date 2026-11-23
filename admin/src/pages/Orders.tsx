@@ -36,6 +36,9 @@ import {
   ArrowUpRight,
   Send,
   Package,
+  Coins,
+  Wallet,
+  Receipt,
 } from 'lucide-react';
 import { api, API_BASE_URL } from '../services/api';
 import { Header } from '../components/Header';
@@ -323,6 +326,12 @@ export const Orders: React.FC = () => {
             ${order.address_snapshot?.line1 || ''}${order.address_snapshot?.line2 ? `, ${order.address_snapshot.line2}` : ''}<br/>
             ${order.address_snapshot?.city || ''}, ${order.address_snapshot?.state || ''} - <strong>${order.address_snapshot?.pincode || ''}</strong><br/>
             <strong>Phone:</strong> ${order.address_snapshot?.phone || order.customer_phone}
+            ${order.address_snapshot?.landmark ? `<br/><strong>Landmark:</strong> ${order.address_snapshot.landmark}` : ''}
+            ${order.address_snapshot?.latitude && order.address_snapshot?.longitude ? `
+            <div style="margin-top: 8px; padding: 6px 10px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; font-size: 11px; color: #065f46;">
+              📍 <strong>Exact Delivery Pin:</strong> ${order.address_snapshot.latitude}, ${order.address_snapshot.longitude} 
+              — <a href="https://www.google.com/maps/search/?api=1&query=${order.address_snapshot.latitude},${order.address_snapshot.longitude}" target="_blank" style="color: #047857; text-decoration: underline; font-weight: bold;">Open in Google Maps</a>
+            </div>` : ''}
           </div>
 
           <table>
@@ -347,9 +356,16 @@ export const Orders: React.FC = () => {
             </tbody>
           </table>
 
-          <div style="margin-top: 24px; padding-top: 16px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; font-size: 12px;">
-            <div><strong>Payment:</strong> ${order.payment_method} (${order.payment_status})</div>
-            <div><strong>Total Value:</strong> ₹${Number(order.total).toFixed(2)}</div>
+          <div style="margin-top: 24px; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; line-height: 1.8;">
+            <div style="display: flex; justify-content: space-between;"><span>Items Gross Subtotal:</span> <span>₹${Number(order.subtotal || order.total).toFixed(2)}</span></div>
+            ${Number(order.discount_amount || 0) > 0 ? `<div style="display: flex; justify-content: space-between; color: #047857;"><span>Coupon Discount:</span> <span>-₹${Number(order.discount_amount).toFixed(2)}</span></div>` : ''}
+            ${Number(order.coins_discount || order.coins_redeemed || 0) > 0 ? `<div style="display: flex; justify-content: space-between; color: #b45309;"><span>Wallet Coins (${order.coins_redeemed || 0} Coins):</span> <span>-₹${Number(order.coins_discount || order.coins_redeemed).toFixed(2)}</span></div>` : ''}
+            <div style="display: flex; justify-content: space-between; color: #475569;"><span>GST (CGST 2.5% + SGST 2.5%):</span> <span>₹${Number(order.tax_amount || 0).toFixed(2)}</span></div>
+            <div style="display: flex; justify-content: space-between;"><span>Express Delivery:</span> <span>${Number(order.delivery_fee || 0) === 0 ? 'FREE' : '₹' + Number(order.delivery_fee).toFixed(2)}</span></div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 2px dashed #cbd5e1; display: flex; justify-content: space-between; font-weight: 900; font-size: 14px; color: #0f172a;">
+              <span>Net Payable (${order.payment_method} - ${order.payment_status}):</span>
+              <span>₹${Number(order.total || order.total_amount).toFixed(2)}</span>
+            </div>
           </div>
           <script>window.print();</script>
         </body>
@@ -692,6 +708,19 @@ export const Orders: React.FC = () => {
                                 <p className="text-[10px] text-slate-400 font-medium">
                                   {o.address_snapshot.city}, {o.address_snapshot.state}
                                 </p>
+                              )}
+                              {o.address_snapshot?.latitude && o.address_snapshot?.longitude && (
+                                <a
+                                  href={`https://www.google.com/maps/search/?api=1&query=${o.address_snapshot.latitude},${o.address_snapshot.longitude}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="Open exact GPS pin in Google Maps"
+                                  className="inline-flex items-center gap-1 text-[10px] text-emerald-800 hover:text-emerald-950 font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded px-1.5 py-0.5 mt-1 transition-colors"
+                                >
+                                  <MapPin className="w-2.5 h-2.5 text-emerald-700" />
+                                  <span>GPS Map</span>
+                                </a>
                               )}
                             </div>
                           </div>
@@ -1145,6 +1174,33 @@ export const Orders: React.FC = () => {
                         {singleOrder.address_snapshot?.city}, {singleOrder.address_snapshot?.state}
                       </p>
 
+                      {singleOrder.address_snapshot?.landmark && (
+                        <p className="text-xs text-amber-900 bg-amber-50/80 px-2.5 py-1 rounded-md border border-amber-200/60 font-medium">
+                          <span className="font-bold">Landmark:</span> {singleOrder.address_snapshot.landmark}
+                        </p>
+                      )}
+
+                      {/* GPS Coordinates & Google Maps Navigation Link */}
+                      {singleOrder.address_snapshot?.latitude && singleOrder.address_snapshot?.longitude && (
+                        <div className="pt-2 mt-2 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-600 font-mono bg-slate-100 px-2.5 py-1 rounded-lg">
+                            <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                            <span>
+                              {Number(singleOrder.address_snapshot.latitude).toFixed(6)}, {Number(singleOrder.address_snapshot.longitude).toFixed(6)}
+                            </span>
+                          </div>
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${singleOrder.address_snapshot.latitude},${singleOrder.address_snapshot.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold shadow-sm transition-all hover:scale-[1.02]"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>Open in Google Maps</span>
+                          </a>
+                        </div>
+                      )}
+
                       <div className="pt-2 mt-2 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2 text-xs">
                         <div className="flex items-center gap-1.5 text-slate-700 font-bold">
                           <Phone className="w-3.5 h-3.5 text-emerald-700" />
@@ -1218,74 +1274,162 @@ export const Orders: React.FC = () => {
                         <FileText className="w-4 h-4 text-emerald-800" />
                         <span>Order Financial Statement</span>
                       </h4>
-                      <span className="text-[10px] font-black uppercase text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                        OFFICIAL GST INVOICE
+                      <span className="text-[10px] font-black uppercase text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-mono">
+                        OFFICIAL GST BREAKDOWN
                       </span>
                     </div>
 
-                    <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80 space-y-2.5">
-                      <div className="flex justify-between text-slate-600 font-medium">
-                        <span>Tea Items Subtotal</span>
-                        <span className="font-bold text-slate-900">
-                          ₹{Number(singleOrder.subtotal || singleOrder.total).toFixed(2)}
-                        </span>
-                      </div>
+                    {(() => {
+                      const rawSubtotal = Number(singleOrder.subtotal || singleOrder.total || 0);
+                      const couponDiscount = Number(singleOrder.discount_total || singleOrder.discount_amount || 0);
+                      const coinsDiscount = Number(singleOrder.coins_discount || 0);
+                      const coinsRedeemed = Number(singleOrder.coins_redeemed || 0);
+                      // Fallback: 1 coin = ₹1 if coins_redeemed exists without coins_discount
+                      const effectiveCoinsDiscount = coinsDiscount > 0 ? coinsDiscount : (coinsRedeemed > 0 ? coinsRedeemed : 0);
+                      const totalSavings = couponDiscount + effectiveCoinsDiscount;
+                      const actualItemAmount = Math.max(0, rawSubtotal - couponDiscount - effectiveCoinsDiscount);
+                      const taxTotal = Number(singleOrder.tax_total || singleOrder.tax_amount || 0);
+                      const deliveryFee = Number(singleOrder.delivery_fee || 0);
+                      const netPayable = Number(singleOrder.total || singleOrder.total_amount || 0);
 
-                      {Number(singleOrder.discount_total || singleOrder.discount_amount || 0) > 0 && (
-                        <div className="flex justify-between text-emerald-800 font-medium">
-                          <span className="flex items-center gap-1.5">
-                            <Tag className="w-3.5 h-3.5 text-emerald-700" />
-                            <span>Promo Voucher Discount</span>
-                          </span>
-                          <span className="font-black text-emerald-700">
-                            -₹{Number(singleOrder.discount_total || singleOrder.discount_amount).toFixed(2)}
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="flex justify-between text-slate-600 font-medium">
-                        <span>GST (CGST 2.5% + SGST 2.5%)</span>
-                        <span className="font-bold text-slate-900">
-                          ₹{Number(singleOrder.tax_total || singleOrder.tax_amount || 0).toFixed(2)}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between text-slate-600 font-medium">
-                        <span>Express Assam Delivery</span>
-                        <span className="font-bold">
-                          {Number(singleOrder.delivery_fee || 0) === 0 ? (
-                            <span className="text-emerald-700 font-black bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                              FREE DELIVERY
+                      return (
+                        <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                          {/* 1. Item MRP Subtotal */}
+                          <div className="flex justify-between items-center text-slate-700 text-xs font-semibold">
+                            <span className="flex items-center gap-1.5">
+                              <ShoppingBag className="w-3.5 h-3.5 text-slate-500" />
+                              <span>Tea Items Gross Subtotal (MRP)</span>
                             </span>
-                          ) : (
-                            `₹${singleOrder.delivery_fee}`
-                          )}
-                        </span>
-                      </div>
+                            <span className="font-bold text-slate-900 font-mono">
+                              ₹{rawSubtotal.toFixed(2)}
+                            </span>
+                          </div>
 
-                      {/* Grand Total Highlight */}
-                      <div className="pt-3 mt-1 border-t-2 border-dashed border-slate-200 flex justify-between items-center text-slate-900">
-                        <div>
-                          <span className="text-xs font-black uppercase tracking-wider text-slate-500 block">
-                            Net Payable Amount
-                          </span>
-                          <span
-                            className={`text-[11px] font-bold ${singleOrder.payment_status === 'PAID' ? 'text-emerald-700' : 'text-amber-700'
-                              }`}
-                          >
-                            {singleOrder.payment_status === 'PAID'
-                              ? '✓ Fully Paid (Settled)'
-                              : '⚠️ Cash to be Collected at Delivery'}
-                          </span>
+                          {/* 2. Promo / Voucher Discount */}
+                          {couponDiscount > 0 && (
+                            <div className="flex justify-between items-center text-emerald-800 text-xs font-medium bg-emerald-50/80 px-2.5 py-1.5 rounded-lg border border-emerald-200/70">
+                              <span className="flex items-center gap-1.5">
+                                <Tag className="w-3.5 h-3.5 text-emerald-700" />
+                                <span>
+                                  Coupon / Voucher Discount {singleOrder.coupon_code ? `(${singleOrder.coupon_code})` : ''}
+                                </span>
+                              </span>
+                              <span className="font-black text-emerald-700 font-mono">
+                                -₹{couponDiscount.toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* 3. Vardhamrit Wallet Coins Discount */}
+                          {effectiveCoinsDiscount > 0 && (
+                            <div className="flex justify-between items-center text-amber-900 text-xs font-medium bg-amber-50/80 px-2.5 py-1.5 rounded-lg border border-amber-200/70">
+                              <span className="flex items-center gap-1.5">
+                                <Coins className="w-3.5 h-3.5 text-amber-700" />
+                                <span>
+                                  Vardhamrit Wallet Coins {coinsRedeemed > 0 ? `(${coinsRedeemed} Coins Redeemed)` : 'Redeemed'}
+                                </span>
+                              </span>
+                              <span className="font-black text-amber-800 font-mono">
+                                -₹{effectiveCoinsDiscount.toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* 4. Actual Net Item Value (Goods after discounts & coins) */}
+                          {(couponDiscount > 0 || effectiveCoinsDiscount > 0) && (
+                            <div className="flex justify-between items-center text-xs pt-1.5 pb-1 border-t border-slate-200/70 font-semibold text-slate-800">
+                              <span className="flex items-center gap-1.5 text-slate-700">
+                                <span>Actual Net Amount of Items</span>
+                                <span className="text-[10.5px] text-emerald-700 font-medium">(Post-Discounts)</span>
+                              </span>
+                              <span className="font-black text-slate-900 font-mono">
+                                ₹{actualItemAmount.toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* 5. Detailed GST Breakdown */}
+                          <div className="pt-2 border-t border-slate-200/70 space-y-1.5">
+                            <div className="flex justify-between items-center text-slate-700 text-xs font-semibold">
+                              <span className="flex items-center gap-1.5">
+                                <Receipt className="w-3.5 h-3.5 text-slate-500" />
+                                <span>GST (5% Integrated Food Tax)</span>
+                              </span>
+                              <span className="font-bold text-slate-900 font-mono">
+                                ₹{taxTotal.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 pl-5 pt-0.5">
+                              <div className="bg-white/80 px-2.5 py-1 rounded-md border border-slate-200/60 text-[11px] text-slate-600 flex justify-between">
+                                <span className="text-slate-500">CGST (2.5%):</span>
+                                <span className="font-mono font-semibold text-slate-800">₹{(taxTotal / 2).toFixed(2)}</span>
+                              </div>
+                              <div className="bg-white/80 px-2.5 py-1 rounded-md border border-slate-200/60 text-[11px] text-slate-600 flex justify-between">
+                                <span className="text-slate-500">SGST (2.5%):</span>
+                                <span className="font-mono font-semibold text-slate-800">₹{(taxTotal / 2).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 6. Express Assam Delivery */}
+                          <div className="flex justify-between items-center text-slate-600 text-xs font-medium pt-2 border-t border-slate-200/70">
+                            <span className="flex items-center gap-1.5">
+                              <Truck className="w-3.5 h-3.5 text-slate-500" />
+                              <span>Express Assam Delivery</span>
+                            </span>
+                            <span className="font-bold">
+                              {deliveryFee === 0 ? (
+                                <span className="text-emerald-700 font-black bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                  FREE DELIVERY
+                                </span>
+                              ) : (
+                                <span className="font-mono text-slate-900">₹{deliveryFee.toFixed(2)}</span>
+                              )}
+                            </span>
+                          </div>
+
+                          {/* 7. Savings Highlight Card */}
+                          {totalSavings > 0 && (
+                            <div className="p-2.5 rounded-xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/10 border border-emerald-300/60 flex items-center justify-between text-xs">
+                              <span className="text-emerald-900 font-bold flex items-center gap-1.5">
+                                <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                                <span>Total Customer Savings</span>
+                              </span>
+                              <span className="font-black text-emerald-800 font-mono">
+                                ₹{totalSavings.toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* 8. Grand Total Highlight */}
+                          <div className="pt-3 mt-1 border-t-2 border-dashed border-slate-200 flex justify-between items-center text-slate-900">
+                            <div>
+                              <span className="text-xs font-black uppercase tracking-wider text-slate-500 block">
+                                Net Payable Amount
+                              </span>
+                              <span
+                                className={`text-[11px] font-bold ${
+                                  singleOrder.payment_status === 'PAID' ? 'text-emerald-700' : 'text-amber-700'
+                                }`}
+                              >
+                                {singleOrder.payment_status === 'PAID'
+                                  ? '✓ Fully Paid (Settled)'
+                                  : '⚠️ Cash to be Collected at Delivery'}
+                              </span>
+                              <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">
+                                Mode: <strong className="text-slate-700 uppercase">{singleOrder.payment_method || 'COD'}</strong>
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-2xl font-black text-emerald-950 font-mono tracking-tight">
+                                ₹{netPayable.toFixed(2)}
+                              </span>
+                              <p className="text-[10px] text-slate-400 font-medium">All taxes & charges included</p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <span className="text-2xl font-black text-emerald-950 font-mono tracking-tight">
-                            ₹{Number(singleOrder.total || singleOrder.total_amount).toFixed(2)}
-                          </span>
-                          <p className="text-[10px] text-slate-400 font-medium">All taxes & charges included</p>
-                        </div>
-                      </div>
-                    </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

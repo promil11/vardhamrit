@@ -20,14 +20,30 @@ export interface DistanceDeliveryFeeResult {
 }
 
 export const DISTANCE_CONFIG = {
-  STORE_LAT: Number(process.env.STORE_LATITUDE) || 22.7196,
-  STORE_LON: Number(process.env.STORE_LONGITUDE) || 75.8577,
-  MAX_DISTANCE_KM: Number(process.env.MAX_DELIVERY_DISTANCE_KM) || 10,
-  BASE_DISTANCE_KM: Number(process.env.BASE_DELIVERY_DISTANCE_KM) || 0.5, // 500 meters
-  BASE_DELIVERY_FEE: Number(process.env.BASE_DELIVERY_FEE) || 30,         // ₹30 below 500m
-  BASE_HANDLING_FEE: Number(process.env.BASE_HANDLING_FEE) || 5,          // ₹5 below 500m
-  DELIVERY_FEE_PER_KM: Number(process.env.DELIVERY_FEE_PER_KM) || 7,      // +₹7 per additional km
-  HANDLING_FEE_PER_KM: Number(process.env.HANDLING_FEE_PER_KM) || 1,      // +₹1 per additional km
+  get STORE_LAT(): number {
+    return Number(process.env.STORE_LATITUDE) || 22.70723;
+  },
+  get STORE_LON(): number {
+    return Number(process.env.STORE_LONGITUDE) || 75.82384;
+  },
+  get MAX_DISTANCE_KM(): number {
+    return Number(process.env.MAX_DELIVERY_DISTANCE_KM) || 10;
+  },
+  get BASE_DISTANCE_KM(): number {
+    return Number(process.env.BASE_DELIVERY_DISTANCE_KM) || 0.5; // 500 meters
+  },
+  get BASE_DELIVERY_FEE(): number {
+    return Number(process.env.BASE_DELIVERY_FEE) || 30; // ₹30 below 500m
+  },
+  get BASE_HANDLING_FEE(): number {
+    return Number(process.env.BASE_HANDLING_FEE) || 5; // ₹5 below 500m
+  },
+  get DELIVERY_FEE_PER_KM(): number {
+    return Number(process.env.DELIVERY_FEE_PER_KM) || 7; // +₹7 per additional km
+  },
+  get HANDLING_FEE_PER_KM(): number {
+    return Number(process.env.HANDLING_FEE_PER_KM) || 1; // +₹1 per additional km
+  },
 };
 
 export const PRICING_CONFIG = {
