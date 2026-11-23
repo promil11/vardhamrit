@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Lock, Mail, AlertCircle, ArrowRight, Coffee, Sparkles } from 'lucide-react';
-import { api } from '../services/api';
+import { api, API_BASE_URL } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export const Login: React.FC = () => {
@@ -36,7 +36,11 @@ export const Login: React.FC = () => {
       login(accessToken, user);
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Invalid admin credentials');
+      if (!err.response) {
+        setError(`Unable to connect to backend server at ${API_BASE_URL}. Please ensure your backend is running on port 5000.`);
+      } else {
+        setError(err.response?.data?.error || err.response?.data?.message || 'Invalid admin credentials');
+      }
     } finally {
       setLoading(false);
     }
