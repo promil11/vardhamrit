@@ -757,7 +757,6 @@ export default function CheckoutScreen() {
           visible={addModalVisible}
           onClose={() => setAddModalVisible(false)}
           onSaveAddress={handleSaveNewAddress}
-          initialAddress={selectedAddress}
         />
 
         {/* GoKwik UPI Payment Gateway Bottom Sheet */}

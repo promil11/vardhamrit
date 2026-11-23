@@ -636,7 +636,6 @@ export default function CartScreen() {
         visible={addAddressModalVisible}
         onClose={() => setAddAddressModalVisible(false)}
         onSaveAddress={handleSaveNewAddress}
-        initialAddress={selectedAddress}
       />
     </View>
   );

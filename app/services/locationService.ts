@@ -288,17 +288,27 @@ async function queryGoogleGeocoding(
     const houseNumber = [streetNumber, subpremise].filter(Boolean).join('/');
     const building = premise;
 
-    const flatHouse = [
+    let flatHouse = [
       houseNumber ? `House No. ${houseNumber}` : '',
       building,
     ].filter(Boolean).join(', ');
 
-    const streetArea = [route, sublocality2, sublocality1]
-      .filter(Boolean)
-      .join(', ') || locality;
+    if (!flatHouse) {
+      const nearestIndore = findNearestIndoreLandmark(latitude, longitude, 3000);
+      flatHouse =
+        getExactPoiPremise(nearestIndore) ||
+        (sublocality2 || sublocality1 ? `Plot / Building, ${sublocality2 || sublocality1}` : `Building, ${route || 'Indore'}`);
+    }
+
+    let streetAreaParts = [route, sublocality2, sublocality1].filter(Boolean);
+    if (flatHouse) {
+      const flatLower = flatHouse.toLowerCase();
+      streetAreaParts = streetAreaParts.filter((p) => !flatLower.includes(p.toLowerCase()));
+    }
+    const streetArea = streetAreaParts.join(', ') || locality;
 
     return {
-      houseNumber: houseNumber || undefined,
+      houseNumber: houseNumber || flatHouse,
       building: building || undefined,
       street: route || undefined,
       area: [sublocality2, sublocality1].filter(Boolean).join(', ') || undefined,
@@ -331,10 +341,15 @@ async function queryGoogleGeocoding(
  */
 function getExactPoiPremise(poi?: PlaceSearchResult | null): string {
   if (!poi) return '';
-  if (!poi.extractedHouseNo) return poi.title;
-  return poi.title.toLowerCase().includes(poi.extractedHouseNo.toLowerCase())
-    ? poi.title
-    : `${poi.extractedHouseNo}, ${poi.title}`;
+  if (poi.extractedHouseNo) {
+    return poi.title.toLowerCase().includes(poi.extractedHouseNo.toLowerCase())
+      ? poi.title
+      : `${poi.extractedHouseNo}, ${poi.title}`;
+  }
+  if (poi.title.includes('Square') || poi.title.includes('Chowk')) {
+    return `Building / Premise, near ${poi.title}`;
+  }
+  return `Plot / Building, ${poi.title}`;
 }
 
 export async function reverseGeocodeCoordinates(
@@ -476,15 +491,21 @@ export async function reverseGeocodeCoordinates(
           }
         }
 
+        // Check for exact plot/premise within 80 meters
+        const exactPremisePoi = findNearestIndoreLandmark(latitude, longitude, 80);
         // Enrich with nearest Indore colony/scheme if street or area is vague
         const nearestIndore = findNearestIndoreLandmark(latitude, longitude, 3000);
         const nearestRoad = nearestIndore?.subtitle?.split(',')[0]?.trim();
+        let colonyName = '';
         if (nearestIndore) {
           if (!street || street === 'Indore City' || street === 'Indore') {
             street = nearestRoad || nearestIndore.title;
           }
-          if (!areaParts.includes(nearestIndore.title)) {
-            areaParts.unshift(nearestIndore.title);
+          colonyName = nearestIndore.extractedHouseNo
+            ? nearestIndore.title.replace(new RegExp(`^${nearestIndore.extractedHouseNo}\\s*,?\\s*`, 'i'), '').trim()
+            : (nearestIndore.title.includes('Square') ? '' : nearestIndore.title);
+          if (colonyName && !areaParts.includes(colonyName)) {
+            areaParts.unshift(colonyName);
           }
           if (!pincode && nearestIndore.pincode) {
             pincode = nearestIndore.pincode;
@@ -495,21 +516,40 @@ export async function reverseGeocodeCoordinates(
         }
 
         const uniqueArea = [...new Set(areaParts)].filter((a) => a !== street && a !== city && a !== 'Indore City');
-        let flatHouse = [houseNumber ? `House No. ${houseNumber}` : '', residentialBuilding]
+        const exactHouse = houseNumber || exactPremisePoi?.extractedHouseNo || '';
+        const exactBuilding = residentialBuilding || exactPremisePoi?.title || '';
+        let flatHouse = [
+          exactHouse ? (exactHouse.toLowerCase().startsWith('plot') || exactHouse.toLowerCase().startsWith('house') || exactHouse.toLowerCase().startsWith('flat') ? exactHouse : `House No. ${exactHouse}`) : '',
+          exactBuilding && exactBuilding !== exactHouse ? exactBuilding : ''
+        ]
           .filter(Boolean)
           .join(', ');
 
         if (!flatHouse) {
-          flatHouse =
-            getExactPoiPremise(nearestIndore) ||
-            residentialBuilding ||
-            nearestIndore?.title ||
-            uniqueArea[0] ||
-            street ||
-            'Indore';
+          if (exactBuilding) {
+            flatHouse = exactBuilding;
+          } else if (exactHouse) {
+            flatHouse = `House No. ${exactHouse}`;
+          } else if (exactPremisePoi) {
+            flatHouse = getExactPoiPremise(exactPremisePoi);
+          } else if (nearestIndore) {
+            flatHouse = getExactPoiPremise(nearestIndore);
+          } else if (colonyName) {
+            flatHouse = `Plot / Building, ${colonyName}`;
+          } else if (street) {
+            flatHouse = `Building, ${street}`;
+          } else if (uniqueArea[0]) {
+            flatHouse = `Plot / Building, ${uniqueArea[0]}`;
+          } else {
+            flatHouse = 'Plot / Building, Indore';
+          }
         }
 
-        const streetAreaParts = [street, ...uniqueArea].filter(Boolean);
+        let streetAreaParts = [street, ...uniqueArea].filter(Boolean);
+        if (flatHouse) {
+          const flatLower = flatHouse.toLowerCase();
+          streetAreaParts = streetAreaParts.filter((p) => typeof p === 'string' && !flatLower.includes(p.toLowerCase()));
+        }
         const streetArea =
           streetAreaParts.length > 0 ? streetAreaParts.join(', ') : uniqueArea[0] || street || city;
         const formatted =
@@ -517,8 +557,8 @@ export async function reverseGeocodeCoordinates(
           [flatHouse, streetArea, city, state, pincode, country].filter(Boolean).join(', ');
 
         return {
-          houseNumber: (houseNumber ? `House No. ${houseNumber}` : '') || nearestIndore?.extractedHouseNo || flatHouse,
-          building: residentialBuilding || nearestIndore?.title || undefined,
+          houseNumber: exactHouse || flatHouse,
+          building: exactBuilding || (nearestIndore?.title || undefined),
           street: street || (nearestRoad || nearestIndore?.title || undefined),
           area: uniqueArea.join(', ') || undefined,
           line1: flatHouse,
@@ -532,7 +572,7 @@ export async function reverseGeocodeCoordinates(
           longitude,
           accuracy,
           landmark: detectedLandmark || uniqueArea[0] || undefined,
-          confidence: houseNumber || residentialBuilding ? 'EXACT_PREMISE' : 'STREET_LEVEL',
+          confidence: exactHouse || residentialBuilding ? 'EXACT_PREMISE' : 'STREET_LEVEL',
         };
       }
     }
@@ -584,12 +624,14 @@ export async function reverseGeocodeCoordinates(
         flatHouse =
           getExactPoiPremise(nearestIndore) ||
           residentialBuilding ||
-          nearestIndore?.title ||
-          area ||
-          street ||
-          'Indore';
+          (area ? `Plot / Building, ${area}` : `Building, ${street || 'Indore'}`);
       }
-      const streetArea = [street, area].filter(Boolean).join(', ') || area || street || city;
+      let streetAreaParts = [street, area].filter(Boolean);
+      if (flatHouse) {
+        const flatLower = flatHouse.toLowerCase();
+        streetAreaParts = streetAreaParts.filter((p) => typeof p === 'string' && !flatLower.includes(p.toLowerCase()));
+      }
+      const streetArea = streetAreaParts.join(', ') || area || street || city;
 
       return {
         houseNumber: (houseNumber ? `House No. ${houseNumber}` : '') || nearestIndore?.extractedHouseNo || flatHouse,
@@ -655,13 +697,14 @@ export async function reverseGeocodeCoordinates(
         flatHouse =
           getExactPoiPremise(nearestIndore) ||
           residentialBuilding ||
-          nearestIndore?.title ||
-          uniqueArea[0] ||
-          street ||
-          'Indore';
+          (uniqueArea[0] ? `Plot / Building, ${uniqueArea[0]}` : `Building, ${street || 'Indore'}`);
       }
 
-      const streetAreaParts = [street, ...uniqueArea].filter(Boolean);
+      let streetAreaParts = [street, ...uniqueArea].filter(Boolean);
+      if (flatHouse) {
+        const flatLower = flatHouse.toLowerCase();
+        streetAreaParts = streetAreaParts.filter((p) => typeof p === 'string' && !flatLower.includes(p.toLowerCase()));
+      }
       const streetArea = streetAreaParts.length > 0 ? streetAreaParts.join(', ') : (nearestIndore?.title || city);
 
       const formatted = [flatHouse, streetArea, city, state, pincode, country]
@@ -703,16 +746,21 @@ export async function reverseGeocodeCoordinates(
       const pincode = (bdcData.postcode || '').replace(/[^0-9]/g, '');
       const country = bdcData.countryName || 'India';
 
+      const exactPremisePoi = findNearestIndoreLandmark(latitude, longitude, 80);
       const nearestIndore = findNearestIndoreLandmark(latitude, longitude, 3000);
       const nearestRoad = nearestIndore?.subtitle?.split(',')[0]?.trim();
       const streetName = nearestRoad || nearestIndore?.title || (locality || 'MR-10 Road');
-      const premiseColony = getExactPoiPremise(nearestIndore) || (locality || 'Indore');
+      const premiseColony = exactPremisePoi
+        ? getExactPoiPremise(exactPremisePoi)
+        : (nearestIndore ? getExactPoiPremise(nearestIndore) : (locality ? `Plot / Building, ${locality}` : 'Plot / Building, Indore'));
       const flatHouse = premiseColony;
-      const streetArea = nearestIndore ? `${nearestIndore.title}, ${streetName}` : (locality || 'Indore');
+      const streetArea = nearestIndore && !flatHouse.toLowerCase().includes(nearestIndore.title.toLowerCase())
+        ? `${nearestIndore.title}, ${streetName}`
+        : `${streetName}, ${locality || 'Indore'}`;
 
       return {
-        houseNumber: nearestIndore?.extractedHouseNo || flatHouse,
-        building: nearestIndore ? nearestIndore.title : undefined,
+        houseNumber: exactPremisePoi?.extractedHouseNo || flatHouse,
+        building: exactPremisePoi ? exactPremisePoi.title : (nearestIndore ? nearestIndore.title : undefined),
         street: streetName,
         area: nearestIndore ? nearestIndore.title : (locality || undefined),
         line1: flatHouse,
@@ -726,7 +774,7 @@ export async function reverseGeocodeCoordinates(
         longitude,
         accuracy,
         landmark: nearestIndore ? `Near ${nearestIndore.title}` : undefined,
-        confidence: 'STREET_LEVEL',
+        confidence: exactPremisePoi ? 'EXACT_PREMISE' : 'STREET_LEVEL',
       };
     }
   } catch (bdcErr) {
@@ -734,16 +782,22 @@ export async function reverseGeocodeCoordinates(
   }
 
   // Ultimate fallback
+  const exactPremisePoi = findNearestIndoreLandmark(latitude, longitude, 80);
   const nearestIndore = findNearestIndoreLandmark(latitude, longitude, 3000);
-  const fallbackColony = nearestIndore ? nearestIndore.title : 'Sukhlia';
+  const fallbackColony = exactPremisePoi
+    ? getExactPoiPremise(exactPremisePoi)
+    : (nearestIndore ? getExactPoiPremise(nearestIndore) : 'Plot / Building, Sukhlia');
   const nearestRoad = nearestIndore?.subtitle?.split(',')[0]?.trim() || 'MR-10 Road';
-  const flatHouse = getExactPoiPremise(nearestIndore) || fallbackColony;
-  const streetArea = `${fallbackColony}, ${nearestRoad}`;
+  const fallbackArea = nearestIndore?.subtitle?.split(',')[1]?.trim() || (nearestIndore?.title || 'Sukhlia');
+  const flatHouse = fallbackColony;
+  const streetArea = nearestIndore && !flatHouse.toLowerCase().includes(nearestIndore.title.toLowerCase())
+    ? `${nearestIndore.title}, ${nearestRoad}`
+    : `${nearestRoad}, ${fallbackArea}`;
   return {
-    houseNumber: nearestIndore?.extractedHouseNo || flatHouse,
+    houseNumber: exactPremisePoi?.extractedHouseNo || flatHouse,
     building: fallbackColony,
     street: nearestRoad,
-    area: fallbackColony,
+    area: fallbackArea,
     line1: flatHouse,
     line2: streetArea,
     city: 'Indore',
@@ -753,8 +807,9 @@ export async function reverseGeocodeCoordinates(
     formattedAddress: `${flatHouse}, ${streetArea}, Indore, Madhya Pradesh - ${nearestIndore?.pincode || '452010'}`,
     latitude,
     longitude,
-    accuracy,
-    confidence: 'LOCALITY',
+    accuracy: null,
+    landmark: nearestIndore ? `Near ${nearestIndore.title}` : undefined,
+    confidence: exactPremisePoi ? 'EXACT_PREMISE' : 'LOCALITY',
   };
 }
 

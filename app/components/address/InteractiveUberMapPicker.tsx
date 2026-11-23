@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -39,12 +39,16 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isPinHovering, setIsPinHovering] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchTimeoutRef = useRef<any>(null);
   const iframeRef = useRef<any>(null);
   const rememberedHouseNoRef = useRef<string | undefined>(undefined);
+  const lastSettledCoordsRef = useRef<{ lat: number; lon: number } | null>(null);
 
-  const activeLat = latitude || 22.7196;
-  const activeLon = longitude || 75.8577;
+  const initialLat = useRef(latitude || 22.7196).current;
+  const initialLon = useRef(longitude || 75.8577).current;
+  const activeLat = latitude || initialLat;
+  const activeLon = longitude || initialLon;
 
   // Search input handler with 180ms debounce
   const handleSearchChange = (text: string) => {
@@ -127,15 +131,22 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     setShowDropdown(false);
   };
 
-  // Sync external coordinate changes to the embedded Leaflet map
+  // Sync external coordinate changes to the embedded Leaflet map (e.g. from Auto-Detect or place select)
   useEffect(() => {
     if (latitude && longitude && iframeRef.current?.contentWindow) {
+      // Don't re-fly if these coordinates were just reported by the map pin itself
+      if (
+        lastSettledCoordsRef.current &&
+        Math.abs(lastSettledCoordsRef.current.lat - latitude) < 0.00001 &&
+        Math.abs(lastSettledCoordsRef.current.lon - longitude) < 0.00001
+      ) {
+        return;
+      }
       iframeRef.current.contentWindow.postMessage(
         {
           type: 'FLY_TO',
           lat: latitude,
           lon: longitude,
-          zoom: 17,
         },
         '*'
       );
@@ -151,10 +162,13 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
 
       if (e.data.type === 'PIN_MOVING') {
         setIsPinHovering(true);
+        // Clear remembered house number from previous search when user drags map pin to a new place
+        rememberedHouseNoRef.current = undefined;
       } else if (e.data.type === 'PIN_SETTLED') {
         setIsPinHovering(false);
         const { lat, lon } = e.data;
         if (typeof lat === 'number' && typeof lon === 'number') {
+          lastSettledCoordsRef.current = { lat, lon };
           onLocationChange(
             { latitude: lat, longitude: lon },
             undefined,
@@ -169,7 +183,8 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
   }, [onLocationChange]);
 
   // Self-contained, responsive Leaflet HTML template with OpenStreetMap & Esri layers, Satellite toggle & Famous Landmark pins
-  const leafletHtml = `<!DOCTYPE html>
+  // Memoized so srcDoc NEVER changes after mount, preventing iframe reload and keeping Satellite mode & Zoom active!
+  const leafletHtml = useMemo(() => `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -322,12 +337,18 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    var startLat = ${activeLat};
-    var startLon = ${activeLon};
+    var startLat = ${initialLat};
+    var startLon = ${initialLon};
 
+    // Deep zoom range: minZoom 10 (city-wide) to maxZoom 22 (ultra-close building & rooftop level)
     var map = L.map('map', {
       center: [startLat, startLon],
-      zoom: 16,
+      zoom: 17,
+      minZoom: 10,
+      maxZoom: 22,
+      zoomDelta: 0.5,
+      zoomSnap: 0.5,
+      wheelPxPerZoomLevel: 60,
       zoomControl: false,
       attributionControl: false,
       inertia: true,
@@ -336,7 +357,9 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
 
     // 1. Street Layer (OpenStreetMap with high-detail local Indore schemes & streets)
     var streetLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
+      minZoom: 10,
+      maxZoom: 22,
+      maxNativeZoom: 19,
       crossOrigin: true
     });
 
@@ -348,32 +371,48 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
       }
     });
 
-    streetLayer.addTo(map);
-
     // 2. High-Res Satellite Layer (Esri World Imagery)
     var satLayer = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
-        maxZoom: 19,
+        minZoom: 10,
+        maxZoom: 22,
+        maxNativeZoom: 19,
         crossOrigin: true
       }
     );
 
-    var currentLayer = 'street';
+    // Read stored layer preference so Satellite mode persists across interactions and reloads
+    var savedLayer = 'street';
+    try {
+      savedLayer = localStorage.getItem('vardhamrit_map_layer') || 'street';
+    } catch (e) {}
+    var currentLayer = savedLayer;
+
+    if (currentLayer === 'satellite') {
+      satLayer.addTo(map);
+      var btn = document.getElementById('layer-btn');
+      if (btn) btn.innerHTML = '<span>🗺️</span><span id="layer-btn-text">Street</span>';
+    } else {
+      streetLayer.addTo(map);
+    }
+
     function toggleMapLayer() {
-      var btnText = document.getElementById('layer-btn-text');
       var btn = document.getElementById('layer-btn');
       if (currentLayer === 'street') {
         map.removeLayer(streetLayer);
         satLayer.addTo(map);
         currentLayer = 'satellite';
-        btn.innerHTML = '<span>🗺️</span><span id="layer-btn-text">Street</span>';
+        try { localStorage.setItem('vardhamrit_map_layer', 'satellite'); } catch (e) {}
+        if (btn) btn.innerHTML = '<span>🗺️</span><span id="layer-btn-text">Street</span>';
       } else {
         map.removeLayer(satLayer);
         streetLayer.addTo(map);
         currentLayer = 'street';
-        btn.innerHTML = '<span>🛰️</span><span id="layer-btn-text">Satellite</span>';
+        try { localStorage.setItem('vardhamrit_map_layer', 'street'); } catch (e) {}
+        if (btn) btn.innerHTML = '<span>🛰️</span><span id="layer-btn-text">Satellite</span>';
       }
+      window.parent.postMessage({ type: 'LAYER_CHANGED', layer: currentLayer }, '*');
     }
 
     // 3. Famous Landmarks in Indore directly pinned on map
@@ -416,19 +455,29 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
       // Tapping any famous landmark pin smoothly flies camera right to it
       marker.on('click', function(e) {
         L.DomEvent.stopPropagation(e);
+        isInitialized = true;
         map.flyTo([poi.lat, poi.lon], 17, { animate: true, duration: 0.9 });
       });
     });
 
     var pinEl = document.getElementById('center-pin');
+    var isInitialized = false;
+    var isUserInteracting = false;
+
+    // Suppress initial viewport setup from emitting PIN_SETTLED
+    setTimeout(function() {
+      isInitialized = true;
+    }, 600);
 
     map.on('movestart dragstart', function() {
+      isInitialized = true;
       if (pinEl) pinEl.classList.add('lifting');
       window.parent.postMessage({ type: 'PIN_MOVING' }, '*');
     });
 
     map.on('moveend dragend', function() {
       if (pinEl) pinEl.classList.remove('lifting');
+      if (!isInitialized) return;
       var center = map.getCenter();
       window.parent.postMessage({
         type: 'PIN_SETTLED',
@@ -439,30 +488,33 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
 
     // Tap/Click on map smoothly centers pin right there
     map.on('click', function(e) {
+      isInitialized = true;
       map.panTo(e.latlng, { animate: true, duration: 0.6 });
     });
 
     window.addEventListener('message', function(e) {
       if (!e.data || typeof e.data !== 'object') return;
       if (e.data.type === 'FLY_TO') {
+        isUserInteracting = true;
         var targetLat = Number(e.data.lat);
         var targetLon = Number(e.data.lon);
-        var zoom = e.data.zoom || 16;
+        var currentZoom = map.getZoom();
+        var zoom = typeof e.data.zoom === 'number' ? e.data.zoom : currentZoom;
         if (!isNaN(targetLat) && !isNaN(targetLon)) {
           map.flyTo([targetLat, targetLon], zoom, {
             animate: true,
-            duration: 1.1
+            duration: 0.9
           });
         }
       } else if (e.data.type === 'ZOOM_IN') {
-        map.zoomIn();
+        map.zoomIn(1);
       } else if (e.data.type === 'ZOOM_OUT') {
-        map.zoomOut();
+        map.zoomOut(1);
       }
     });
   </script>
 </body>
-</html>`;
+</html>`, [initialLat, initialLon]);
 
   return (
     <View style={styles.container}>
@@ -476,7 +528,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
 
       {/* 1. Uber-Style Location Search Bar */}
       <View style={styles.searchBarWrapper}>
-        <View style={styles.searchBar}>
+        <View style={[styles.searchBar, isSearchFocused && styles.searchBarFocused]}>
           <Icon name="search" size={16} color={theme.colors.primary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
@@ -485,8 +537,10 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
             value={searchQuery}
             onChangeText={handleSearchChange}
             onFocus={() => {
+              setIsSearchFocused(true);
               if (searchResults.length > 0) setShowDropdown(true);
             }}
+            onBlur={() => setIsSearchFocused(false)}
           />
           {isSearching ? (
             <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginRight: 8 }} />
@@ -571,7 +625,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
             {isLocating ? (
               <ActivityIndicator size="small" color={theme.colors.primary} />
             ) : (
-              <Icon name="crosshair" size={18} color={theme.colors.primary} />
+              <Icon name="map-pin" size={18} color={theme.colors.primary} />
             )}
           </TouchableOpacity>
         ) : null}
@@ -691,6 +745,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  searchBarFocused: {
+    borderColor: '#0A3622',
+  },
   searchIcon: {
     marginRight: 8,
   },
@@ -700,7 +757,9 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontWeight: '500',
     paddingVertical: 0,
-  },
+    outlineWidth: 0,
+    outlineStyle: 'none',
+  } as any,
   clearBtn: {
     padding: 4,
     backgroundColor: '#F3F4F6',
@@ -810,8 +869,7 @@ const styles = StyleSheet.create({
   webIframe: {
     width: '100%',
     height: '100%',
-    border: 'none',
-    display: 'block',
+    borderWidth: 0,
   },
   nativeFallback: {
     flex: 1,
@@ -839,7 +897,7 @@ const styles = StyleSheet.create({
     zIndex: 30,
   },
   uberFloatingHintText: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.2,
