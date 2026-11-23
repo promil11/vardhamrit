@@ -21,7 +21,9 @@ import {
   MapPin,
   Calendar,
   CreditCard,
+  Banknote,
   ChevronRight,
+  ChevronLeft,
   ExternalLink,
   ShoppingBag,
   TrendingUp,
@@ -384,51 +386,51 @@ export const Orders: React.FC = () => {
     switch (status) {
       case 'PLACED':
         return {
-          bg: 'bg-amber-50 text-amber-900 border-amber-300 shadow-2xs',
+          bg: 'bg-amber-50/90 text-amber-800 border-amber-200/90',
           dot: 'bg-amber-500 animate-pulse',
-          label: 'AWAITING CONFIRMATION',
+          label: 'Awaiting Confirmation',
           tag: 'Needs Confirmation',
         };
       case 'CONFIRMED':
         return {
-          bg: 'bg-blue-50 text-blue-900 border-blue-200/90 shadow-2xs',
-          dot: 'bg-blue-500',
-          label: 'CONFIRMED',
+          bg: 'bg-sky-50 text-sky-800 border-sky-200/90',
+          dot: 'bg-sky-500',
+          label: 'Confirmed',
           tag: 'Ready for Dispatch',
         };
       case 'PACKED':
       case 'APPROVED':
         return {
-          bg: 'bg-blue-50 text-blue-900 border-blue-200/90 shadow-2xs',
-          dot: 'bg-blue-500',
-          label: 'PACKED',
+          bg: 'bg-indigo-50 text-indigo-800 border-indigo-200/90',
+          dot: 'bg-indigo-500',
+          label: 'Packed',
           tag: 'Ready for Dispatch',
         };
       case 'DISPATCHED':
         return {
-          bg: 'bg-purple-50 text-purple-900 border-purple-200/90 shadow-2xs',
+          bg: 'bg-purple-50 text-purple-800 border-purple-200/90',
           dot: 'bg-purple-500 animate-pulse',
-          label: 'IN TRANSIT',
+          label: 'In Transit',
           tag: 'With Courier',
         };
       case 'DELIVERED':
         return {
-          bg: 'bg-emerald-50 text-emerald-900 border-emerald-200/90 shadow-2xs',
+          bg: 'bg-emerald-50 text-emerald-800 border-emerald-200/90',
           dot: 'bg-emerald-600',
-          label: 'DELIVERED',
+          label: 'Delivered',
           tag: 'Completed',
         };
       case 'CANCELLED':
       case 'REJECTED':
         return {
-          bg: 'bg-rose-50 text-rose-900 border-rose-200/90 shadow-2xs',
+          bg: 'bg-rose-50 text-rose-800 border-rose-200/90',
           dot: 'bg-rose-500',
-          label: 'CANCELLED',
+          label: 'Cancelled',
           tag: 'Cancelled',
         };
       default:
         return {
-          bg: 'bg-slate-50 text-slate-800 border-slate-200',
+          bg: 'bg-slate-50 text-slate-700 border-slate-200',
           dot: 'bg-slate-400',
           label: status,
           tag: 'Active',
@@ -653,128 +655,210 @@ export const Orders: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50/90 text-slate-600 border-b border-slate-200 font-black uppercase tracking-wider text-[11px]">
-                    <th className="py-4 px-5">Order Reference</th>
-                    <th className="py-4 px-4">Customer</th>
-                    <th className="py-4 px-4">Placement Date</th>
-                    <th className="py-4 px-4">Fulfillment Status</th>
-                    <th className="py-4 px-4">Payment</th>
-                    <th className="py-4 px-4">Total Amount</th>
-                    <th className="py-4 px-5 text-right">Actions</th>
+                  <tr className="bg-slate-50/90 text-slate-500 border-b border-slate-200/80 font-bold uppercase tracking-wider text-[11px] select-none">
+                    <th className="py-3.5 pl-6 pr-4 min-w-[150px]">
+                      <div className="flex items-center gap-1.5">
+                        <Tag className="w-3 h-3 text-slate-400" />
+                        <span>Order #</span>
+                      </div>
+                    </th>
+                    <th className="py-3.5 px-4 min-w-[210px]">
+                      <div className="flex items-center gap-1.5">
+                        <User className="w-3 h-3 text-slate-400" />
+                        <span>Customer</span>
+                      </div>
+                    </th>
+                    <th className="py-3.5 px-4 min-w-[140px]">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3 text-slate-400" />
+                        <span>Date & Time</span>
+                      </div>
+                    </th>
+                    <th className="py-3.5 px-4 min-w-[160px]">
+                      <div className="flex items-center gap-1.5">
+                        <Package className="w-3 h-3 text-slate-400" />
+                        <span>Fulfillment</span>
+                      </div>
+                    </th>
+                    <th className="py-3.5 px-4 min-w-[190px]">
+                      <div className="flex items-center gap-1.5">
+                        <CreditCard className="w-3 h-3 text-slate-400" />
+                        <span>Payment</span>
+                      </div>
+                    </th>
+                    <th className="py-3.5 px-4 min-w-[130px]">
+                      <div className="flex items-center gap-1.5">
+                        <Receipt className="w-3 h-3 text-slate-400" />
+                        <span>Total Amount</span>
+                      </div>
+                    </th>
+                    <th className="py-3.5 pl-4 pr-6 text-right min-w-[170px]">
+                      <span>Actions</span>
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 text-xs">
                   {orders.map((o: any) => {
                     const statusObj = getStatusBadge(o.status);
                     const formattedOrderNum = o.order_number || `VRD-${o.id}`;
 
                     return (
-                      <tr key={o.id} className="hover:bg-slate-50/80 transition-colors group">
-                        {/* Order ID */}
-                        <td className="py-4 px-5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono font-black text-emerald-950 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-lg text-xs">
-                              {formattedOrderNum}
+                      <tr
+                        key={o.id}
+                        onClick={() => setSelectedOrderId(o.id)}
+                        className="group hover:bg-emerald-50/30 transition-all duration-150 cursor-pointer relative"
+                      >
+                        {/* Order Reference */}
+                        <td className="py-4 pl-6 pr-4 align-middle relative" onClick={(e) => e.stopPropagation()}>
+                          <span className="absolute left-0 top-2 bottom-2 w-1 bg-[#0A3622] rounded-r-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[12px] font-bold text-slate-900 bg-slate-100/90 group-hover:bg-emerald-100/80 group-hover:text-emerald-950 border border-slate-200/80 group-hover:border-emerald-300 px-2.5 py-1 rounded-lg transition-all tracking-tight whitespace-nowrap shadow-2xs">
+                              #{formattedOrderNum}
                             </span>
                             <button
                               onClick={() => handleCopy(formattedOrderNum, `order-${o.id}`)}
-                              className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors"
+                              className="p-1 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-all active:scale-90"
                               title="Copy order number"
                             >
                               {copiedItem === `order-${o.id}` ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-700" />
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
                               ) : (
-                                <Copy className="w-3.5 h-3.5" />
+                                <Copy className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
                               )}
                             </button>
                           </div>
                           {o.courier_name && (
-                            <p className="text-[10px] text-slate-400 font-semibold mt-1 flex items-center gap-1">
-                              <Truck className="w-3 h-3 text-purple-600" />
-                              <span>{o.courier_name}</span>
-                            </p>
+                            <div className="mt-1.5 flex items-center gap-1.5">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50/90 border border-purple-200/70 rounded-md px-2 py-0.5 shadow-2xs">
+                                <Truck className="w-3 h-3 text-purple-600" />
+                                <span>{o.courier_name}</span>
+                              </span>
+                            </div>
                           )}
                         </td>
 
                         {/* Customer */}
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-800 to-emerald-950 text-amber-300 font-black text-xs flex items-center justify-center flex-shrink-0 shadow-2xs">
-                              {o.customer_name ? o.customer_name.charAt(0).toUpperCase() : 'C'}
+                        <td className="py-4 px-4 align-middle">
+                          <div className="flex items-center gap-3">
+                            <div className="relative flex-shrink-0">
+                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-800 to-[#0A3622] text-amber-300 font-black text-xs flex items-center justify-center shadow-sm ring-2 ring-emerald-100/80">
+                                {o.customer_name ? o.customer_name.charAt(0).toUpperCase() : 'C'}
+                              </div>
+                              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white" />
                             </div>
-                            <div>
-                              <p className="font-black text-slate-900 leading-tight">{o.customer_name || 'Guest User'}</p>
-                              <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                                <Phone className="w-3 h-3 text-slate-400" />
-                                <span>{o.customer_phone || o.address_snapshot?.phone || 'No phone'}</span>
+                            <div className="min-w-0">
+                              <p className="font-extrabold text-slate-900 text-[13px] leading-tight group-hover:text-emerald-950 transition-colors truncate max-w-[190px]">
+                                {o.customer_name || 'Guest User'}
                               </p>
-                              {o.address_snapshot?.city && (
-                                <p className="text-[10px] text-slate-400 font-medium">
-                                  {o.address_snapshot.city}, {o.address_snapshot.state}
-                                </p>
-                              )}
-                              {o.address_snapshot?.latitude && o.address_snapshot?.longitude && (
-                                <a
-                                  href={`https://www.google.com/maps/search/?api=1&query=${o.address_snapshot.latitude},${o.address_snapshot.longitude}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  title="Open exact GPS pin in Google Maps"
-                                  className="inline-flex items-center gap-1 text-[10px] text-emerald-800 hover:text-emerald-950 font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded px-1.5 py-0.5 mt-1 transition-colors"
-                                >
-                                  <MapPin className="w-2.5 h-2.5 text-emerald-700" />
-                                  <span>GPS Map</span>
-                                </a>
-                              )}
+                              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium mt-0.5">
+                                <Phone className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                                <span className="truncate">{o.customer_phone || o.address_snapshot?.phone || 'No phone'}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                {o.address_snapshot?.city && (
+                                  <span className="text-[10.5px] text-slate-500 font-medium flex items-center gap-1">
+                                    <MapPin className="w-2.5 h-2.5 text-slate-400" />
+                                    <span>{o.address_snapshot.city}, {o.address_snapshot.state}</span>
+                                  </span>
+                                )}
+                                {o.address_snapshot?.latitude && o.address_snapshot?.longitude && (
+                                  <a
+                                    href={`https://www.google.com/maps/search/?api=1&query=${o.address_snapshot.latitude},${o.address_snapshot.longitude}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    title="Open exact GPS pin in Google Maps"
+                                    className="inline-flex items-center gap-1 text-[9.5px] text-emerald-800 hover:text-emerald-950 font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/90 rounded-md px-1.5 py-0.5 transition-colors shadow-2xs"
+                                  >
+                                    <Navigation className="w-2.5 h-2.5 text-emerald-600" />
+                                    <span>GPS</span>
+                                  </a>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
 
                         {/* Placement Date */}
-                        <td className="py-4 px-4">
-                          <div className="text-slate-700 font-bold">
-                            {new Date(o.created_at).toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
-                          </div>
-                          <div className="text-[10.5px] text-slate-400 font-medium mt-0.5">
-                            {new Date(o.created_at).toLocaleTimeString('en-IN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
+                        <td className="py-4 px-4 align-middle">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-[12.5px] font-bold text-slate-800">
+                              <Calendar className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                              <span>
+                                {new Date(o.created_at).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400 pl-4.5">
+                              <Clock className="w-2.5 h-2.5 text-slate-300" />
+                              <span>
+                                {new Date(o.created_at).toLocaleTimeString('en-IN', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: true,
+                                })}
+                              </span>
+                            </div>
                           </div>
                         </td>
 
                         {/* Fulfillment Status */}
-                        <td className="py-4 px-4">
+                        <td className="py-4 px-4 align-middle">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black border ${statusObj.bg}`}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all shadow-2xs whitespace-nowrap ${statusObj.bg}`}
                           >
-                            <span className={`w-2 h-2 rounded-full ${statusObj.dot}`} />
+                            <span className="relative flex h-2 w-2">
+                              {o.status === 'PLACED' && (
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                              )}
+                              {o.status === 'DISPATCHED' && (
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
+                              )}
+                              <span className={`relative inline-flex rounded-full h-2 w-2 ${statusObj.dot.replace('animate-pulse', '')}`} />
+                            </span>
                             <span>{statusObj.label}</span>
                           </span>
                         </td>
 
                         {/* Payment */}
-                        <td className="py-4 px-4">
-                          <div className="space-y-1">
-                            <span className="font-bold text-slate-800 block text-xs">
-                              {o.payment_method === 'COD' ? 'Cash on Delivery' : 'Online Prepaid'}
-                            </span>
+                        <td className="py-4 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex flex-col gap-1.5 min-w-[175px]">
+                            {/* Branded Method Line */}
+                            <div className="flex items-center gap-2">
+                              <span className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 border shadow-2xs ${
+                                o.payment_method === 'COD'
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200/90'
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200/90'
+                              }`}>
+                                {o.payment_method === 'COD' ? (
+                                  <Banknote className="w-3.5 h-3.5" />
+                                ) : (
+                                  <CreditCard className="w-3.5 h-3.5" />
+                                )}
+                              </span>
+                              <span className="text-[12px] font-bold text-slate-800 tracking-tight whitespace-nowrap">
+                                {o.payment_method === 'COD' ? 'Cash on Delivery' : 'Online (Prepaid)'}
+                              </span>
+                            </div>
+
+                            {/* Status Badge + Mark Paid Action */}
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span
-                                className={`inline-block px-2 py-0.5 rounded-md text-[9.5px] font-black border ${
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border whitespace-nowrap shadow-2xs ${
                                   o.payment_status === 'PAID'
-                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                    : 'bg-amber-50 text-amber-800 border-amber-200'
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200/90'
+                                    : 'bg-amber-50 text-amber-900 border-amber-200/90'
                                 }`}
                               >
-                                {o.payment_status === 'PAID' ? 'PAID / SETTLED' : o.payment_method === 'COD' ? 'UNPAID (COD)' : 'PENDING PAYMENT'}
+                                <span className={`w-1.5 h-1.5 rounded-full ${o.payment_status === 'PAID' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                <span>{o.payment_status === 'PAID' ? 'Paid / Settled' : 'Unpaid (COD)'}</span>
                               </span>
+
                               {o.payment_method === 'COD' && o.payment_status !== 'PAID' && (
                                 <button
                                   onClick={(e) => {
@@ -782,10 +866,10 @@ export const Orders: React.FC = () => {
                                     codCollectedMutation.mutate(o.id);
                                   }}
                                   disabled={codCollectedMutation.isPending}
-                                  className="px-2 py-0.5 rounded-md bg-emerald-700 hover:bg-emerald-600 text-white text-[9.5px] font-black shadow-2xs hover:shadow-xs transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
+                                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-[10.5px] font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                                   title="Mark Cash on Delivery as Collected/Paid"
                                 >
-                                  <DollarSign className="w-2.5 h-2.5" />
+                                  <Check className="w-2.5 h-2.5" />
                                   <span>Mark Paid</span>
                                 </button>
                               )}
@@ -794,31 +878,40 @@ export const Orders: React.FC = () => {
                         </td>
 
                         {/* Gross Total */}
-                        <td className="py-4 px-4 font-black text-slate-900 text-sm">
-                          ₹{Number(o.total || o.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          {Number(o.delivery_fee || 0) > 0 && (
-                            <span className="block text-[10px] font-medium text-slate-400">
-                              incl. ₹{o.delivery_fee} delivery
-                            </span>
-                          )}
+                        <td className="py-4 px-4 align-middle">
+                          <div className="space-y-0.5">
+                            <div className="text-base font-black text-slate-900 tracking-tight font-sans">
+                              ₹{Number(o.total || o.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
+                            {Number(o.delivery_fee || 0) > 0 ? (
+                              <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200/60">
+                                <span>+₹{o.delivery_fee} delivery</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/60">
+                                <span>Free Delivery</span>
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         {/* Actions */}
-                        <td className="py-4 px-5 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                        <td className="py-4 pl-4 pr-6 text-right align-middle" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => downloadInvoice(o.id)}
-                              className="p-2 text-slate-400 hover:text-emerald-800 hover:bg-emerald-50 rounded-xl transition-colors border border-transparent hover:border-emerald-200"
-                              title="Download GST Invoice"
+                              className="p-2 text-slate-500 hover:text-emerald-800 hover:bg-emerald-50 rounded-xl transition-all border border-slate-200/80 hover:border-emerald-200 shadow-2xs hover:shadow-xs active:scale-95"
+                              title="Download Official GST Invoice (PDF)"
                             >
                               <FileText className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => setSelectedOrderId(o.id)}
-                              className="bg-emerald-950 hover:bg-[#0A3521] text-amber-300 px-3.5 py-1.5 rounded-xl text-xs font-black inline-flex items-center gap-1.5 transition-all active:scale-95 shadow-sm"
+                              className="bg-[#0A3622] hover:bg-[#124b31] text-amber-300 hover:text-white px-3.5 py-2 rounded-xl text-xs font-black inline-flex items-center gap-1.5 transition-all active:scale-95 shadow-sm hover:shadow-md whitespace-nowrap"
                             >
                               <Eye className="w-3.5 h-3.5 text-amber-300" />
                               <span>Fulfill & Manage</span>
+                              <ChevronRight className="w-3.5 h-3.5 opacity-70 group-hover:translate-x-0.5 transition-transform" />
                             </button>
                           </div>
                         </td>
@@ -831,24 +924,33 @@ export const Orders: React.FC = () => {
           )}
 
           {/* Pagination */}
-          <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span className="font-bold">
-              Showing page {pagination.page} of {pagination.totalPages || 1}
-            </span>
+          <div className="px-6 py-4 border-t border-slate-200/70 bg-gradient-to-b from-slate-50/40 to-slate-50/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-slate-600">
+                Page <span className="font-extrabold text-slate-900">{pagination.page}</span> of{' '}
+                <span className="font-extrabold text-slate-900">{pagination.totalPages || 1}</span>
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="text-slate-500 font-semibold">
+                Showing {orders.length} of {pagination.totalItems || orders.length} orders
+              </span>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold disabled:opacity-40 transition-colors"
+                className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl font-bold border border-slate-200/80 shadow-2xs hover:shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5 text-xs active:scale-95"
               >
-                Previous
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Previous</span>
               </button>
               <button
                 disabled={page >= pagination.totalPages}
                 onClick={() => setPage((p) => p + 1)}
-                className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold disabled:opacity-40 transition-colors"
+                className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl font-bold border border-slate-200/80 shadow-2xs hover:shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5 text-xs active:scale-95"
               >
-                Next
+                <span>Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>

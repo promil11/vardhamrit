@@ -178,6 +178,9 @@ app.use('/admin', (req, res, next) => {
 if (adminDist) {
   app.use('/admin', express.static(adminDist));
   app.get(['/admin', '/admin/*'], (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.join(adminDist, 'index.html'));
   });
 } else {
