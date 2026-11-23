@@ -51,7 +51,6 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
   const [isLocating, setIsLocating] = useState(false);
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
   const [locationSuccess, setLocationSuccess] = useState(false);
-  const [locationHint, setLocationHint] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -78,7 +77,6 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
     try {
       setIsLocating(true);
       setLocationSuccess(false);
-      setLocationHint(null);
 
       const detectedCoords = await getAccurateCoordinates();
       setCoords({ latitude: detectedCoords.latitude, longitude: detectedCoords.longitude });
@@ -110,11 +108,9 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
       // 4. Flat / House No. / Building
       if (geocoded.line1 && geocoded.line1.trim().length > 0) {
         setLine1(geocoded.line1);
-        setLocationHint('🏠 House/Building & Street detected with satellite precision!');
       } else {
         // Clear any previous generic text and focus flat/house field so user can type their private flat/house number
         setLine1('');
-        setLocationHint('🛣️ Street & Area pinpointed! Please enter your Flat / House No.');
         setTimeout(() => {
           flatInputRef.current?.focus();
         }, 200);
@@ -165,7 +161,6 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
       if (reGeocoded.pincode) setPincode(reGeocoded.pincode);
       if (reGeocoded.landmark) setLandmark(reGeocoded.landmark);
       setConfidence(reGeocoded.confidence || (homeNumber ? 'EXACT_PREMISE' : 'STREET_LEVEL'));
-      setLocationHint(`📍 Pin shifted ${direction.toUpperCase()} by 14m! ${homeNumber ? homeNumber + ', ' : ''}${reGeocoded.line2 || reGeocoded.city}`);
     } catch (e) {
       console.warn('Error nudging pin:', e);
     } finally {
@@ -212,15 +207,6 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
 
       setConfidence(geocoded.confidence || (homeNumber ? 'EXACT_PREMISE' : 'STREET_LEVEL'));
 
-      if (homeNumber) {
-        setLocationHint(`🎯 Pin set: ${homeNumber}, ${geocoded.line2 || placeHint || geocoded.city}`);
-      } else {
-        setLocationHint(
-          placeHint
-            ? `🎯 Pin set: ${placeHint}`
-            : `🎯 Pin set: ${geocoded.line2 || `${newCoords.latitude.toFixed(4)}, ${newCoords.longitude.toFixed(4)}`}`
-        );
-      }
     } catch (e) {
       console.warn('Error reverse geocoding map location change:', e);
     } finally {
@@ -380,9 +366,6 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
                         ? 'Location Auto-Detected!'
                         : 'Auto-Detect Current GPS Location'}
                   </Text>
-                  <View style={styles.gpsFreeBadge}>
-                    <Text style={styles.gpsFreeBadgeText}>FREE</Text>
-                  </View>
                 </View>
                 <Text style={styles.autoDetectSub} numberOfLines={1}>
                   {locationSuccess
@@ -391,86 +374,6 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
                 </Text>
               </View>
             </TouchableOpacity>
-
-            {/* GPS Detection Status / User Guidance Banner */}
-            {locationHint ? (
-              <View style={styles.hintBanner}>
-                <Icon name="check" size={13} color="#15803D" />
-                <Text style={styles.hintBannerText}>{locationHint}</Text>
-              </View>
-            ) : null}
-
-            {/* GPS Pin Precision & Micro-Nudge Card (Swiggy/Uber style) */}
-            {coords.latitude && coords.longitude ? (
-              <View style={styles.pinPrecisionCard}>
-                <View style={styles.pinHeaderRow}>
-                  <View style={styles.pinDotWrapper}>
-                    <View style={styles.pinPulseDot} />
-                    <Icon name="map-pin" size={14} color="#0A3622" />
-                  </View>
-                  <View style={{ flex: 1, marginLeft: 8 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Text style={styles.pinPrecisionTitle}>
-                        GPS Pin ({coords.latitude.toFixed(4)}, {coords.longitude.toFixed(4)})
-                      </Text>
-                      <View style={confidence === 'EXACT_PREMISE' ? styles.premiseBadge : styles.streetBadge}>
-                        <Text style={confidence === 'EXACT_PREMISE' ? styles.premiseBadgeText : styles.streetBadgeText}>
-                          {confidence === 'EXACT_PREMISE' ? '🏠 House Level' : '🛣️ Street Level'}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={styles.pinAccuracyText}>
-                      {gpsAccuracy ? `Accuracy: ±${gpsAccuracy}m (Satellite Fix)` : 'High-precision coordinates active'}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* 4-way Nudge Controls */}
-                <View style={styles.nudgeContainer}>
-                  <Text style={styles.nudgePrompt}>
-                    Slightly off indoors? Nudge pin 14m:
-                  </Text>
-                  <View style={styles.nudgeButtonsRow}>
-                    <TouchableOpacity
-                      onPress={() => handleNudgePin('north')}
-                      disabled={isLocating}
-                      style={styles.nudgePill}
-                      activeOpacity={0.7}
-                    >
-                      <Icon name="arrow-up" size={11} color="#0A3622" />
-                      <Text style={styles.nudgePillText}>North</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleNudgePin('south')}
-                      disabled={isLocating}
-                      style={styles.nudgePill}
-                      activeOpacity={0.7}
-                    >
-                      <Icon name="arrow-down" size={11} color="#0A3622" />
-                      <Text style={styles.nudgePillText}>South</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleNudgePin('west')}
-                      disabled={isLocating}
-                      style={styles.nudgePill}
-                      activeOpacity={0.7}
-                    >
-                      <Icon name="arrow-left" size={11} color="#0A3622" />
-                      <Text style={styles.nudgePillText}>West</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleNudgePin('east')}
-                      disabled={isLocating}
-                      style={styles.nudgePill}
-                      activeOpacity={0.7}
-                    >
-                      <Icon name="arrow-right" size={11} color="#0A3622" />
-                      <Text style={styles.nudgePillText}>East</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            ) : null}
 
             {/* Input Fields */}
             <Text style={styles.label}>Recipient Name *</Text>

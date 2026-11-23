@@ -12,7 +12,7 @@ import { theme } from '../../theme';
 import { BottomSheetWrapper } from '../common/BottomSheetWrapper';
 import { Address } from '../../types';
 import { fetchUserAddresses, saveUserAddress, removeUserAddress } from '../../services/addressService';
-import { fetchCurrentLocationAddress } from '../../services/locationService';
+import { fetchCurrentLocationAddress, formatHeaderAddress } from '../../services/locationService';
 import { DeleteAddressModal } from '../address/DeleteAddressModal';
 import { Icon } from '../common/Icon';
 import { Skeleton } from '../common/Skeleton';
@@ -168,7 +168,7 @@ export const AddressBottomSheet: React.FC<AddressBottomSheetProps> = ({
                 </View>
               ) : (
                 <View style={styles.gpsFreeBadge}>
-                  <Text style={styles.gpsFreeBadgeText}>GPS 100% FREE</Text>
+                  <Text style={styles.gpsFreeBadgeText}>GPS</Text>
                 </View>
               )}
             </View>
@@ -176,7 +176,7 @@ export const AddressBottomSheet: React.FC<AddressBottomSheetProps> = ({
               {locatingStatus
                 ? locatingStatus
                 : isGpsActive && selectedAddress
-                  ? `${selectedAddress.line1}, ${selectedAddress.city} • Tap to refresh`
+                  ? `${formatHeaderAddress(selectedAddress)} • Tap to refresh`
                   : 'Tap to auto-detect your location via GPS'}
             </Text>
           </View>

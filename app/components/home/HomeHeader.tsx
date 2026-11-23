@@ -17,6 +17,7 @@ import { useAddressStore } from '../../store/useAddressStore';
 import { useNotificationStore } from '../../store/useNotificationStore';
 import { Icon } from '../common/Icon';
 import { useResponsive } from '../../utils/responsive';
+import { formatHeaderAddress } from '../../services/locationService';
 
 const PLACEHOLDERS = [
   "Search 'Normal Kadak chai'...",
@@ -92,11 +93,11 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
           >
             <View style={styles.deliverToRow}>
               <Icon name="map-pin" size={isTablet ? 14 : 12} color="rgba(255, 255, 255, 0.85)" />
-              <Text style={[styles.deliverToLabel, isTablet && { fontSize: scaleFont(11.5) }]}>
+              <Text style={[styles.deliverToLabel, isTablet && { fontSize: scaleFont(11.5) }]} numberOfLines={1}>
                 {isLocating
                   ? 'Detecting Location...'
                   : selectedAddress
-                    ? `Deliver to ${selectedAddress.tag}`
+                    ? `Deliver to ${selectedAddress.tag || 'Current Location'}`
                     : 'Select Delivery Location'}
               </Text>
             </View>
@@ -110,11 +111,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
               >
                 {isLocating
                   ? 'Fetching GPS location...'
-                  : selectedAddress
-                    ? (selectedAddress.line1 && selectedAddress.line1.includes(selectedAddress.city)
-                      ? selectedAddress.line1
-                      : `${selectedAddress.line1 || ''}${selectedAddress.line1 && selectedAddress.city ? ', ' : ''}${selectedAddress.city || ''}`.trim() || 'Current Location')
-                    : 'Tap to set address'}
+                  : formatHeaderAddress(selectedAddress)}
               </Text>
               <Icon name="chevron-down" size={isTablet ? 18 : 16} color={theme.colors.textInverse} />
             </View>
@@ -291,6 +288,7 @@ const styles = StyleSheet.create({
   },
   addressDropdown: {
     alignSelf: 'flex-start',
+    maxWidth: '100%',
   },
   deliverToRow: {
     flexDirection: 'row',
@@ -306,12 +304,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    maxWidth: '100%',
   },
   addressText: {
     color: theme.colors.textInverse,
     fontSize: theme.typography.scale.sm + 1,
     fontWeight: theme.typography.weights.extraBold,
-    maxWidth: 240,
+    flexShrink: 1,
+    maxWidth: 320,
   },
   headerRightActions: {
     flexDirection: 'row',

@@ -26,6 +26,7 @@ import { Icon } from '../../components/common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import { api } from '../../services/api';
 import { socket } from '../../services/socketService';
+import { formatHeaderAddress } from '../../services/locationService';
 import { useResponsive } from '../../utils/responsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -556,9 +557,7 @@ export default function CartScreen() {
               </View>
               <Text style={[styles.bottomAddrLine, isTablet && { fontSize: 13.5 }]} numberOfLines={1} ellipsizeMode="tail">
                 {selectedAddress
-                  ? (selectedAddress.line1 && selectedAddress.line1.includes(selectedAddress.city)
-                    ? selectedAddress.line1
-                    : `${selectedAddress.line1 || ''}${selectedAddress.line1 && selectedAddress.city ? ', ' : ''}${selectedAddress.city || ''}`.trim() || 'Current Location')
+                  ? formatHeaderAddress(selectedAddress)
                   : 'Tap to add delivery address'}
               </Text>
             </TouchableOpacity>

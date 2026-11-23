@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { Platform } from 'react-native';
 import { Address } from '../types';
 import { fetchUserAddresses, saveUserAddress, removeUserAddress, setDefaultUserAddress } from '../services/addressService';
-import { fetchCurrentLocationAddress } from '../services/locationService';
+import { fetchCurrentLocationAddress, enrichAddressCoordinates } from '../services/locationService';
 import { storage } from '../services/storage';
 
 const SELECTED_ADDRESS_KEY = 'vardhamrit_selected_address';
@@ -14,6 +14,9 @@ const getInitialSelectedAddress = (): Address | null => {
     const parsed = JSON.parse(raw);
     // If it's a GPS-detected address, it's valid for this device
     if (parsed && String(parsed.id).startsWith('gps-')) {
+      if (parsed.latitude && parsed.longitude) {
+        return enrichAddressCoordinates(parsed);
+      }
       return parsed;
     }
     const user = storage.getUserSync();
@@ -69,7 +72,10 @@ export const useAddressStore = create<AddressState>((set, get) => ({
         currentSelected &&
         (String(currentSelected.id).startsWith('gps-') || currentSelected.tag === 'Current Location')
       ) {
-        targetAddress = currentSelected;
+        targetAddress =
+          currentSelected.latitude && currentSelected.longitude
+            ? enrichAddressCoordinates(currentSelected)
+            : currentSelected;
       }
 
       // 3. If user has saved addresses in database
@@ -82,7 +88,10 @@ export const useAddressStore = create<AddressState>((set, get) => ({
             try {
               const parsed = JSON.parse(storedJson);
               if (parsed && (String(parsed.id).startsWith('gps-') || parsed.tag === 'Current Location')) {
-                targetAddress = parsed;
+                targetAddress =
+                  parsed.latitude && parsed.longitude
+                    ? enrichAddressCoordinates(parsed)
+                    : parsed;
               } else {
                 targetAddress = addrList.find((a) => String(a.id) === String(parsed.id)) || null;
               }
@@ -99,14 +108,20 @@ export const useAddressStore = create<AddressState>((set, get) => ({
       if (!targetAddress && addrList.length === 0) {
         // Only keep an address if it is an authentic GPS-detected address from this device
         if (currentSelected && (String(currentSelected.id).startsWith('gps-') || currentSelected.tag === 'Current Location')) {
-          targetAddress = currentSelected;
+          targetAddress =
+            currentSelected.latitude && currentSelected.longitude
+              ? enrichAddressCoordinates(currentSelected)
+              : currentSelected;
         } else {
           const storedJson = storage.getItemSync(SELECTED_ADDRESS_KEY);
           if (storedJson) {
             try {
               const parsed = JSON.parse(storedJson);
               if (parsed && (String(parsed.id).startsWith('gps-') || parsed.tag === 'Current Location')) {
-                targetAddress = parsed;
+                targetAddress =
+                  parsed.latitude && parsed.longitude
+                    ? enrichAddressCoordinates(parsed)
+                    : parsed;
               }
             } catch {}
           }
@@ -168,15 +183,15 @@ export const useAddressStore = create<AddressState>((set, get) => ({
         tag: 'HOME',
       });
 
-      const cardLine1 = geocoded.line1 && geocoded.line1.trim().length > 0
-        ? `${geocoded.line1}, ${geocoded.line2}`
-        : (geocoded.line2 || 'Current Location');
-
       const detectedAddress: Address = {
         ...address,
         id: `gps-${Date.now()}`,
         tag: 'Current Location',
-        line1: cardLine1,
+        line1: address.line1,
+        line2: address.line2,
+        houseNumber: address.houseNumber,
+        street: address.street,
+        area: address.area,
         city: geocoded.city,
         state: geocoded.state,
         pincode: geocoded.pincode,

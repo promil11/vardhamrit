@@ -452,7 +452,7 @@ export default function LoginScreen() {
               <Text style={styles.cardSub}>
                 {emailOtpSent
                   ? `Enter the 6-digit verification code sent to ${email}.`
-                  : 'Fast & 100% free login. Enter your registered email address'}
+                  : 'Fast & free login. Enter your registered email address'}
               </Text>
 
               {!emailOtpSent ? (
@@ -553,7 +553,7 @@ export default function LoginScreen() {
               <Text style={styles.cardSub}>
                 {otpSent
                   ? `Enter the 6-digit verification code sent via SMS to +91 ${phone}`
-                  : 'Fast & 100% free login via Mobile OTP'}
+                  : 'Fast & free login via Mobile OTP'}
               </Text>
 
               {!otpSent ? (

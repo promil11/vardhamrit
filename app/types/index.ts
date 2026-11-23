@@ -77,4 +77,7 @@ export interface Address {
   latitude?: number;
   longitude?: number;
   isDefault: boolean;
+  houseNumber?: string;
+  street?: string;
+  area?: string;
 }

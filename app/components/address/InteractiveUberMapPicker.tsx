@@ -25,16 +25,6 @@ interface InteractiveUberMapPickerProps {
   isLocating?: boolean;
 }
 
-const POPULAR_INDORE_CHIPS = [
-  { label: 'Electronic Complex', query: 'Electronic Complex' },
-  { label: 'Vijay Nagar', query: 'Vijay Nagar' },
-  { label: 'Sukhlia', query: 'Sukhlia' },
-  { label: 'Palasia', query: 'Palasia' },
-  { label: '56 Dukan', query: 'Chhappan Dukan' },
-  { label: 'Bhawarkua', query: 'Bhawarkua' },
-  { label: 'Sudama Nagar', query: 'Sudama Nagar' },
-  { label: 'Apollo DB City', query: 'Apollo DB City' },
-];
 
 export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> = ({
   latitude,
@@ -482,7 +472,6 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
           <Icon name="check" size={11} color="#15803D" />
           <Text style={styles.zoneHeaderBadgeText}>INDORE ONLY</Text>
         </View>
-        <Text style={styles.zoneHeaderTitle}>Fast 48-hr Doorstep Delivery</Text>
       </View>
 
       {/* 1. Uber-Style Location Search Bar */}
@@ -491,7 +480,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
           <Icon name="search" size={16} color={theme.colors.primary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search Indore area, colony, street (e.g. Sukhlia, Vijay Nagar)..."
+            placeholder="Search Indore area, colony, street..."
             placeholderTextColor="#6B7280"
             value={searchQuery}
             onChangeText={handleSearchChange}
@@ -506,20 +495,6 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
               <Icon name="close" size={13} color="#6B7280" />
             </TouchableOpacity>
           ) : null}
-        </View>
-
-        {/* Quick Tap Indore Chips */}
-        <View style={styles.quickChipsRow}>
-          {POPULAR_INDORE_CHIPS.map((c) => (
-            <TouchableOpacity
-              key={c.label}
-              activeOpacity={0.75}
-              onPress={() => handleChipPress(c.query)}
-              style={styles.quickChip}
-            >
-              <Text style={styles.quickChipText}>{c.label}</Text>
-            </TouchableOpacity>
-          ))}
         </View>
 
         {/* Search Results Dropdown Card */}
@@ -568,7 +543,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
             ref={iframeRef}
             srcDoc={leafletHtml}
             style={styles.webIframe}
-            title="Uber Style Map Picker"
+            title="Map Picker"
             loading="eager"
           />
         ) : (
@@ -581,7 +556,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
         {/* Floating Uber Hint Pill on Map */}
         <View style={styles.uberFloatingHint}>
           <Text style={styles.uberFloatingHintText}>
-            {isPinHovering ? '🎯 Release to drop pin' : '🖐️ Drag map to pinpoint house / entrance'}
+            {isPinHovering ? 'Release to drop pin' : 'Drag map to pinpoint house / entrance'}
           </Text>
         </View>
 
@@ -632,7 +607,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
             Pin: {activeLat.toFixed(5)}, {activeLon.toFixed(5)}
           </Text>
           <Text style={styles.statusSubText}>
-            {accuracy ? `Satellite Accuracy: ±${accuracy}m` : 'Uber-style moving pin active'}
+            {accuracy ? `Satellite Accuracy: ±${accuracy}m` : 'moving pin active'}
           </Text>
         </View>
         <View style={styles.pinLockedBadge}>
