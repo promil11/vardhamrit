@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Platform } from 'react-native';
 import { Address } from '../types';
-import { fetchUserAddresses, saveUserAddress, removeUserAddress, setDefaultUserAddress } from '../services/addressService';
+import { fetchUserAddresses, saveUserAddress, removeUserAddress, setDefaultUserAddress, updateUserAddress } from '../services/addressService';
 import { fetchCurrentLocationAddress, enrichAddressCoordinates } from '../services/locationService';
 import { storage } from '../services/storage';
 
@@ -41,6 +41,7 @@ interface AddressState {
   setDefaultAddress: (id: string | number) => Promise<boolean>;
   setAddresses: (addresses: Address[]) => void;
   addNewAddress: (addr: Omit<Address, 'id'> | Address) => Promise<Address | null>;
+  updateAddress: (id: string | number, addr: Partial<Address>) => Promise<Address | null>;
   deleteAddress: (id: string | number) => Promise<boolean>;
   clearAddresses: () => void;
   autoDetectLocation: (force?: boolean) => Promise<Address | null>;
@@ -301,6 +302,37 @@ export const useAddressStore = create<AddressState>((set, get) => ({
       return null;
     } catch (e) {
       console.warn('Error saving address in useAddressStore:', e);
+      return null;
+    }
+  },
+
+  updateAddress: async (id: string | number, updatedFields: Partial<Address>) => {
+    try {
+      const updated = await updateUserAddress(id, updatedFields);
+      if (updated) {
+        set((state) => {
+          const nextList = state.addresses.map((a) =>
+            String(a.id) === String(id)
+              ? updated
+              : updated.isDefault
+              ? { ...a, isDefault: false }
+              : a
+          );
+          let nextSelected = state.selectedAddress;
+          if (nextSelected && String(nextSelected.id) === String(id)) {
+            nextSelected = updated;
+            storage.setItem(SELECTED_ADDRESS_KEY, JSON.stringify(nextSelected));
+          }
+          return {
+            addresses: nextList,
+            selectedAddress: nextSelected,
+          };
+        });
+        return updated;
+      }
+      return null;
+    } catch (e) {
+      console.warn('Error updating address in useAddressStore:', e);
       return null;
     }
   },

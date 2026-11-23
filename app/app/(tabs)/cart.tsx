@@ -60,6 +60,7 @@ export default function CartScreen() {
   const [couponSheetVisible, setCouponSheetVisible] = useState(false);
   const [addressSheetVisible, setAddressSheetVisible] = useState(false);
   const [addAddressModalVisible, setAddAddressModalVisible] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [distanceInfo, setDistanceInfo] = useState<{
     distanceKm: number;
     deliveryFee: number;
@@ -75,6 +76,7 @@ export default function CartScreen() {
     setSelectedAddress,
     loadAddresses,
     addNewAddress,
+    updateAddress,
   } = useAddressStore();
 
   useEffect(() => {
@@ -127,19 +129,31 @@ export default function CartScreen() {
     };
   }, [selectedAddress, items]);
 
-  const handleSaveNewAddress = async (newAddr: Address) => {
+  const handleSaveAddress = async (savedAddr: Address) => {
     try {
-      const saved = await addNewAddress(newAddr);
-      if (saved) {
-        setSelectedAddress(saved);
-        // Seamlessly route to checkout with the newly saved delivery address
-        router.push({
-          pathname: '/checkout',
-          params: { addressId: String(saved.id) },
-        });
+      if (
+        editingAddress?.id &&
+        !String(editingAddress.id).startsWith('addr-') &&
+        !String(editingAddress.id).startsWith('gps-')
+      ) {
+        const updated = await updateAddress(editingAddress.id, savedAddr);
+        if (updated) {
+          setSelectedAddress(updated);
+        }
+      } else {
+        const saved = await addNewAddress(savedAddr);
+        if (saved) {
+          setSelectedAddress(saved);
+          router.push({
+            pathname: '/checkout',
+            params: { addressId: String(saved.id) },
+          });
+        }
       }
     } catch (e) {
-      console.warn('Error saving new address in cart:', e);
+      console.warn('Error saving address in cart:', e);
+    } finally {
+      setEditingAddress(null);
     }
   };
 
@@ -627,15 +641,26 @@ export default function CartScreen() {
         onClose={() => setAddressSheetVisible(false)}
         selectedAddressId={selectedAddress?.id || ''}
         onSelectAddress={(addr) => setSelectedAddress(addr)}
-        onAddNewPress={() => setAddAddressModalVisible(true)}
+        onAddNewPress={() => {
+          setEditingAddress(null);
+          setAddAddressModalVisible(true);
+        }}
+        onEditAddress={(addr) => {
+          setEditingAddress(addr);
+          setAddAddressModalVisible(true);
+        }}
         addresses={addresses}
       />
 
       {/* Add Address Modal with Free & Accurate GPS Auto-Detect */}
       <AddAddressModal
         visible={addAddressModalVisible}
-        onClose={() => setAddAddressModalVisible(false)}
-        onSaveAddress={handleSaveNewAddress}
+        initialAddress={editingAddress}
+        onClose={() => {
+          setAddAddressModalVisible(false);
+          setEditingAddress(null);
+        }}
+        onSaveAddress={handleSaveAddress}
       />
     </View>
   );

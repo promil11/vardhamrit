@@ -80,6 +80,48 @@ export async function removeUserAddress(id: string | number): Promise<boolean> {
   }
 }
 
+export async function updateUserAddress(id: string | number, addr: Partial<Address>): Promise<Address | null> {
+  try {
+    const res = await api.put(`/api/v1/addresses/${id}`, {
+      name: addr.name,
+      phone: addr.phone,
+      tag: addr.tag || 'HOME',
+      line1: addr.line1,
+      line2: addr.line2 || undefined,
+      city: addr.city,
+      state: addr.state,
+      pincode: addr.pincode,
+      landmark: addr.landmark || undefined,
+      latitude: addr.latitude != null ? Number(addr.latitude) : undefined,
+      longitude: addr.longitude != null ? Number(addr.longitude) : undefined,
+      isDefault: Boolean(addr.isDefault),
+    });
+
+    if (res.data?.success && res.data?.data) {
+      const a = res.data.data;
+      return {
+        id: String(a.id),
+        name: a.name,
+        phone: a.phone,
+        tag: a.tag || 'HOME',
+        line1: a.line1,
+        line2: a.line2 || undefined,
+        city: a.city,
+        state: a.state,
+        pincode: a.pincode,
+        landmark: a.landmark || undefined,
+        latitude: a.latitude != null ? Number(a.latitude) : undefined,
+        longitude: a.longitude != null ? Number(a.longitude) : undefined,
+        isDefault: Boolean(a.is_default),
+      };
+    }
+    return null;
+  } catch (err) {
+    console.warn(`Error updating address ${id} in API:`, err);
+    return null;
+  }
+}
+
 export async function setDefaultUserAddress(id: string | number): Promise<boolean> {
   try {
     const res = await api.patch(`/api/v1/addresses/${id}/default`);

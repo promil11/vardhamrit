@@ -92,9 +92,11 @@ export default function HomeScreen() {
     setSelectedAddress,
     loadAddresses,
     addNewAddress,
+    updateAddress,
   } = useAddressStore();
   const [addressSheetVisible, setAddressSheetVisible] = useState(false);
   const [addAddressModalVisible, setAddAddressModalVisible] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -568,11 +570,21 @@ export default function HomeScreen() {
     }
   };
 
-  const handleSaveNewAddress = async (newAddr: Address) => {
+  const handleSaveAddress = async (savedAddr: Address) => {
     try {
-      await addNewAddress(newAddr);
+      if (
+        editingAddress?.id &&
+        !String(editingAddress.id).startsWith('addr-') &&
+        !String(editingAddress.id).startsWith('gps-')
+      ) {
+        await updateAddress(editingAddress.id, savedAddr);
+      } else {
+        await addNewAddress(savedAddr);
+      }
     } catch (e) {
-      console.warn('Error saving new address from Home:', e);
+      console.warn('Error saving address from Home:', e);
+    } finally {
+      setEditingAddress(null);
     }
   };
 
@@ -1269,6 +1281,11 @@ export default function HomeScreen() {
         selectedAddressId={selectedAddress?.id || ''}
         onSelectAddress={(addr) => setSelectedAddress(addr)}
         onAddNewPress={() => {
+          setEditingAddress(null);
+          setAddAddressModalVisible(true);
+        }}
+        onEditAddress={(addr) => {
+          setEditingAddress(addr);
           setAddAddressModalVisible(true);
         }}
         addresses={addresses}
@@ -1277,8 +1294,12 @@ export default function HomeScreen() {
       {/* Add Address Modal with Free & Accurate GPS Auto-Detect */}
       <AddAddressModal
         visible={addAddressModalVisible}
-        onClose={() => setAddAddressModalVisible(false)}
-        onSaveAddress={handleSaveNewAddress}
+        initialAddress={editingAddress}
+        onClose={() => {
+          setAddAddressModalVisible(false);
+          setEditingAddress(null);
+        }}
+        onSaveAddress={handleSaveAddress}
       />
     </View >
   );

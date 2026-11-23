@@ -91,9 +91,11 @@ export default function ProfileScreen() {
     setDefaultAddress: storeSetDefaultAddress,
     deleteAddress: storeDeleteAddress,
     addNewAddress: storeAddNewAddress,
+    updateAddress: storeUpdateAddress,
   } = useAddressStore();
   const [loading, setLoading] = useState(true);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -706,7 +708,10 @@ export default function ProfileScreen() {
                 <Text style={styles.sectionTitle}>Saved Addresses</Text>
               </View>
               <TouchableOpacity
-                onPress={() => setAddModalVisible(true)}
+                onPress={() => {
+                  setEditingAddress(null);
+                  setAddModalVisible(true);
+                }}
                 style={styles.addBtnRow}
               >
                 <Icon name="plus" size={13} color={theme.colors.primary} />
@@ -767,8 +772,20 @@ export default function ProfileScreen() {
 
                   <View style={styles.addrActions}>
                     <TouchableOpacity
+                      onPress={() => {
+                        setEditingAddress(addr);
+                        setAddModalVisible(true);
+                      }}
+                      style={styles.editBtn}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    >
+                      <Icon name="edit" size={12} color={theme.colors.primary} />
+                      <Text style={styles.editText}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
                       onPress={() => promptDeleteAddress(addr)}
                       style={styles.deleteBtn}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     >
                       <Icon name="trash" size={12} color="#DC2626" />
                       <Text style={styles.deleteText}>Delete</Text>
@@ -996,12 +1013,27 @@ export default function ProfileScreen() {
         onSave={handleSaveProfile}
       />
 
-      {/* Add Address Modal */}
+      {/* Add / Edit Address Modal */}
       <AddAddressModal
         visible={addModalVisible}
-        onClose={() => setAddModalVisible(false)}
-        onSaveAddress={async (newAddr) => {
-          await storeAddNewAddress(newAddr);
+        initialAddress={editingAddress}
+        onClose={() => {
+          setAddModalVisible(false);
+          setEditingAddress(null);
+        }}
+        onSaveAddress={async (savedAddr) => {
+          if (
+            editingAddress &&
+            editingAddress.id &&
+            !String(editingAddress.id).startsWith('addr-') &&
+            !String(editingAddress.id).startsWith('gps-')
+          ) {
+            await storeUpdateAddress(editingAddress.id, savedAddr);
+          } else {
+            await storeAddNewAddress(savedAddr);
+          }
+          setEditingAddress(null);
+          await loadAddresses();
         }}
       />
 
@@ -1640,9 +1672,21 @@ const styles = StyleSheet.create({
   addrActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 14,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.05)',
     paddingTop: 6,
+  },
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  editText: {
+    fontSize: 10.5,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.primary,
   },
   deleteBtn: {
     flexDirection: 'row',

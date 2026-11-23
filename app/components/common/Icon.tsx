@@ -69,6 +69,8 @@ import {
   ScanQrCode,
   Coins,
   Mail,
+  Camera,
+  UploadCloud,
   LucideProps,
 } from 'lucide-react-native';
 import { theme } from '../../theme';
@@ -146,6 +148,9 @@ export type IconName =
   | 'coin'
   | 'copy'
   | 'mail'
+  | 'camera'
+  | 'upload-cloud'
+  | 'trash-2'
   | 'whatsapp';
 
 interface IconProps extends Omit<LucideProps, 'ref'> {
@@ -219,7 +224,12 @@ export const Icon: React.FC<IconProps> = ({
     case 'shield-check':
       return <ShieldCheck {...commonProps} />;
     case 'trash':
+    case 'trash-2':
       return <Trash2 {...commonProps} />;
+    case 'camera':
+      return <Camera {...commonProps} />;
+    case 'upload-cloud':
+      return <UploadCloud {...commonProps} />;
     case 'tag':
       return <Tag {...commonProps} />;
     case 'clock':

@@ -91,12 +91,14 @@ export default function CheckoutScreen() {
     setSelectedAddress,
     loadAddresses,
     addNewAddress,
+    updateAddress,
     isLoading: loadingAddresses,
   } = useAddressStore();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('UPI');
   const [addressSheetVisible, setAddressSheetVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [processing, setProcessing] = useState(false);
 
   // GoKwik UPI Modal State
@@ -234,11 +236,22 @@ export default function CheckoutScreen() {
     };
   }, [appliedCoupon]);
 
-  const handleSaveNewAddress = async (newAddr: Address) => {
+  const handleSaveAddress = async (savedAddr: Address) => {
     try {
-      await addNewAddress(newAddr);
+      if (
+        editingAddress &&
+        editingAddress.id &&
+        !String(editingAddress.id).startsWith('addr-') &&
+        !String(editingAddress.id).startsWith('gps-')
+      ) {
+        await updateAddress(editingAddress.id, savedAddr);
+      } else {
+        await addNewAddress(savedAddr);
+      }
     } catch (e) {
-      console.warn('Error saving new address to DB:', e);
+      console.warn('Error saving address in checkout:', e);
+    } finally {
+      setEditingAddress(null);
     }
   };
 
@@ -401,18 +414,34 @@ export default function CheckoutScreen() {
                   <Text style={styles.sectionTitle}>Delivery Address</Text>
                 </View>
 
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    if (addresses.length === 0) {
-                      setAddModalVisible(true);
-                    } else {
-                      setAddressSheetVisible(true);
-                    }
-                  }}
-                >
-                  <Text style={styles.changeActionText}>{addresses.length > 0 ? 'CHANGE' : 'ADD'}</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  {selectedAddress && (
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        setEditingAddress(selectedAddress);
+                        setAddModalVisible(true);
+                      }}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                    >
+                      <Icon name="edit" size={13} color={theme.colors.primary} />
+                      <Text style={styles.changeActionText}>EDIT</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      if (addresses.length === 0) {
+                        setEditingAddress(null);
+                        setAddModalVisible(true);
+                      } else {
+                        setAddressSheetVisible(true);
+                      }
+                    }}
+                  >
+                    <Text style={styles.changeActionText}>{addresses.length > 0 ? 'CHANGE' : 'ADD'}</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Selected Address Display Card */}
@@ -748,15 +777,26 @@ export default function CheckoutScreen() {
           onClose={() => setAddressSheetVisible(false)}
           selectedAddressId={selectedAddress?.id || ''}
           onSelectAddress={(addr) => setSelectedAddress(addr)}
-          onAddNewPress={() => setAddModalVisible(true)}
+          onAddNewPress={() => {
+            setEditingAddress(null);
+            setAddModalVisible(true);
+          }}
+          onEditAddress={(addr) => {
+            setEditingAddress(addr);
+            setAddModalVisible(true);
+          }}
           addresses={addresses}
         />
 
         {/* Add Address Modal with Pincode auto-fill */}
         <AddAddressModal
           visible={addModalVisible}
-          onClose={() => setAddModalVisible(false)}
-          onSaveAddress={handleSaveNewAddress}
+          initialAddress={editingAddress}
+          onClose={() => {
+            setAddModalVisible(false);
+            setEditingAddress(null);
+          }}
+          onSaveAddress={handleSaveAddress}
         />
 
         {/* GoKwik UPI Payment Gateway Bottom Sheet */}

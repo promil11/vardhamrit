@@ -14,6 +14,7 @@ import { Address } from '../../types';
 import { fetchUserAddresses, saveUserAddress, removeUserAddress } from '../../services/addressService';
 import { fetchCurrentLocationAddress, formatHeaderAddress } from '../../services/locationService';
 import { DeleteAddressModal } from '../address/DeleteAddressModal';
+import { AddAddressModal } from '../checkout/AddAddressModal';
 import { Icon } from '../common/Icon';
 import { Skeleton } from '../common/Skeleton';
 import { useAddressStore } from '../../store/useAddressStore';
@@ -24,6 +25,7 @@ interface AddressBottomSheetProps {
   selectedAddressId: string | number;
   onSelectAddress: (address: Address) => void;
   onAddNewPress?: () => void;
+  onEditAddress?: (address: Address) => void;
   addresses?: Address[];
   onRefreshAddresses?: () => void;
 }
@@ -34,6 +36,7 @@ export const AddressBottomSheet: React.FC<AddressBottomSheetProps> = ({
   selectedAddressId,
   onSelectAddress,
   onAddNewPress,
+  onEditAddress,
   addresses: propAddresses,
   onRefreshAddresses,
 }) => {
@@ -44,6 +47,7 @@ export const AddressBottomSheet: React.FC<AddressBottomSheetProps> = ({
     setSelectedAddress: storeSetSelectedAddress,
     deleteAddress: storeDeleteAddress,
     addNewAddress: storeAddNewAddress,
+    updateAddress: storeUpdateAddress,
     autoDetectLocation,
   } = useAddressStore();
 
@@ -54,6 +58,8 @@ export const AddressBottomSheet: React.FC<AddressBottomSheetProps> = ({
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [addressToDelete, setAddressToDelete] = useState<Address | null>(null);
   const [isDeletingAddress, setIsDeletingAddress] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [internalEditModalVisible, setInternalEditModalVisible] = useState(false);
 
   const promptDeleteAddress = (addr: Address) => {
     setAddressToDelete(addr);
@@ -250,19 +256,40 @@ export const AddressBottomSheet: React.FC<AddressBottomSheetProps> = ({
                           </View>
                         ) : null}
                       </View>
-                      {!addr.isDefault ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <TouchableOpacity
                           activeOpacity={0.7}
                           onPress={(e) => {
                             e.stopPropagation();
-                            promptDeleteAddress(addr);
+                            if (onEditAddress) {
+                              onClose();
+                              onEditAddress(addr);
+                            } else {
+                              setEditingAddress(addr);
+                              setInternalEditModalVisible(true);
+                            }
                           }}
-                          style={styles.sheetDeleteBtn}
+                          style={styles.sheetEditBtn}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
-                          <Icon name="trash" size={13} color="#DC2626" />
+                          <Icon name="edit" size={11} color={theme.colors.primary} />
+                          <Text style={styles.sheetEditText}>EDIT</Text>
                         </TouchableOpacity>
-                      ) : null}
+
+                        {!addr.isDefault ? (
+                          <TouchableOpacity
+                            activeOpacity={0.7}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              promptDeleteAddress(addr);
+                            }}
+                            style={styles.sheetDeleteBtn}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Icon name="trash" size={13} color="#DC2626" />
+                          </TouchableOpacity>
+                        ) : null}
+                      </View>
                     </View>
                     <Text style={styles.recipientName}>{addr.name}</Text>
                     <Text style={styles.addressLine} numberOfLines={2}>
@@ -303,6 +330,31 @@ export const AddressBottomSheet: React.FC<AddressBottomSheetProps> = ({
         }}
         onConfirmDelete={confirmDeleteAddress}
         isDeleting={isDeletingAddress}
+      />
+
+      {/* Internal Self-Contained Edit Address Modal */}
+      <AddAddressModal
+        visible={internalEditModalVisible}
+        initialAddress={editingAddress}
+        onClose={() => {
+          setInternalEditModalVisible(false);
+          setEditingAddress(null);
+        }}
+        onSaveAddress={async (savedAddr) => {
+          if (
+            editingAddress?.id &&
+            !String(editingAddress.id).startsWith('addr-') &&
+            !String(editingAddress.id).startsWith('gps-')
+          ) {
+            await storeUpdateAddress(editingAddress.id, savedAddr);
+          } else {
+            await storeAddNewAddress(savedAddr);
+          }
+          setEditingAddress(null);
+          setInternalEditModalVisible(false);
+          await loadAddresses();
+          onRefreshAddresses?.();
+        }}
       />
     </BottomSheetWrapper>
   );
@@ -432,6 +484,27 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   sheetDeleteBtn: {
+    padding: 3,
+    borderRadius: 4,
+  },
+  sheetEditBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+  sheetEditText: {
+    fontSize: 9.5,
+    fontWeight: theme.typography.weights.extraBold,
+    color: theme.colors.primary,
+    letterSpacing: 0.3,
+  },
+  sheetActionBtn: {
     padding: 3,
     borderRadius: 4,
   },

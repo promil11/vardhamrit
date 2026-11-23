@@ -40,15 +40,26 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
   const [showDropdown, setShowDropdown] = useState(false);
   const [isPinHovering, setIsPinHovering] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isMapReady, setIsMapReady] = useState(false);
   const searchTimeoutRef = useRef<any>(null);
   const iframeRef = useRef<any>(null);
   const rememberedHouseNoRef = useRef<string | undefined>(undefined);
-  const lastSettledCoordsRef = useRef<{ lat: number; lon: number } | null>(null);
+  const lastSettledCoordsRef = useRef<{ lat: number; lon: number } | null>(
+    typeof latitude === 'number' && typeof longitude === 'number' && !isNaN(latitude) && !isNaN(longitude) && latitude !== 0
+      ? { lat: latitude, lon: longitude }
+      : null
+  );
 
-  const initialLat = useRef(latitude || 22.7196).current;
-  const initialLon = useRef(longitude || 75.8577).current;
-  const activeLat = latitude || initialLat;
-  const activeLon = longitude || initialLon;
+  const effectiveLat =
+    typeof latitude === 'number' && !isNaN(latitude) && latitude !== 0
+      ? latitude
+      : 22.7196;
+  const effectiveLon =
+    typeof longitude === 'number' && !isNaN(longitude) && longitude !== 0
+      ? longitude
+      : 75.8577;
+  const activeLat = effectiveLat;
+  const activeLon = effectiveLon;
 
   // Search input handler with 180ms debounce
   const handleSearchChange = (text: string) => {
@@ -133,23 +144,26 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
 
   // Sync external coordinate changes to the embedded Leaflet map (e.g. from Auto-Detect or place select)
   useEffect(() => {
-    if (latitude && longitude && iframeRef.current?.contentWindow) {
-      // Don't re-fly if these coordinates were just reported by the map pin itself
-      if (
-        lastSettledCoordsRef.current &&
-        Math.abs(lastSettledCoordsRef.current.lat - latitude) < 0.00001 &&
-        Math.abs(lastSettledCoordsRef.current.lon - longitude) < 0.00001
-      ) {
-        return;
+    if (latitude && longitude && !isNaN(latitude) && !isNaN(longitude) && latitude !== 0) {
+      lastSettledCoordsRef.current = { lat: Number(latitude), lon: Number(longitude) };
+      if (iframeRef.current?.contentWindow) {
+        // Don't re-fly if these coordinates were just reported by the map pin itself
+        if (
+          lastSettledCoordsRef.current &&
+          Math.abs(lastSettledCoordsRef.current.lat - latitude) < 0.00001 &&
+          Math.abs(lastSettledCoordsRef.current.lon - longitude) < 0.00001
+        ) {
+          return;
+        }
+        iframeRef.current.contentWindow.postMessage(
+          {
+            type: 'FLY_TO',
+            lat: latitude,
+            lon: longitude,
+          },
+          '*'
+        );
       }
-      iframeRef.current.contentWindow.postMessage(
-        {
-          type: 'FLY_TO',
-          lat: latitude,
-          lon: longitude,
-        },
-        '*'
-      );
     }
   }, [latitude, longitude]);
 
@@ -160,7 +174,24 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     const handleMessage = (e: MessageEvent) => {
       if (!e.data || typeof e.data !== 'object') return;
 
-      if (e.data.type === 'PIN_MOVING') {
+      if (e.data.type === 'MAP_READY') {
+        setIsMapReady(true);
+        if (
+          latitude &&
+          longitude &&
+          (Math.abs(latitude - e.data.lat) > 0.0001 || Math.abs(longitude - e.data.lon) > 0.0001)
+        ) {
+          iframeRef.current?.contentWindow?.postMessage(
+            {
+              type: 'FLY_TO',
+              lat: latitude,
+              lon: longitude,
+              zoom: 17,
+            },
+            '*'
+          );
+        }
+      } else if (e.data.type === 'PIN_MOVING') {
         setIsPinHovering(true);
         // Clear remembered house number from previous search when user drags map pin to a new place
         rememberedHouseNoRef.current = undefined;
@@ -168,6 +199,14 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
         setIsPinHovering(false);
         const { lat, lon } = e.data;
         if (typeof lat === 'number' && typeof lon === 'number') {
+          // If coords have not changed (e.g. initial map load / iframe render), do NOT trigger location change
+          if (
+            lastSettledCoordsRef.current &&
+            Math.abs(lastSettledCoordsRef.current.lat - lat) < 0.00005 &&
+            Math.abs(lastSettledCoordsRef.current.lon - lon) < 0.00005
+          ) {
+            return;
+          }
           lastSettledCoordsRef.current = { lat, lon };
           onLocationChange(
             { latitude: lat, longitude: lon },
@@ -180,7 +219,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onLocationChange]);
+  }, [onLocationChange, latitude, longitude]);
 
   // Self-contained, responsive Leaflet HTML template with OpenStreetMap & Esri layers, Satellite toggle & Famous Landmark pins
   // Memoized so srcDoc NEVER changes after mount, preventing iframe reload and keeping Satellite mode & Zoom active!
@@ -337,8 +376,8 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    var startLat = ${initialLat};
-    var startLon = ${initialLon};
+    var startLat = ${effectiveLat};
+    var startLon = ${effectiveLon};
 
     // Deep zoom range: minZoom 10 (city-wide) to maxZoom 22 (ultra-close building & rooftop level)
     var map = L.map('map', {
@@ -464,10 +503,15 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     var isInitialized = false;
     var isUserInteracting = false;
 
-    // Suppress initial viewport setup from emitting PIN_SETTLED
+    // Suppress initial viewport setup from emitting PIN_SETTLED, but notify parent that map is ready
     setTimeout(function() {
       isInitialized = true;
-    }, 600);
+      window.parent.postMessage({
+        type: 'MAP_READY',
+        lat: startLat,
+        lon: startLon
+      }, '*');
+    }, 350);
 
     map.on('movestart dragstart', function() {
       isInitialized = true;
@@ -514,7 +558,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     });
   </script>
 </body>
-</html>`, [initialLat, initialLon]);
+</html>`, [effectiveLat, effectiveLon]);
 
   return (
     <View style={styles.container}>
@@ -599,6 +643,21 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
             style={styles.webIframe}
             title="Map Picker"
             loading="eager"
+            onLoad={() => {
+              if (latitude && longitude) {
+                setTimeout(() => {
+                  iframeRef.current?.contentWindow?.postMessage(
+                    {
+                      type: 'FLY_TO',
+                      lat: latitude,
+                      lon: longitude,
+                      zoom: 17,
+                    },
+                    '*'
+                  );
+                }, 300);
+              }
+            }}
           />
         ) : (
           <View style={styles.nativeFallback}>
