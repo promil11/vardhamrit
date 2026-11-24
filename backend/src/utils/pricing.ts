@@ -48,8 +48,31 @@ export const DISTANCE_CONFIG = {
 
 export const PRICING_CONFIG = {
   GST_PERCENTAGE: process.env.GST_PERCENTAGE !== undefined ? Number(process.env.GST_PERCENTAGE) : 5,
-  FREE_DELIVERY_THRESHOLD: process.env.FREE_DELIVERY_THRESHOLD !== undefined ? Number(process.env.FREE_DELIVERY_THRESHOLD) : 0,
+  FREE_DELIVERY_THRESHOLD: process.env.FREE_DELIVERY_THRESHOLD !== undefined ? Number(process.env.FREE_DELIVERY_THRESHOLD) : 499,
 };
+
+/**
+ * Tiered Handling & Packaging Fee:
+ * - ₹1 to ₹499: 5%
+ * - ₹500 to ₹999: 3%
+ * - ₹1000 to ₹1999: 2%
+ * - ₹2000 and above: 1.5%
+ */
+export function getHandlingFeeTier(subtotal: number): { percentage: number; fee: number } {
+  if (subtotal <= 0) return { percentage: 0, fee: 0 };
+  let percentage = 1.5;
+  if (subtotal <= 499) {
+    percentage = 5;
+  } else if (subtotal <= 999) {
+    percentage = 3;
+  } else if (subtotal <= 1999) {
+    percentage = 2;
+  } else {
+    percentage = 1.5;
+  }
+  const fee = Math.max(1, Math.round((subtotal * percentage) / 100));
+  return { percentage, fee };
+}
 
 // Known pincode centroids for instant high-precision distance fallback
 export const PINCODE_COORDINATES: Record<string, { lat: number; lon: number }> = {
@@ -168,12 +191,33 @@ export function calculateDynamicDistanceFees(address: any, subtotal: number = 0)
     };
   }
 
+  // Tiered Handling & Packaging Fee based on subtotal (item total value):
+  // 1-499: 5%, 500-999: 3%, 1000-1999: 2%, 2000+: 1.5%
+  const handlingInfo = getHandlingFeeTier(subtotal);
+  const handlingFee = handlingInfo.fee;
+
+  // Free Delivery Threshold: Delivery is 100% FREE when item total value >= FREE_DELIVERY_THRESHOLD (₹499)
+  const isFreeDelivery =
+    subtotal > 0 &&
+    PRICING_CONFIG.FREE_DELIVERY_THRESHOLD > 0 &&
+    subtotal >= PRICING_CONFIG.FREE_DELIVERY_THRESHOLD;
+
+  if (isFreeDelivery) {
+    return {
+      distanceKm,
+      deliveryFee: 0,
+      handlingFee,
+      isServiceable: true,
+      maxDistanceKm: DISTANCE_CONFIG.MAX_DISTANCE_KM,
+    };
+  }
+
   // Below or equal to 500 meters (0.5 km)
   if (distanceKm <= DISTANCE_CONFIG.BASE_DISTANCE_KM) {
     return {
       distanceKm,
       deliveryFee: DISTANCE_CONFIG.BASE_DELIVERY_FEE,
-      handlingFee: DISTANCE_CONFIG.BASE_HANDLING_FEE,
+      handlingFee,
       isServiceable: true,
       maxDistanceKm: DISTANCE_CONFIG.MAX_DISTANCE_KM,
     };
@@ -182,10 +226,8 @@ export function calculateDynamicDistanceFees(address: any, subtotal: number = 0)
   // Between 500 meters and 10 km: Scales dynamically with distance
   const extraKm = distanceKm - DISTANCE_CONFIG.BASE_DISTANCE_KM;
   const extraDelivery = Math.round(extraKm * DISTANCE_CONFIG.DELIVERY_FEE_PER_KM);
-  const extraHandling = Math.round(extraKm * DISTANCE_CONFIG.HANDLING_FEE_PER_KM);
 
   const deliveryFee = DISTANCE_CONFIG.BASE_DELIVERY_FEE + extraDelivery;
-  const handlingFee = DISTANCE_CONFIG.BASE_HANDLING_FEE + extraHandling;
 
   return {
     distanceKm,
@@ -198,6 +240,9 @@ export function calculateDynamicDistanceFees(address: any, subtotal: number = 0)
 
 export function calculateDeliveryFee(subtotal: number, address?: any): number {
   if (subtotal === 0) return 0.00;
+  if (PRICING_CONFIG.FREE_DELIVERY_THRESHOLD > 0 && subtotal >= PRICING_CONFIG.FREE_DELIVERY_THRESHOLD) {
+    return 0.00;
+  }
   if (address) {
     const fees = calculateDynamicDistanceFees(address, subtotal);
     return fees.isServiceable ? fees.deliveryFee : 0;
@@ -205,13 +250,9 @@ export function calculateDeliveryFee(subtotal: number, address?: any): number {
   return DISTANCE_CONFIG.BASE_DELIVERY_FEE;
 }
 
-export function calculateHandlingFee(subtotal: number, address?: any): number {
+export function calculateHandlingFee(subtotal: number, _address?: any): number {
   if (subtotal === 0) return 0.00;
-  if (address) {
-    const fees = calculateDynamicDistanceFees(address, subtotal);
-    return fees.isServiceable ? fees.handlingFee : 0;
-  }
-  return DISTANCE_CONFIG.BASE_HANDLING_FEE;
+  return getHandlingFeeTier(subtotal).fee;
 }
 
 export function calculateTax(taxableAmount: number): number {
@@ -224,12 +265,19 @@ export function calculateOrderTotals(subtotal: number, discountAmount: number, a
   const taxableAmount = Math.max(0, subtotal - validDiscount);
   const taxAmount = calculateTax(taxableAmount);
 
+  const isFreeDelivery =
+    subtotal > 0 &&
+    PRICING_CONFIG.FREE_DELIVERY_THRESHOLD > 0 &&
+    subtotal >= PRICING_CONFIG.FREE_DELIVERY_THRESHOLD;
+
+  const defaultHandling = getHandlingFeeTier(subtotal).fee;
+
   const distanceFees = address
     ? calculateDynamicDistanceFees(address, subtotal)
     : {
         distanceKm: 0.4,
-        deliveryFee: DISTANCE_CONFIG.BASE_DELIVERY_FEE,
-        handlingFee: DISTANCE_CONFIG.BASE_HANDLING_FEE,
+        deliveryFee: isFreeDelivery ? 0 : DISTANCE_CONFIG.BASE_DELIVERY_FEE,
+        handlingFee: defaultHandling,
         isServiceable: true,
         maxDistanceKm: DISTANCE_CONFIG.MAX_DISTANCE_KM,
       };

@@ -134,10 +134,33 @@ try {
   // Ignore synchronous parse error
 }
 
+/**
+ * Tiered Handling & Packaging Fee:
+ * - ₹1 to ₹499: 5%
+ * - ₹500 to ₹999: 3%
+ * - ₹1000 to ₹1999: 2%
+ * - ₹2000 and above: 1.5%
+ */
+export function getHandlingFeeTier(subtotal: number): { percentage: number; fee: number } {
+  if (subtotal <= 0) return { percentage: 0, fee: 0 };
+  let percentage = 1.5;
+  if (subtotal <= 499) {
+    percentage = 5;
+  } else if (subtotal <= 999) {
+    percentage = 3;
+  } else if (subtotal <= 1999) {
+    percentage = 2;
+  } else {
+    percentage = 1.5;
+  }
+  const fee = Math.max(1, Math.round((subtotal * percentage) / 100));
+  return { percentage, fee };
+}
+
 export const useCartStore = create<CartState>((set, get) => ({
   items: initialItems,
   appliedCoupon: initialCoupon,
-  freeDeliveryThreshold: 0,
+  freeDeliveryThreshold: 499,
   deliveryFee: 0,
   handlingFee: 0,
   currentUserId: initialUserId,
@@ -509,10 +532,11 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   getFinalDeliveryFee: () => {
     const subtotal = get().getSubtotal();
-    if (subtotal === 0 || subtotal >= get().freeDeliveryThreshold) {
+    const threshold = get().freeDeliveryThreshold || 499;
+    if (subtotal === 0 || subtotal >= threshold) {
       return 0;
     }
-    return get().deliveryFee;
+    return get().deliveryFee || 30;
   },
 
   getGrandTotal: () => {
@@ -520,19 +544,19 @@ export const useCartStore = create<CartState>((set, get) => ({
     if (subtotal === 0) return 0;
     const discount = get().getCouponDiscount();
     const delivery = get().getFinalDeliveryFee();
-    const handling = get().handlingFee;
+    const handling = getHandlingFeeTier(subtotal).fee;
     return Math.max(0, subtotal - discount + delivery + handling);
   },
 
   getFreeDeliveryProgress: () => {
     const subtotal = get().getSubtotal();
-    const threshold = get().freeDeliveryThreshold;
+    const threshold = get().freeDeliveryThreshold || 499;
     return Math.min(100, Math.round((subtotal / threshold) * 100));
   },
 
   getAmountNeededForFreeDelivery: () => {
     const subtotal = get().getSubtotal();
-    const threshold = get().freeDeliveryThreshold;
+    const threshold = get().freeDeliveryThreshold || 499;
     return Math.max(0, threshold - subtotal);
   },
 }));

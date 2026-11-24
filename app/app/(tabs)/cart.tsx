@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
-import { useCartStore } from '../../store/useCartStore';
+import { useCartStore, getHandlingFeeTier } from '../../store/useCartStore';
 import { useAddressStore } from '../../store/useAddressStore';
 import { CartItem } from '../../types';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -202,13 +202,14 @@ export default function CartScreen() {
     };
   }, [appliedCoupon]);
 
-  // Dynamic distance-based fees (< 500m => Delivery: ₹30, Handling: ₹5)
+  // Dynamic distance-based fees with Free Delivery above ₹499 & Tiered Handling Fee (1-499: 5%, 500-999: 3%, 1000-1999: 2%, 2000+: 1.5%)
+  const handlingTier = getHandlingFeeTier(subtotal);
   const currentDeliveryFee = distanceInfo
-    ? (distanceInfo.isServiceable ? distanceInfo.deliveryFee : 0)
+    ? (distanceInfo.isServiceable ? (subtotal >= 499 ? 0 : distanceInfo.deliveryFee) : 0)
     : getFinalDeliveryFee();
   const currentHandlingFee = distanceInfo
-    ? (distanceInfo.isServiceable ? distanceInfo.handlingFee : 5)
-    : 5;
+    ? (distanceInfo.isServiceable ? distanceInfo.handlingFee : handlingTier.fee)
+    : handlingTier.fee;
   const currentGrandTotal = Math.max(0, subtotal - couponDiscount + currentDeliveryFee + currentHandlingFee);
   const freeProgress = getFreeDeliveryProgress();
   const amountNeeded = getAmountNeededForFreeDelivery();
@@ -505,13 +506,6 @@ export default function CartScreen() {
                   <View style={styles.billRow}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Text style={[styles.billLabel, isTablet && { fontSize: 15 }]}>Handling & Packaging</Text>
-                      {distanceInfo ? (
-                        <View style={styles.distanceTagPill}>
-                          <Text style={styles.distanceTagPillText}>
-                            {distanceInfo.distanceKm <= 0.5 ? 'Base ₹5' : `₹${currentHandlingFee}`}
-                          </Text>
-                        </View>
-                      ) : null}
                     </View>
                     <Text style={[styles.billVal, isTablet && { fontSize: 15.5 }]}>₹{currentHandlingFee}</Text>
                   </View>

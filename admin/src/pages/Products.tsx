@@ -689,7 +689,7 @@ export const Products: React.FC = () => {
                     onClick={() =>
                       setVariants((prev) => [
                         ...prev,
-                        { label: '250 g', price: 150, mrp: 199, stock: 50, sku: `TEA-${Date.now()}` },
+                        { label: '200 g', price: 150, mrp: 199, stock: 50, sku: `TEA-${Date.now()}` },
                       ])
                     }
                     className="text-emerald-800 font-extrabold text-[11px] hover:underline flex items-center gap-1"

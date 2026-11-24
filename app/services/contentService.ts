@@ -1,4 +1,5 @@
 import { api } from './api';
+import { MOCK_BANNERS } from './mockData';
 
 export interface Banner {
   id: number;
@@ -71,10 +72,10 @@ export async function fetchBanners(): Promise<any[]> {
         target_url: b.target_url,
       }));
     }
-    return [];
+    return MOCK_BANNERS;
   } catch (err) {
-    console.warn('Error fetching banners from database API:', err);
-    return [];
+    console.warn('Error fetching banners from database API, using fallback:', err);
+    return MOCK_BANNERS;
   }
 }
 

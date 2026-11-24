@@ -14,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { theme } from '../theme';
 import { useAuth } from '../store/authContext';
-import { useCartStore } from '../store/useCartStore';
+import { useCartStore, getHandlingFeeTier } from '../store/useCartStore';
 import { useAddressStore } from '../store/useAddressStore';
 import { Address } from '../types';
 import { api } from '../services/api';
@@ -109,13 +109,17 @@ export default function CheckoutScreen() {
   const [userCoins, setUserCoins] = useState<number>(user?.coins_balance ?? 0);
   const [useCoins, setUseCoins] = useState<boolean>(true); // default true if user has coins
 
-  // Dynamic Distance Pricing State (< 500m => Delivery: ₹30, Handling: ₹5)
-  const [distanceInfo, setDistanceInfo] = useState<DistanceFeeInfo>({
-    distanceKm: 0.4,
-    deliveryFee: 30,
-    handlingFee: 5,
-    isServiceable: true,
-    maxDistanceKm: 10,
+  // Dynamic Distance Pricing State (Free Delivery above ₹499 & Tiered Handling Fee)
+  const [distanceInfo, setDistanceInfo] = useState<DistanceFeeInfo>(() => {
+    const initSub = getSubtotal();
+    const tier = getHandlingFeeTier(initSub);
+    return {
+      distanceKm: 0.4,
+      deliveryFee: initSub >= 499 ? 0 : 30,
+      handlingFee: tier.fee,
+      isServiceable: true,
+      maxDistanceKm: 10,
+    };
   });
   const [calculatingFees, setCalculatingFees] = useState(false);
 
@@ -255,9 +259,14 @@ export default function CheckoutScreen() {
     }
   };
 
-  // Dynamic fees based on distance (< 500m => Delivery: ₹30, Handling: ₹5)
-  const deliveryFee = distanceInfo.isServiceable ? distanceInfo.deliveryFee : 0;
-  const handlingFee = distanceInfo.isServiceable ? distanceInfo.handlingFee : 0;
+  // Dynamic fees based on distance and Free Delivery Threshold above ₹499
+  const handlingTier = getHandlingFeeTier(subtotal);
+  const deliveryFee = distanceInfo.isServiceable
+    ? (subtotal >= 499 ? 0 : distanceInfo.deliveryFee)
+    : 0;
+  const handlingFee = distanceInfo.isServiceable
+    ? distanceInfo.handlingFee
+    : handlingTier.fee;
 
   // Coins Calculation (1 Coin = ₹1 Discount)
   const remainingSubtotal = Math.max(0, subtotal - couponDiscount);
@@ -687,11 +696,6 @@ export default function CheckoutScreen() {
               <View style={styles.billRow}>
                 <View style={styles.feeLabelRow}>
                   <Text style={styles.billLabel}>Handling & Packaging</Text>
-                  <View style={styles.distanceTagPill}>
-                    <Text style={styles.distanceTagPillText}>
-                      {distanceInfo.distanceKm <= 0.5 ? 'Base ₹5' : `₹${handlingFee}`}
-                    </Text>
-                  </View>
                 </View>
                 <Text style={styles.billVal}>
                   {handlingFee === 0 ? <Text style={styles.freeText}>FREE</Text> : `₹${handlingFee}`}

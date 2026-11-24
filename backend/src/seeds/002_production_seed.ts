@@ -178,13 +178,15 @@ async function seedDatabase() {
         sort_order: 1,
         badges: ['Daily Kadak', 'Single Estate', 'Rich Malty'],
         images: [
-          'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=800&q=80',
-          'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800&q=80',
+          '/uploads/products/classic_200g.png',
+          '/uploads/products/classic_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-NR-250', label: '250 g', weight_grams: 250, price: 149.00, mrp: 185.00, stock_quantity: 50, sort_order: 1 },
-          { sku: 'VRD-NR-500', label: '500 g', weight_grams: 500, price: 279.00, mrp: 350.00, stock_quantity: 45, sort_order: 2 },
-          { sku: 'VRD-NR-1KG', label: '1 kg Saver', weight_grams: 1000, price: 519.00, mrp: 650.00, stock_quantity: 30, sort_order: 3 },
+          { sku: 'VRD-NR-200', label: '200 g', weight_grams: 200, price: 129.00, mrp: 160.00, stock_quantity: 50, sort_order: 1 },
+          { sku: 'VRD-NR-400', label: '400 g', weight_grams: 400, price: 239.00, mrp: 320.00, stock_quantity: 40, sort_order: 2 },
+          { sku: 'VRD-NR-500', label: '500 g', weight_grams: 500, price: 279.00, mrp: 350.00, stock_quantity: 45, sort_order: 3 },
+          { sku: 'VRD-NR-1KG', label: '1 kg Saver', weight_grams: 1000, price: 519.00, mrp: 650.00, stock_quantity: 30, sort_order: 4 },
         ],
       },
       {
@@ -199,17 +201,19 @@ async function seedDatabase() {
         is_bestseller: false,
         is_fresh_harvest: true,
         is_featured: false,
-        discount_percentage: 15,
+        discount_percentage: 20,
         sort_order: 2,
         badges: ['Morning Kick', 'Strong Kadak', 'Pure CTC'],
         images: [
-          'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800&q=80',
-          'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=800&q=80',
+          '/uploads/products/normal_200g.png',
+          '/uploads/products/normal_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-DM-250', label: '250 g', weight_grams: 250, price: 139.00, mrp: 175.00, stock_quantity: 60, sort_order: 1 },
-          { sku: 'VRD-DM-500', label: '500 g', weight_grams: 500, price: 259.00, mrp: 330.00, stock_quantity: 40, sort_order: 2 },
-          { sku: 'VRD-DM-1KG', label: '1 kg Saver', weight_grams: 1000, price: 489.00, mrp: 620.00, stock_quantity: 25, sort_order: 3 },
+          { sku: 'VRD-DM-200', label: '200 g', weight_grams: 200, price: 129.00, mrp: 160.00, stock_quantity: 60, sort_order: 1 },
+          { sku: 'VRD-DM-400', label: '400 g', weight_grams: 400, price: 219.00, mrp: 300.00, stock_quantity: 35, sort_order: 2 },
+          { sku: 'VRD-DM-500', label: '500 g', weight_grams: 500, price: 259.00, mrp: 330.00, stock_quantity: 40, sort_order: 3 },
+          { sku: 'VRD-DM-1KG', label: '1 kg Saver', weight_grams: 1000, price: 489.00, mrp: 620.00, stock_quantity: 25, sort_order: 4 },
         ],
       },
       {
@@ -224,16 +228,19 @@ async function seedDatabase() {
         is_bestseller: true,
         is_fresh_harvest: false,
         is_featured: true,
-        discount_percentage: 25,
+        discount_percentage: 22,
         sort_order: 3,
         badges: ['Gold Tipped', 'Reserve Blend', 'Amber Cup'],
         images: [
-          'https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=800&q=80',
-          'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=800&q=80',
+          '/uploads/products/classic_200g.png',
+          '/uploads/products/classic_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-GL-250', label: '250 g', weight_grams: 250, price: 169.00, mrp: 225.00, stock_quantity: 45, sort_order: 1 },
-          { sku: 'VRD-GL-500', label: '500 g', weight_grams: 500, price: 319.00, mrp: 425.00, stock_quantity: 35, sort_order: 2 },
+          { sku: 'VRD-GL-200', label: '200 g', weight_grams: 200, price: 129.00, mrp: 160.00, stock_quantity: 45, sort_order: 1 },
+          { sku: 'VRD-GL-400', label: '400 g', weight_grams: 400, price: 279.00, mrp: 380.00, stock_quantity: 30, sort_order: 2 },
+          { sku: 'VRD-GL-500', label: '500 g', weight_grams: 500, price: 319.00, mrp: 425.00, stock_quantity: 35, sort_order: 3 },
+          { sku: 'VRD-GL-1KG', label: '1 kg Saver', weight_grams: 1000, price: 599.00, mrp: 800.00, stock_quantity: 20, sort_order: 4 },
         ],
       },
 
@@ -250,16 +257,19 @@ async function seedDatabase() {
         is_bestseller: true,
         is_fresh_harvest: true,
         is_featured: true,
-        discount_percentage: 15,
+        discount_percentage: 20,
         sort_order: 4,
         badges: ['7 Fresh Spices', 'Ayurvedic Blend', 'Immunity Boost'],
         images: [
-          'https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?w=800&q=80',
-          'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&q=80',
+          '/uploads/products/masala_200g.png',
+          '/uploads/products/masala_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-MS-250', label: '250 g', weight_grams: 250, price: 199.00, mrp: 265.00, stock_quantity: 60, sort_order: 1 },
-          { sku: 'VRD-MS-500', label: '500 g', weight_grams: 500, price: 379.00, mrp: 510.00, stock_quantity: 25, sort_order: 2 },
+          { sku: 'VRD-MS-200', label: '200 g', weight_grams: 200, price: 169.00, mrp: 225.00, stock_quantity: 60, sort_order: 1 },
+          { sku: 'VRD-MS-400', label: '400 g', weight_grams: 400, price: 319.00, mrp: 430.00, stock_quantity: 40, sort_order: 2 },
+          { sku: 'VRD-MS-500', label: '500 g', weight_grams: 500, price: 379.00, mrp: 510.00, stock_quantity: 25, sort_order: 3 },
+          { sku: 'VRD-MS-1KG', label: '1 kg Saver', weight_grams: 1000, price: 699.00, mrp: 950.00, stock_quantity: 20, sort_order: 4 },
         ],
       },
       {
@@ -274,16 +284,19 @@ async function seedDatabase() {
         is_bestseller: false,
         is_fresh_harvest: true,
         is_featured: false,
-        discount_percentage: 20,
+        discount_percentage: 22,
         sort_order: 5,
         badges: ['Hand Pounded', '12 Spices', 'Winter Shield'],
         images: [
-          'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&q=80',
-          'https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?w=800&q=80',
+          '/uploads/products/masala_200g.png',
+          '/uploads/products/masala_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-KD-250', label: '250 g', weight_grams: 250, price: 219.00, mrp: 285.00, stock_quantity: 40, sort_order: 1 },
-          { sku: 'VRD-KD-500', label: '500 g', weight_grams: 500, price: 419.00, mrp: 550.00, stock_quantity: 20, sort_order: 2 },
+          { sku: 'VRD-KD-200', label: '200 g', weight_grams: 200, price: 169.00, mrp: 225.00, stock_quantity: 40, sort_order: 1 },
+          { sku: 'VRD-KD-400', label: '400 g', weight_grams: 400, price: 349.00, mrp: 460.00, stock_quantity: 30, sort_order: 2 },
+          { sku: 'VRD-KD-500', label: '500 g', weight_grams: 500, price: 419.00, mrp: 550.00, stock_quantity: 20, sort_order: 3 },
+          { sku: 'VRD-KD-1KG', label: '1 kg Saver', weight_grams: 1000, price: 769.00, mrp: 1020.00, stock_quantity: 15, sort_order: 4 },
         ],
       },
       {
@@ -298,16 +311,19 @@ async function seedDatabase() {
         is_bestseller: false,
         is_fresh_harvest: false,
         is_featured: false,
-        discount_percentage: 18,
+        discount_percentage: 20,
         sort_order: 6,
         badges: ['Idukki Cardamom', 'Malabar Pepper', 'Brisk Sip'],
         images: [
-          'https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=800&q=80',
-          'https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?w=800&q=80',
+          '/uploads/products/masala_200g.png',
+          '/uploads/products/masala_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-MB-250', label: '250 g', weight_grams: 250, price: 189.00, mrp: 240.00, stock_quantity: 50, sort_order: 1 },
-          { sku: 'VRD-MB-500', label: '500 g', weight_grams: 500, price: 359.00, mrp: 460.00, stock_quantity: 30, sort_order: 2 },
+          { sku: 'VRD-MB-200', label: '200 g', weight_grams: 200, price: 169.00, mrp: 225.00, stock_quantity: 50, sort_order: 1 },
+          { sku: 'VRD-MB-400', label: '400 g', weight_grams: 400, price: 299.00, mrp: 400.00, stock_quantity: 35, sort_order: 2 },
+          { sku: 'VRD-MB-500', label: '500 g', weight_grams: 500, price: 359.00, mrp: 460.00, stock_quantity: 30, sort_order: 3 },
+          { sku: 'VRD-MB-1KG', label: '1 kg Saver', weight_grams: 1000, price: 649.00, mrp: 880.00, stock_quantity: 20, sort_order: 4 },
         ],
       },
 
@@ -324,16 +340,19 @@ async function seedDatabase() {
         is_bestseller: true,
         is_fresh_harvest: false,
         is_featured: true,
-        discount_percentage: 20,
+        discount_percentage: 23,
         sort_order: 7,
         badges: ['Grade A Saffron', 'Royal Gold', 'Almond Crunch'],
         images: [
-          'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=800&q=80',
-          'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&q=80',
+          '/uploads/products/kesar_200g.png',
+          '/uploads/products/kesar_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-KS-250', label: '250 g Tin', weight_grams: 250, price: 349.00, mrp: 440.00, stock_quantity: 25, sort_order: 1 },
-          { sku: 'VRD-KS-500', label: '500 g Gift Box', weight_grams: 500, price: 649.00, mrp: 820.00, stock_quantity: 20, sort_order: 2 },
+          { sku: 'VRD-KS-200', label: '200 g', weight_grams: 200, price: 299.00, mrp: 399.00, stock_quantity: 25, sort_order: 1 },
+          { sku: 'VRD-KS-400', label: '400 g', weight_grams: 400, price: 569.00, mrp: 750.00, stock_quantity: 25, sort_order: 2 },
+          { sku: 'VRD-KS-500', label: '500 g Gift Box', weight_grams: 500, price: 649.00, mrp: 820.00, stock_quantity: 20, sort_order: 3 },
+          { sku: 'VRD-KS-1KG', label: '1 kg Saver', weight_grams: 1000, price: 1199.00, mrp: 1550.00, stock_quantity: 15, sort_order: 4 },
         ],
       },
       {
@@ -348,16 +367,19 @@ async function seedDatabase() {
         is_bestseller: true,
         is_fresh_harvest: true,
         is_featured: true,
-        discount_percentage: 15,
+        discount_percentage: 23,
         sort_order: 8,
         badges: ['Pampore Saffron', 'Deep Amber', 'Aristocratic'],
         images: [
-          'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&q=80',
-          'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=800&q=80',
+          '/uploads/products/kesar_200g.png',
+          '/uploads/products/kesar_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-MG-250', label: '250 g', weight_grams: 250, price: 379.00, mrp: 480.00, stock_quantity: 30, sort_order: 1 },
-          { sku: 'VRD-MG-500', label: '500 g', weight_grams: 500, price: 699.00, mrp: 890.00, stock_quantity: 15, sort_order: 2 },
+          { sku: 'VRD-MG-200', label: '200 g', weight_grams: 200, price: 299.00, mrp: 399.00, stock_quantity: 30, sort_order: 1 },
+          { sku: 'VRD-MG-400', label: '400 g', weight_grams: 400, price: 599.00, mrp: 800.00, stock_quantity: 20, sort_order: 2 },
+          { sku: 'VRD-MG-500', label: '500 g', weight_grams: 500, price: 699.00, mrp: 890.00, stock_quantity: 15, sort_order: 3 },
+          { sku: 'VRD-MG-1KG', label: '1 kg Saver', weight_grams: 1000, price: 1299.00, mrp: 1700.00, stock_quantity: 15, sort_order: 4 },
         ],
       },
       {
@@ -372,16 +394,19 @@ async function seedDatabase() {
         is_bestseller: false,
         is_fresh_harvest: false,
         is_featured: false,
-        discount_percentage: 20,
+        discount_percentage: 22,
         sort_order: 9,
         badges: ['Keser & Pista', 'Festive Reserve', 'Nutty Aroma'],
         images: [
-          'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&q=80',
-          'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=800&q=80',
+          '/uploads/products/kesar_200g.png',
+          '/uploads/products/kesar_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-KP-250', label: '250 g', weight_grams: 250, price: 399.00, mrp: 510.00, stock_quantity: 25, sort_order: 1 },
-          { sku: 'VRD-KP-500', label: '500 g', weight_grams: 500, price: 749.00, mrp: 960.00, stock_quantity: 15, sort_order: 2 },
+          { sku: 'VRD-KP-200', label: '200 g', weight_grams: 200, price: 299.00, mrp: 399.00, stock_quantity: 25, sort_order: 1 },
+          { sku: 'VRD-KP-400', label: '400 g', weight_grams: 400, price: 649.00, mrp: 860.00, stock_quantity: 20, sort_order: 2 },
+          { sku: 'VRD-KP-500', label: '500 g', weight_grams: 500, price: 749.00, mrp: 960.00, stock_quantity: 15, sort_order: 3 },
+          { sku: 'VRD-KP-1KG', label: '1 kg Saver', weight_grams: 1000, price: 1399.00, mrp: 1850.00, stock_quantity: 15, sort_order: 4 },
         ],
       },
 
@@ -398,16 +423,19 @@ async function seedDatabase() {
         is_bestseller: false,
         is_fresh_harvest: false,
         is_featured: true,
-        discount_percentage: 15,
+        discount_percentage: 22,
         sort_order: 10,
         badges: ['Real Cocoa Nibs', 'Dessert Chai', 'Velvety Body'],
         images: [
-          'https://images.unsplash.com/photo-1511381939415-e44015466834?w=800&q=80',
-          'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=800&q=80',
+          '/uploads/products/chocolate_200g.png',
+          '/uploads/products/chocolate_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-CH-250', label: '250 g Pouch', weight_grams: 250, price: 219.00, mrp: 260.00, stock_quantity: 35, sort_order: 1 },
-          { sku: 'VRD-CH-500', label: '500 g Pouch', weight_grams: 500, price: 419.00, mrp: 499.00, stock_quantity: 20, sort_order: 2 },
+          { sku: 'VRD-CH-200', label: '200 g', weight_grams: 200, price: 189.00, mrp: 240.00, stock_quantity: 35, sort_order: 1 },
+          { sku: 'VRD-CH-400', label: '400 g', weight_grams: 400, price: 349.00, mrp: 460.00, stock_quantity: 30, sort_order: 2 },
+          { sku: 'VRD-CH-500', label: '500 g Pouch', weight_grams: 500, price: 419.00, mrp: 499.00, stock_quantity: 20, sort_order: 3 },
+          { sku: 'VRD-CH-1KG', label: '1 kg Saver', weight_grams: 1000, price: 799.00, mrp: 1050.00, stock_quantity: 20, sort_order: 4 },
         ],
       },
       {
@@ -422,16 +450,19 @@ async function seedDatabase() {
         is_bestseller: true,
         is_fresh_harvest: true,
         is_featured: true,
-        discount_percentage: 22,
+        discount_percentage: 24,
         sort_order: 11,
         badges: ['70% Dark Cacao', 'Dessert Indulgence', 'Creamy Finish'],
         images: [
-          'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=800&q=80',
-          'https://images.unsplash.com/photo-1511381939415-e44015466834?w=800&q=80',
+          '/uploads/products/chocolate_200g.png',
+          '/uploads/products/chocolate_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-DC-250', label: '250 g', weight_grams: 250, price: 239.00, mrp: 310.00, stock_quantity: 40, sort_order: 1 },
-          { sku: 'VRD-DC-500', label: '500 g', weight_grams: 500, price: 449.00, mrp: 590.00, stock_quantity: 25, sort_order: 2 },
+          { sku: 'VRD-DC-200', label: '200 g', weight_grams: 200, price: 189.00, mrp: 240.00, stock_quantity: 40, sort_order: 1 },
+          { sku: 'VRD-DC-400', label: '400 g', weight_grams: 400, price: 379.00, mrp: 500.00, stock_quantity: 25, sort_order: 2 },
+          { sku: 'VRD-DC-500', label: '500 g', weight_grams: 500, price: 449.00, mrp: 590.00, stock_quantity: 25, sort_order: 3 },
+          { sku: 'VRD-DC-1KG', label: '1 kg Saver', weight_grams: 1000, price: 849.00, mrp: 1120.00, stock_quantity: 20, sort_order: 4 },
         ],
       },
       {
@@ -446,16 +477,19 @@ async function seedDatabase() {
         is_bestseller: false,
         is_fresh_harvest: false,
         is_featured: false,
-        discount_percentage: 18,
+        discount_percentage: 22,
         sort_order: 12,
         badges: ['Crushed Beans', 'Sweet Cinnamon', 'Velvet Aroma'],
         images: [
-          'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800&q=80',
-          'https://images.unsplash.com/photo-1511381939415-e44015466834?w=800&q=80',
+          '/uploads/products/chocolate_200g.png',
+          '/uploads/products/chocolate_pouch.png',
+          '/uploads/products/vardhamrit_4flavour_lineup.png',
         ],
         variants: [
-          { sku: 'VRD-RC-250', label: '250 g', weight_grams: 250, price: 229.00, mrp: 290.00, stock_quantity: 35, sort_order: 1 },
-          { sku: 'VRD-RC-500', label: '500 g', weight_grams: 500, price: 429.00, mrp: 540.00, stock_quantity: 20, sort_order: 2 },
+          { sku: 'VRD-RC-200', label: '200 g', weight_grams: 200, price: 189.00, mrp: 240.00, stock_quantity: 35, sort_order: 1 },
+          { sku: 'VRD-RC-400', label: '400 g', weight_grams: 400, price: 369.00, mrp: 480.00, stock_quantity: 25, sort_order: 2 },
+          { sku: 'VRD-RC-500', label: '500 g', weight_grams: 500, price: 429.00, mrp: 540.00, stock_quantity: 20, sort_order: 3 },
+          { sku: 'VRD-RC-1KG', label: '1 kg Saver', weight_grams: 1000, price: 819.00, mrp: 1080.00, stock_quantity: 20, sort_order: 4 },
         ],
       },
     ];
@@ -519,10 +553,10 @@ async function seedDatabase() {
       {
         id: 1,
         slug: 'b1-normal-kadak',
-        tagline: 'CLASSIC ASSAM CTC',
-        headline: 'Normal Kadak Chai',
-        subheadline: 'Single-estate bold Assam granules with rich malty body',
-        image_url: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=800&q=80',
+        tagline: 'ORIGINAL ASSAM | RICH & ROBUST',
+        headline: 'Classic Royal Assam Tea',
+        subheadline: 'Born in the Valleys of Assam, Brewed for Your Soul • 200g',
+        image_url: '/uploads/products/classic_200g.png',
         badge_text: 'FLAT 25% OFF',
         badge_variant: 'discount',
         gradient_start: '#1A5D38',
@@ -533,10 +567,10 @@ async function seedDatabase() {
       {
         id: 2,
         slug: 'b2-masala-blend',
-        tagline: '7-SPICE ROYAL RECIPE',
-        headline: 'Grand Masala Chai',
-        subheadline: 'Aromatic cinnamon, cloves, cardamom & dried ginger',
-        image_url: 'https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?w=800&q=80',
+        tagline: 'SPICED & AROMATIC',
+        headline: 'Masala Royal Assam Tea',
+        subheadline: 'Born in the Valleys of Assam, Brewed for Your Soul • 200g',
+        image_url: '/uploads/products/masala_200g.png',
         badge_text: 'BESTSELLER',
         badge_variant: 'gold',
         gradient_start: '#1A5D38',
@@ -547,10 +581,10 @@ async function seedDatabase() {
       {
         id: 3,
         slug: 'b3-keser-saffron',
-        tagline: 'ROYAL KASHMIRI KESER',
-        headline: 'Royal Keser Saffron Chai',
-        subheadline: 'Grade-A whole saffron stigmas with roasted almond slivers',
-        image_url: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=800&q=80',
+        tagline: 'EXOTIC & FRAGRANT',
+        headline: 'Kesar Royal Assam Tea',
+        subheadline: 'Born in the Valleys of Assam, Brewed for Your Soul • 200g',
+        image_url: '/uploads/products/kesar_200g.png',
         badge_text: 'ROYAL BATCH',
         badge_variant: 'gold',
         gradient_start: '#1A5D38',
@@ -561,10 +595,10 @@ async function seedDatabase() {
       {
         id: 4,
         slug: 'b4-chocolate-cacao',
-        tagline: 'VELVETY COCOA DESSERT',
-        headline: 'Artisan Chocolate Chai',
-        subheadline: 'Roasted cocoa nibs & Dutch dark cacao with Assam tea',
-        image_url: 'https://images.unsplash.com/photo-1511381939415-e44015466834?w=800&q=80',
+        tagline: 'INDULGENT & VELVET',
+        headline: 'Chocolate Royal Assam Tea',
+        subheadline: 'Born in the Valleys of Assam, Brewed for Your Soul • 200g',
+        image_url: '/uploads/products/chocolate_200g.png',
         badge_text: 'GOURMET SPECIAL',
         badge_variant: 'discount',
         gradient_start: '#1A5D38',
@@ -604,7 +638,7 @@ async function seedDatabase() {
 
     await connection.query(`
       INSERT INTO promotions (id, product_id, variant_id, title, subtitle, deal_price, original_price, discount_percent, start_time, end_time, is_active)
-      VALUES (1, 1, ?, 'Normal Kadak Chai (Special 500g Family Pack)', '500g Bestseller CTC Pack • Fresh Vacuum Sealed', 249.00, 385.00, 35, ?, ?, TRUE)
+      VALUES (1, 1, ?, 'Normal Kadak Chai (Special 500g Family Pack)', '500g Bestseller CTC Pack • Fresh Vacuum Sealed', 239.00, 369.00, 35, ?, ?, TRUE)
       ON DUPLICATE KEY UPDATE 
         variant_id=VALUES(variant_id),
         deal_price=VALUES(deal_price), 
@@ -658,20 +692,30 @@ async function seedDatabase() {
       `, [t.id, t.title, t.subtitle, t.icon_name, t.sort_order]);
     }
 
-    // 10. SEED COUPONS
-    console.log('🏷️ 10. Seeding Promotional Coupons...');
+    // 10. SEED COUPONS (Configured for >= 40% Guaranteed Margin)
+    console.log('🏷️ 10. Seeding Promotional Coupons (Margin Protected >= 40%)...');
     const couponsData = [
-      { id: 1, code: 'CHAI10', title: '10% OFF on all Teas', description: 'Valid on cart subtotal above ₹199', discount_type: 'PERCENT', discount_value: 10.00, min_order_value: 199.00, max_discount: 100.00, usage_limit_per_user: null },
-      { id: 2, code: 'WELCOME50', title: 'Flat ₹50 OFF for New Chai Lovers', description: 'Instant discount on first order above ₹299', discount_type: 'FLAT', discount_value: 50.00, min_order_value: 299.00, max_discount: null, usage_limit_per_user: 1 },
-      { id: 3, code: 'KADAK100', title: 'Flat ₹100 OFF on Family Packs', description: 'Valid on orders containing 1kg packs above ₹599', discount_type: 'FLAT', discount_value: 100.00, min_order_value: 599.00, max_discount: null, usage_limit_per_user: null },
+      { id: 1, code: 'WELCOME10', title: '10% OFF (Up to ₹50)', description: 'Valid on cart subtotal above ₹499', discount_type: 'PERCENT', discount_value: 10.00, min_order_value: 499.00, max_discount: 50.00, usage_limit_per_user: 1, is_first_order_only: 0 },
+      { id: 2, code: 'CHAI50', title: 'Flat ₹50 OFF', description: 'Instant ₹50 off on orders above ₹499', discount_type: 'FLAT', discount_value: 50.00, min_order_value: 499.00, max_discount: 50.00, usage_limit_per_user: 5, is_first_order_only: 0 },
+      { id: 3, code: 'KADAK100', title: 'Flat ₹100 OFF on Family Orders', description: 'Instant ₹100 off on bulk orders above ₹749', discount_type: 'FLAT', discount_value: 100.00, min_order_value: 749.00, max_discount: 100.00, usage_limit_per_user: 5, is_first_order_only: 0 },
+      { id: 10, code: 'WELCOMEFIRST', title: 'Flat ₹75 OFF - First Order Welcome Gift', description: 'Flat ₹75 OFF exclusively on your first tea order (Min cart ₹499)', discount_type: 'FLAT', discount_value: 75.00, min_order_value: 499.00, max_discount: 75.00, usage_limit_per_user: 1, is_first_order_only: 1 },
     ];
 
     for (const c of couponsData) {
       await connection.query(`
-        INSERT INTO coupons (id, code, title, description, discount_type, discount_value, min_order_value, max_discount, usage_limit_total, usage_limit_per_user)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 10000, ?)
-        ON DUPLICATE KEY UPDATE title=VALUES(title), discount_value=VALUES(discount_value), min_order_value=VALUES(min_order_value), usage_limit_per_user=VALUES(usage_limit_per_user);
-      `, [c.id, c.code, c.title, c.description, c.discount_type, c.discount_value, c.min_order_value, c.max_discount, c.usage_limit_per_user]);
+        INSERT INTO coupons (id, code, title, description, discount_type, discount_value, min_order_value, max_discount, usage_limit_total, usage_limit_per_user, is_first_order_only)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 10000, ?, ?)
+        ON DUPLICATE KEY UPDATE 
+          code=VALUES(code),
+          title=VALUES(title), 
+          description=VALUES(description),
+          discount_type=VALUES(discount_type),
+          discount_value=VALUES(discount_value), 
+          min_order_value=VALUES(min_order_value), 
+          max_discount=VALUES(max_discount),
+          usage_limit_per_user=VALUES(usage_limit_per_user),
+          is_first_order_only=VALUES(is_first_order_only);
+      `, [c.id, c.code, c.title, c.description, c.discount_type, c.discount_value, c.min_order_value, c.max_discount, c.usage_limit_per_user, c.is_first_order_only]);
     }
 
     // 11. SEED ORDERS, ITEMS & TRACKING (Targeting the 4 flavours)
