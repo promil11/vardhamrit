@@ -481,7 +481,7 @@ export const Orders: React.FC = () => {
         }
       />
 
-      <main className="p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
+      <main className="p-6 md:p-8 max-w-8xl w-full mx-auto space-y-6">
         {/* KPI Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* 1. Total Orders */}

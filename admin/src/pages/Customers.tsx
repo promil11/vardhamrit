@@ -72,7 +72,7 @@ export const Customers: React.FC = () => {
         onRefresh={() => refetch()}
       />
 
-      <main className="p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
+      <main className="p-6 md:p-8 max-w-8xl w-full mx-auto space-y-6">
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-card-subtle flex items-center justify-between">

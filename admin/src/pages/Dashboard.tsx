@@ -101,7 +101,7 @@ export const Dashboard: React.FC = () => {
         onRefresh={() => refetch()}
       />
 
-      <main className="p-6 md:p-8 space-y-8 max-w-7xl w-full mx-auto">
+      <main className="p-6 md:p-8 space-y-8 max-w-8xl w-full mx-auto">
         {/* Top Operational Status Banner */}
         <div className="relative rounded-3xl p-6 md:p-8 text-white shadow-xl overflow-hidden bg-gradient-to-r from-[#04160E] via-[#0E3D29] to-[#145338] border border-emerald-800/40">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -340,11 +340,10 @@ export const Dashboard: React.FC = () => {
                         key={tab.id}
                         type="button"
                         onClick={() => setChartView(tab.id as any)}
-                        className={`px-3 py-1 text-xs font-bold rounded-xl transition-all ${
-                          chartView === tab.id
-                            ? 'bg-emerald-950 text-amber-300 shadow-sm'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
+                        className={`px-3 py-1 text-xs font-bold rounded-xl transition-all ${chartView === tab.id
+                          ? 'bg-emerald-950 text-amber-300 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                          }`}
                       >
                         {tab.label}
                       </button>

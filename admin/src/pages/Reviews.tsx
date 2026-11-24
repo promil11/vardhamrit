@@ -77,7 +77,7 @@ export const Reviews: React.FC = () => {
         onRefresh={() => refetch()}
       />
 
-      <main className="p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
+      <main className="p-6 md:p-8 max-w-8xl w-full mx-auto space-y-6">
         {/* Rating Summary Banner */}
         <div className="bg-gradient-to-r from-[#04160E] via-[#0E3D29] to-[#145338] text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 border border-emerald-800/40">
           <div className="flex items-center gap-5">
@@ -105,11 +105,10 @@ export const Reviews: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setStarFilter(null)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-                starFilter === null
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${starFilter === null
                   ? 'bg-amber-400 text-emerald-950 shadow-xs'
                   : 'bg-white/10 text-emerald-100 hover:bg-white/20'
-              }`}
+                }`}
             >
               All Stars
             </button>
@@ -117,11 +116,10 @@ export const Reviews: React.FC = () => {
               <button
                 key={s}
                 onClick={() => setStarFilter(starFilter === s ? null : s)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1 ${
-                  starFilter === s
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1 ${starFilter === s
                     ? 'bg-amber-400 text-emerald-950 shadow-xs'
                     : 'bg-white/10 text-emerald-100 hover:bg-white/20'
-                }`}
+                  }`}
               >
                 <span>{s}</span>
                 <Star className="w-3 h-3 fill-current" />
@@ -168,9 +166,8 @@ export const Reviews: React.FC = () => {
                 return (
                   <div
                     key={rev.id}
-                    className={`p-6 transition-colors space-y-3.5 ${
-                      rev.is_hidden ? 'bg-slate-50/80 opacity-70' : 'hover:bg-slate-50/50'
-                    }`}
+                    className={`p-6 transition-colors space-y-3.5 ${rev.is_hidden ? 'bg-slate-50/80 opacity-70' : 'hover:bg-slate-50/50'
+                      }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="flex items-start gap-3.5">
@@ -217,11 +214,10 @@ export const Reviews: React.FC = () => {
                       <div className="flex items-center gap-2 self-end sm:self-auto">
                         <button
                           onClick={() => moderateMutation.mutate({ id: rev.id, isHidden: !rev.is_hidden })}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-                            rev.is_hidden
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${rev.is_hidden
                               ? 'bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-300'
                               : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
-                          }`}
+                            }`}
                         >
                           {rev.is_hidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                           <span>{rev.is_hidden ? 'Hidden (Unhide)' : 'Hide Review'}</span>

@@ -226,7 +226,7 @@ export const Products: React.FC = () => {
         }
       />
 
-      <main className="p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
+      <main className="p-6 md:p-8 max-w-8xl w-full mx-auto space-y-6">
         {/* Controls & Category Filter Bar */}
         <div className="bg-white p-4 rounded-3xl border border-slate-200/90 shadow-card-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Category Tabs */}

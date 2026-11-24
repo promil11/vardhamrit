@@ -159,7 +159,7 @@ export const Coupons: React.FC = () => {
         }
       />
 
-      <main className="p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
+      <main className="p-6 md:p-8 max-w-8xl w-full mx-auto space-y-6">
         {/* KPI Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-card-subtle flex items-center justify-between">
@@ -210,18 +210,16 @@ export const Coupons: React.FC = () => {
           <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80">
             <button
               onClick={() => setViewMode('cards')}
-              className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'cards' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-              }`}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'cards' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                }`}
               title="Voucher cards view"
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'table' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-              }`}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                }`}
               title="Table view"
             >
               <List className="w-4 h-4" />
@@ -261,11 +259,10 @@ export const Coupons: React.FC = () => {
               return (
                 <div
                   key={c.id}
-                  className={`relative rounded-3xl p-5 border transition-all duration-200 shadow-card-subtle flex flex-col justify-between overflow-hidden ${
-                    c.is_active
+                  className={`relative rounded-3xl p-5 border transition-all duration-200 shadow-card-subtle flex flex-col justify-between overflow-hidden ${c.is_active
                       ? 'bg-white border-slate-200/90 hover:shadow-card-elevated hover:-translate-y-0.5'
                       : 'bg-slate-50/70 border-slate-200 opacity-60'
-                  }`}
+                    }`}
                 >
                   <div>
                     {/* Top Tag & Status */}
@@ -278,11 +275,10 @@ export const Coupons: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                            c.is_active
+                          className={`text-[10px] font-black px-2 py-0.5 rounded-full ${c.is_active
                               ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                               : 'bg-slate-200 text-slate-600'
-                          }`}
+                            }`}
                         >
                           {c.is_active ? 'ACTIVE' : 'DISABLED'}
                         </span>
@@ -362,11 +358,10 @@ export const Coupons: React.FC = () => {
                     </div>
                     <button
                       onClick={() => toggleStatusMutation.mutate({ id: c.id, isActive: !c.is_active })}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-                        c.is_active
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${c.is_active
                           ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
                           : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
-                      }`}
+                        }`}
                     >
                       {c.is_active ? 'Disable' : 'Enable'}
                     </button>
@@ -417,11 +412,10 @@ export const Coupons: React.FC = () => {
                         </td>
                         <td className="py-3.5 px-4">
                           <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-black ${
-                              c.is_active
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-black ${c.is_active
                                 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                                 : 'bg-slate-100 text-slate-500'
-                            }`}
+                              }`}
                           >
                             {c.is_active ? 'ACTIVE' : 'DISABLED'}
                           </span>
@@ -432,11 +426,10 @@ export const Coupons: React.FC = () => {
                         <td className="py-3.5 px-5 text-right">
                           <button
                             onClick={() => toggleStatusMutation.mutate({ id: c.id, isActive: !c.is_active })}
-                            className={`px-3 py-1 rounded-xl text-xs font-bold ${
-                              c.is_active
+                            className={`px-3 py-1 rounded-xl text-xs font-bold ${c.is_active
                                 ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                                 : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                            }`}
+                              }`}
                           >
                             {c.is_active ? 'Disable' : 'Enable'}
                           </button>
@@ -607,11 +600,10 @@ export const Coupons: React.FC = () => {
                       key={p.days}
                       type="button"
                       onClick={() => setValidityDays(p.days)}
-                      className={`py-1.5 text-[11px] font-black rounded-lg border transition-all ${
-                        validityDays === p.days
+                      className={`py-1.5 text-[11px] font-black rounded-lg border transition-all ${validityDays === p.days
                           ? 'bg-emerald-800 text-white border-emerald-800 shadow-xs'
                           : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800'
-                      }`}
+                        }`}
                     >
                       {p.label}
                     </button>
@@ -690,11 +682,10 @@ export const Coupons: React.FC = () => {
 
             <button
               onClick={() => setFeedback(null)}
-              className={`w-full py-3 rounded-2xl font-black text-xs shadow-sm transition-all active:scale-95 ${
-                feedback.type === 'success'
+              className={`w-full py-3 rounded-2xl font-black text-xs shadow-sm transition-all active:scale-95 ${feedback.type === 'success'
                   ? 'bg-emerald-800 hover:bg-emerald-700 text-white'
                   : 'bg-slate-900 hover:bg-slate-800 text-white'
-              }`}
+                }`}
             >
               {feedback.type === 'success' ? 'Great, Got It' : 'Dismiss'}
             </button>
