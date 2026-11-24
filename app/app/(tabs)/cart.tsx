@@ -371,16 +371,9 @@ export default function CartScreen() {
                       <Icon name="map-pin" size={13} color={theme.colors.textSecondary} style={{ marginRight: 4 }} />
                       <Text style={[styles.deliverToText, isTablet && { fontSize: 13.5 }]} numberOfLines={1}>
                         {selectedAddress
-                          ? `Delivering to ${selectedAddress.tag}: ${selectedAddress.line1}, ${selectedAddress.city}`
+                          ? `Delivering to ${selectedAddress.tag === "Current Location" ? "Home" : selectedAddress.tag}: ${selectedAddress.line1}, ${selectedAddress.city}`
                           : 'Select or add delivery address'}
                       </Text>
-                      {distanceInfo ? (
-                        <View style={styles.distanceInlinePill}>
-                          <Text style={styles.distanceInlinePillText}>
-                            {distanceInfo.distanceKm <= 0.5 ? '< 500m' : `${distanceInfo.distanceKm} km away`}
-                          </Text>
-                        </View>
-                      ) : null}
                       <Text style={styles.dropdownArrow}>▾</Text>
                     </View>
                   </TouchableOpacity>

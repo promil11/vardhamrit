@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
   role ENUM('customer', 'admin', 'sommelier', 'rider') NOT NULL DEFAULT 'customer',
   status ENUM('active', 'suspended', 'pending_verification') NOT NULL DEFAULT 'active',
   push_token VARCHAR(255) NULL,
-  avatar_url VARCHAR(500) NULL,
+  avatar_url MEDIUMTEXT NULL,
   coins_balance INT UNSIGNED NOT NULL DEFAULT 100,
   tier ENUM('BRONZE', 'SILVER', 'GOLD', 'PLATINUM') NOT NULL DEFAULT 'GOLD',
   preferred_blend VARCHAR(100) NULL DEFAULT 'Upper Assam Kadak',

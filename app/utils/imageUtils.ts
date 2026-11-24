@@ -8,6 +8,11 @@ export function getFullImageUrl(url?: string | null): string {
     return `${API_BASE_URL}/uploads/products/classic_200g.png`;
   }
 
+  // Preserve inline Base64 data URIs completely
+  if (url.startsWith('data:')) {
+    return url;
+  }
+
   // Replace any hardcoded localhost/127.0.0.1 with live API_BASE_URL (essential on real mobile devices)
   if (url.includes('localhost') || url.includes('127.0.0.1')) {
     return url.replace(/https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, API_BASE_URL);
@@ -28,6 +33,9 @@ export function getFullImageUrl(url?: string | null): string {
 export function getAvatarUrl(url?: string | null): string | null {
   if (!url || typeof url !== 'string' || url.trim() === '') {
     return null;
+  }
+  if (url.startsWith('data:')) {
+    return url;
   }
   return getFullImageUrl(url);
 }

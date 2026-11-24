@@ -53,26 +53,44 @@ export async function uploadAvatar(req: Request, res: Response, next: NextFuncti
   try {
     const userId = req.user?.userId || (req as any).user?.id;
     let avatarUrl: string | null = null;
+    let persistentDataUrl: string | null = null;
 
     // 1. Check if multipart file uploaded
     const files = req.files as Express.Multer.File[] | undefined;
+    let fileBuffer: Buffer | null = null;
+    let fileMime = 'image/jpeg';
     if (files && files.length > 0) {
       avatarUrl = `/uploads/avatars/${files[0].filename}`;
+      try {
+        fileBuffer = await fs.promises.readFile(files[0].path);
+        fileMime = files[0].mimetype || 'image/jpeg';
+      } catch {}
     } else if ((req as any).file) {
       avatarUrl = `/uploads/avatars/${(req as any).file.filename}`;
+      try {
+        fileBuffer = await fs.promises.readFile((req as any).file.path);
+        fileMime = (req as any).file.mimetype || 'image/jpeg';
+      } catch {}
+    }
+
+    if (fileBuffer) {
+      persistentDataUrl = `data:${fileMime};base64,${fileBuffer.toString('base64')}`;
     }
 
     // 2. Check if Base64 string payload provided
     const base64Data = (req.body?.imageBase64 || req.body?.base64 || req.body?.image || req.body?.avatar || '').trim();
-    if (!avatarUrl && base64Data) {
+    if (base64Data) {
       let ext = '.jpg';
       let cleanBase64 = base64Data;
+      let mimeType = 'image/jpeg';
       const match = base64Data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
       if (match) {
         const rawExt = match[1].toLowerCase();
         ext = rawExt === 'jpeg' ? '.jpg' : `.${rawExt}`;
+        mimeType = `image/${rawExt}`;
         cleanBase64 = match[2];
       }
+      persistentDataUrl = base64Data.startsWith('data:') ? base64Data : `data:${mimeType};base64,${cleanBase64}`;
       const buffer = Buffer.from(cleanBase64, 'base64');
       const filename = `avatar-${Date.now()}-${crypto.randomBytes(4).toString('hex')}${ext}`;
       const filepath = path.join(avatarsDir, filename);
@@ -80,20 +98,23 @@ export async function uploadAvatar(req: Request, res: Response, next: NextFuncti
       avatarUrl = `/uploads/avatars/${filename}`;
     }
 
-    if (!avatarUrl) {
+    const effectiveAvatar = persistentDataUrl || avatarUrl;
+    if (!effectiveAvatar) {
       return sendError(res, 'No image file or base64 data provided', 400);
     }
 
-    // 3. If authenticated, update user's avatar_url in database
+    // 3. If authenticated, update user's avatar_url in database with persistent data URI
+    // This ensures avatars never get wiped when server containers rebuild or redeploy!
     if (userId) {
-      await pool.query('UPDATE users SET avatar_url = ? WHERE id = ?', [avatarUrl, userId]);
+      await pool.query('UPDATE users SET avatar_url = ? WHERE id = ?', [effectiveAvatar, userId]);
     }
 
     return sendSuccess(
       res,
       {
-        url: avatarUrl,
-        avatar_url: avatarUrl,
+        url: effectiveAvatar,
+        avatar_url: effectiveAvatar,
+        relativeUrl: avatarUrl,
         userId: userId || null,
       },
       'Profile image uploaded successfully'

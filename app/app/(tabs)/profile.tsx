@@ -480,9 +480,9 @@ export default function ProfileScreen() {
                 style={styles.avatarBorder}
               >
                 <View style={styles.avatarInner}>
-                  {getAvatarUrl(user?.avatar_url) ? (
+                  {getAvatarUrl(user?.avatar_url || userProfile?.avatar_url) ? (
                     <Image
-                      source={{ uri: getAvatarUrl(user?.avatar_url)! }}
+                      source={{ uri: getAvatarUrl(user?.avatar_url || userProfile?.avatar_url)! }}
                       style={styles.avatarImage}
                       contentFit="cover"
                       transition={200}
