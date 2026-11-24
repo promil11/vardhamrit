@@ -7,10 +7,24 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { theme } from '../../theme';
 import { Icon } from '../common/Icon';
 import { PlaceSearchResult, searchPlaces, parseAddressQuery } from '../../services/locationService';
+
+const POPULAR_INDORE_AREAS = [
+  'Electronic Complex',
+  'Vijay Nagar',
+  'Scheme 78',
+  'Apollo DB City',
+  'Palasia',
+  'Bhawarkua',
+  'Sudama Nagar',
+  'Phoenix Citadel',
+  'Silicon City',
+  'Chhappan Dukan',
+];
 
 interface InteractiveUberMapPickerProps {
   latitude?: number;
@@ -19,7 +33,8 @@ interface InteractiveUberMapPickerProps {
   onLocationChange: (
     coords: { latitude: number; longitude: number },
     placeHint?: string,
-    extractedHouseNo?: string
+    extractedHouseNo?: string,
+    selectedPlace?: PlaceSearchResult
   ) => void;
   onRequestLocateMe?: () => void;
   isLocating?: boolean;
@@ -120,7 +135,8 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     onLocationChange(
       { latitude: place.latitude, longitude: place.longitude },
       `${place.title}, ${place.subtitle}`,
-      place.extractedHouseNo || rememberedHouseNoRef.current
+      place.extractedHouseNo || rememberedHouseNoRef.current,
+      place
     );
   };
 
@@ -142,24 +158,25 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     setShowDropdown(false);
   };
 
-  // Sync external coordinate changes to the embedded Leaflet map (e.g. from Auto-Detect or place select)
+  // Sync external coordinate changes to the embedded Leaflet map (e.g. from Auto-Detect, forward geocoding, or place select)
   useEffect(() => {
     if (latitude && longitude && !isNaN(latitude) && !isNaN(longitude) && latitude !== 0) {
+      // Don't re-fly if these coordinates match what the map pin just reported
+      if (
+        lastSettledCoordsRef.current &&
+        Math.abs(lastSettledCoordsRef.current.lat - latitude) < 0.00002 &&
+        Math.abs(lastSettledCoordsRef.current.lon - longitude) < 0.00002
+      ) {
+        return;
+      }
       lastSettledCoordsRef.current = { lat: Number(latitude), lon: Number(longitude) };
       if (iframeRef.current?.contentWindow) {
-        // Don't re-fly if these coordinates were just reported by the map pin itself
-        if (
-          lastSettledCoordsRef.current &&
-          Math.abs(lastSettledCoordsRef.current.lat - latitude) < 0.00001 &&
-          Math.abs(lastSettledCoordsRef.current.lon - longitude) < 0.00001
-        ) {
-          return;
-        }
         iframeRef.current.contentWindow.postMessage(
           {
             type: 'FLY_TO',
             lat: latitude,
             lon: longitude,
+            zoom: 17,
           },
           '*'
         );
@@ -576,13 +593,13 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
           <Icon name="search" size={16} color={theme.colors.primary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search Indore area, colony, street..."
+            placeholder="Search Indore colony, scheme, landmark..."
             placeholderTextColor="#6B7280"
             value={searchQuery}
             onChangeText={handleSearchChange}
             onFocus={() => {
               setIsSearchFocused(true);
-              if (searchResults.length > 0) setShowDropdown(true);
+              setShowDropdown(true);
             }}
             onBlur={() => setIsSearchFocused(false)}
           />
@@ -595,40 +612,102 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
           ) : null}
         </View>
 
+        {/* Quick Suggestion Pills Row */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.popularChipsContainer}
+          style={styles.popularChipsScroll}
+        >
+          {POPULAR_INDORE_AREAS.map((area) => (
+            <TouchableOpacity
+              key={area}
+              activeOpacity={0.7}
+              onPress={() => handleChipPress(area)}
+              style={styles.popularChip}
+            >
+              <Icon name="map-pin" size={10} color="#0A3622" style={{ marginRight: 4 }} />
+              <Text style={styles.popularChipText}>{area}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
         {/* Search Results Dropdown Card */}
-        {showDropdown && searchResults.length > 0 ? (
+        {showDropdown && (searchResults.length > 0 || isSearching || searchQuery.trim().length >= 2) ? (
           <View style={styles.dropdownCard}>
             <View style={styles.dropdownHeader}>
-              <Text style={styles.dropdownHeaderText}>INDORE LOCATIONS ({searchResults.length})</Text>
+              <Text style={styles.dropdownHeaderText}>
+                {isSearching
+                  ? 'SEARCHING INDORE...'
+                  : searchResults.length > 0
+                  ? `INDORE LOCATIONS (${searchResults.length})`
+                  : 'INDORE LOCATIONS'}
+              </Text>
               <TouchableOpacity onPress={() => setShowDropdown(false)}>
                 <Text style={styles.dropdownCloseText}>Close</Text>
               </TouchableOpacity>
             </View>
-            {searchResults.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                activeOpacity={0.7}
-                onPress={() => handleSelectPlace(item)}
-                style={styles.dropdownItem}
+
+            {isSearching && searchResults.length === 0 ? (
+              <View style={styles.dropdownEmptyBox}>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <Text style={styles.dropdownEmptyText}>Finding Indore addresses & landmarks...</Text>
+              </View>
+            ) : searchResults.length === 0 ? (
+              <View style={styles.dropdownEmptyBox}>
+                <Text style={styles.dropdownEmptyTitle}>No exact match found in Indore</Text>
+                <Text style={styles.dropdownEmptyText}>
+                  Try searching your colony, scheme, or major landmark:
+                </Text>
+                <View style={styles.dropdownQuickPills}>
+                  {POPULAR_INDORE_AREAS.slice(0, 4).map((area) => (
+                    <TouchableOpacity
+                      key={area}
+                      style={styles.dropdownQuickPill}
+                      onPress={() => handleChipPress(area)}
+                    >
+                      <Text style={styles.dropdownQuickPillText}>📍 {area}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ) : (
+              <ScrollView
+                style={styles.dropdownList}
+                nestedScrollEnabled={true}
+                keyboardShouldPersistTaps="handled"
               >
-                <View style={styles.dropdownItemIconCircle}>
-                  <Icon name="map-pin" size={13} color={theme.colors.primary} />
-                </View>
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.dropdownItemTitle} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.dropdownItemSubtitle} numberOfLines={1}>
-                    {item.subtitle}
-                  </Text>
-                </View>
-                <View style={item.source === 'INDORE_POI' ? styles.indoreBadge : styles.osmBadge}>
-                  <Text style={item.source === 'INDORE_POI' ? styles.indoreBadgeText : styles.osmBadgeText}>
-                    {item.source === 'INDORE_POI' ? 'Indore POI' : 'Verified'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+                {searchResults.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    activeOpacity={0.7}
+                    onPress={() => handleSelectPlace(item)}
+                    style={styles.dropdownItem}
+                  >
+                    <View style={styles.dropdownItemIconCircle}>
+                      <Icon
+                        name={item.source === 'INDORE_POI' ? 'home' : 'map-pin'}
+                        size={13}
+                        color={theme.colors.primary}
+                      />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text style={styles.dropdownItemTitle} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.dropdownItemSubtitle} numberOfLines={1}>
+                        {item.subtitle}
+                      </Text>
+                    </View>
+                    <View style={item.source === 'INDORE_POI' ? styles.indoreBadge : styles.osmBadge}>
+                      <Text style={item.source === 'INDORE_POI' ? styles.indoreBadgeText : styles.osmBadgeText}>
+                        {item.source === 'INDORE_POI' ? 'Indore Area' : 'Verified'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
           </View>
         ) : null}
       </View>
@@ -839,8 +918,73 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     zIndex: 99,
-    maxHeight: 220,
+    maxHeight: 280,
     overflow: 'hidden',
+  },
+  popularChipsScroll: {
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  popularChipsContainer: {
+    paddingHorizontal: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  popularChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 14,
+  },
+  popularChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#0A3622',
+  },
+  dropdownEmptyBox: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dropdownEmptyTitle: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 4,
+  },
+  dropdownEmptyText: {
+    fontSize: 11.5,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  dropdownQuickPills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 10,
+  },
+  dropdownQuickPill: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  dropdownQuickPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#065F46',
+  },
+  dropdownList: {
+    maxHeight: 230,
   },
   dropdownHeader: {
     flexDirection: 'row',
