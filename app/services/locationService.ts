@@ -3445,6 +3445,739 @@ export const INDORE_LANDMARKS: PlaceSearchResult[] = [
     source: 'INDORE_POI',
     keywords: ['bada ganpati', 'bada ganpati square', 'malharganj'],
   },
+  // --- Small Localities, Galis, Bazaars & Sectors ---
+  {
+    id: 'indore-tilak-path-poi',
+    title: 'Tilak Path',
+    subtitle: 'Near Jawahar Marg & Rajwada, Central Indore • 452002',
+    latitude: 22.716,
+    longitude: 75.852,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['tilak path', 'tilak marg', 'jawahar marg', 'rajwada'],
+  },
+  {
+    id: 'indore-kailash-marg-poi',
+    title: 'Kailash Marg',
+    subtitle: 'Central Commercial Corridor, Indore • 452002',
+    latitude: 22.715,
+    longitude: 75.848,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['kailash marg', 'kailash road', 'malharganj'],
+  },
+  {
+    id: 'indore-subhash-marg-poi',
+    title: 'Subhash Marg',
+    subtitle: 'Malharganj / Jinsi Corridor, Indore • 452002',
+    latitude: 22.721,
+    longitude: 75.848,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['subhash marg', 'subhash road', 'jinsi', 'malharganj'],
+  },
+  {
+    id: 'indore-nandlalpura-poi',
+    title: 'Nandlalpura',
+    subtitle: 'Fruit Market & Commercial Area, Central Indore • 452007',
+    latitude: 22.714,
+    longitude: 75.858,
+    pincode: '452007',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['nandlalpura', 'nandlal pura', 'gautampura'],
+  },
+  {
+    id: 'indore-ada-bazaar-poi',
+    title: 'Ada Bazaar',
+    subtitle: 'Near Rajwada & Sarafa, Central Indore • 452002',
+    latitude: 22.7185,
+    longitude: 75.854,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['ada bazaar', 'ada bazar', 'rajwada', 'sarafa'],
+  },
+  {
+    id: 'indore-bartan-bazaar-poi',
+    title: 'Bartan Bazaar',
+    subtitle: 'Historical Metal Utensil Market, Rajwada • 452002',
+    latitude: 22.719,
+    longitude: 75.853,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['bartan bazaar', 'bartan bazar', 'rajwada'],
+  },
+  {
+    id: 'indore-sitlamata-bazaar-poi',
+    title: 'Sitlamata Bazaar',
+    subtitle: 'Wholesale & Retail Cloth Market, Rajwada • 452002',
+    latitude: 22.7195,
+    longitude: 75.852,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['sitlamata bazaar', 'sitlamata bazar', 'cloth market'],
+  },
+  {
+    id: 'indore-marothia-bazaar-poi',
+    title: 'Marothia Bazaar',
+    subtitle: 'Traditional Spice & Grocery Market, Rajwada • 452002',
+    latitude: 22.7198,
+    longitude: 75.855,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['marothia bazaar', 'marothia bazar', 'rajwada'],
+  },
+  {
+    id: 'indore-khajuri-bazaar-poi',
+    title: 'Khajuri Bazaar',
+    subtitle: 'Book Market & Wholesale Stationery, Rajwada • 452002',
+    latitude: 22.718,
+    longitude: 75.8565,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['khajuri bazaar', 'khajuri bazar', 'book market'],
+  },
+  {
+    id: 'indore-narsingh-bazaar-poi',
+    title: 'Narsingh Bazaar',
+    subtitle: 'Near Bada Ganpati & Malharganj, Indore • 452002',
+    latitude: 22.7205,
+    longitude: 75.849,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['narsingh bazaar', 'narsingh bazar', 'bada ganpati'],
+  },
+  {
+    id: 'indore-pipali-bazaar-poi',
+    title: 'Pipali Bazaar',
+    subtitle: 'Near Rajwada & Krishnapura Chhatri, Indore • 452002',
+    latitude: 22.717,
+    longitude: 75.8545,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['pipali bazaar', 'pipali bazar', 'rajwada'],
+  },
+  {
+    id: 'indore-itwaria-bazaar-poi',
+    title: 'Itwaria Bazaar',
+    subtitle: 'Near Kanch Mandir & Malharganj, Indore • 452002',
+    latitude: 22.718,
+    longitude: 75.847,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['itwaria bazaar', 'itwaria bazar', 'kanch mandir'],
+  },
+  {
+    id: 'indore-topkhana-poi',
+    title: 'Topkhana',
+    subtitle: 'MG Road Commercial Hub, Indore • 452001',
+    latitude: 22.72,
+    longitude: 75.862,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['topkhana', 'mg road', 'rajwada'],
+  },
+  {
+    id: 'indore-kothari-market-poi',
+    title: 'Kothari Market',
+    subtitle: 'MG Road Shopping Complex, Indore • 452001',
+    latitude: 22.7215,
+    longitude: 75.8645,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['kothari market', 'mg road', 'jail road'],
+  },
+  {
+    id: 'indore-dhenu-market-poi',
+    title: 'Dhenu Market',
+    subtitle: 'Tukoganj, Near Race Course Road • 452001',
+    latitude: 22.723,
+    longitude: 75.875,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['dhenu market', 'tukoganj', 'race course road'],
+  },
+  {
+    id: 'indore-pagnis-paga-poi',
+    title: 'Pagnis Paga',
+    subtitle: 'Near Jawahar Marg & Juni Indore • 452002',
+    latitude: 22.714,
+    longitude: 75.851,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['pagnis paga', 'pagnispaga', 'jawahar marg'],
+  },
+  {
+    id: 'indore-lohar-patti-poi',
+    title: 'Lohar Patti',
+    subtitle: 'Central Commercial Area, Indore • 452002',
+    latitude: 22.717,
+    longitude: 75.849,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['lohar patti', 'loharpatti', 'malharganj'],
+  },
+  {
+    id: 'indore-silawatpura-poi',
+    title: 'Silawatpura',
+    subtitle: 'Near Subhash Marg, Central Indore • 452002',
+    latitude: 22.722,
+    longitude: 75.852,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['silawatpura', 'silawat pura', 'subhash marg'],
+  },
+  {
+    id: 'indore-lodhipura-poi',
+    title: 'Lodhipura',
+    subtitle: 'Central Historic Locality, Indore • 452002',
+    latitude: 22.721,
+    longitude: 75.855,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['lodhipura', 'lodhi pura'],
+  },
+  {
+    id: 'indore-kishoreganj-poi',
+    title: 'Kishoreganj',
+    subtitle: 'Near Malharganj, Indore • 452002',
+    latitude: 22.724,
+    longitude: 75.851,
+    pincode: '452002',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['kishoreganj', 'kishore ganj', 'malharganj'],
+  },
+  {
+    id: 'indore-bholaram-ustad-poi',
+    title: 'Bholaram Ustad Marg',
+    subtitle: 'Student Food Street & Hostels, Bhawarkua • 452001',
+    latitude: 22.694,
+    longitude: 75.865,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['bholaram ustad marg', 'bholaram', 'bhawarkua', 'hostel area'],
+  },
+  {
+    id: 'indore-indrapuri-poi',
+    title: 'Indrapuri Colony',
+    subtitle: 'Near Bhawarkua Square, AB Road • 452001',
+    latitude: 22.695,
+    longitude: 75.869,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['indrapuri', 'indrapuri colony', 'bhawarkua'],
+  },
+  {
+    id: 'indore-telephone-nagar-poi',
+    title: 'Telephone Nagar',
+    subtitle: 'Near Bengali Square & Ring Road • 452016',
+    latitude: 22.71,
+    longitude: 75.91,
+    pincode: '452016',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['telephone nagar', 'bengali square', 'ring road'],
+  },
+  {
+    id: 'indore-vaibhav-nagar-poi',
+    title: 'Vaibhav Nagar',
+    subtitle: 'Kanadia Road, Near Bengali Square • 452016',
+    latitude: 22.717,
+    longitude: 75.908,
+    pincode: '452016',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['vaibhav nagar', 'kanadia road', 'bengali square'],
+  },
+  {
+    id: 'indore-sharda-nagar-poi',
+    title: 'Sharda Nagar',
+    subtitle: 'Near Gumasta Nagar & Footi Kothi • 452009',
+    latitude: 22.705,
+    longitude: 75.832,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['sharda nagar', 'gumasta nagar', 'footi kothi'],
+  },
+  {
+    id: 'indore-veena-nagar-poi',
+    title: 'Veena Nagar',
+    subtitle: 'MR-10 / Sukhlia Road, Indore • 452010',
+    latitude: 22.756,
+    longitude: 75.865,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['veena nagar', 'mr 10', 'sukhlia'],
+  },
+  {
+    id: 'indore-vigyan-nagar-poi',
+    title: 'Vigyan Nagar',
+    subtitle: 'Near Navlakha & Annapurna Road • 452001',
+    latitude: 22.708,
+    longitude: 75.882,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['vigyan nagar', 'navlakha'],
+  },
+  {
+    id: 'indore-chanakyapuri-poi',
+    title: 'Chanakyapuri',
+    subtitle: 'Near Annapurna Temple, Indore • 452009',
+    latitude: 22.702,
+    longitude: 75.845,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['chanakyapuri', 'chanakya puri', 'annapurna road'],
+  },
+  {
+    id: 'indore-clerk-colony-poi',
+    title: 'Clerk Colony',
+    subtitle: 'Near Pardesipura & Malwa Mill • 452003',
+    latitude: 22.742,
+    longitude: 75.874,
+    pincode: '452003',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['clerk colony', 'pardesipura', 'malwa mill'],
+  },
+  {
+    id: 'indore-loha-mandi-poi',
+    title: 'Loha Mandi',
+    subtitle: 'Iron Wholesale Market, Loha Gate • 452001',
+    latitude: 22.713,
+    longitude: 75.865,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['loha mandi', 'loha gate', 'siyaganj'],
+  },
+  {
+    id: 'indore-bairathi-colony-poi',
+    title: 'Bairathi Colony',
+    subtitle: 'Tower Square to Sapna Sangeeta • 452001',
+    latitude: 22.706,
+    longitude: 75.862,
+    pincode: '452001',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['bairathi colony', 'tower square', 'sapna sangeeta'],
+  },
+  {
+    id: 'indore-scheme-78-slice-1',
+    title: 'Scheme 78 Slice 1',
+    subtitle: 'Vijay Nagar, Near Aranya Nagar • 452010',
+    latitude: 22.755,
+    longitude: 75.888,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['scheme 78 slice 1', 'slice 1', 'scheme 78', 'vijay nagar'],
+  },
+  {
+    id: 'indore-scheme-78-slice-2',
+    title: 'Scheme 78 Slice 2',
+    subtitle: 'Vijay Nagar, Near Prestige Institute • 452010',
+    latitude: 22.757,
+    longitude: 75.89,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['scheme 78 slice 2', 'slice 2', 'scheme 78', 'prestige college'],
+  },
+  {
+    id: 'indore-scheme-78-slice-3',
+    title: 'Scheme 78 Slice 3',
+    subtitle: 'Vijay Nagar, Near Ring Road • 452010',
+    latitude: 22.759,
+    longitude: 75.892,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['scheme 78 slice 3', 'slice 3', 'scheme 78'],
+  },
+  {
+    id: 'indore-aranya-nagar-poi',
+    title: 'Aranya Nagar (Scheme 78)',
+    subtitle: 'Vijay Nagar Residential Sector • 452010',
+    latitude: 22.758,
+    longitude: 75.885,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['aranya nagar', 'scheme 78', 'vijay nagar'],
+  },
+  {
+    id: 'indore-scheme-54-pu3',
+    title: 'Scheme 54 PU-3',
+    subtitle: 'Commercial Hub, Behind C21 Mall, Vijay Nagar • 452010',
+    latitude: 22.751,
+    longitude: 75.889,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['scheme 54 pu3', 'pu 3', 'pu3', 'scheme 54', 'c21 mall'],
+  },
+  {
+    id: 'indore-scheme-54-pu4',
+    title: 'Scheme 54 PU-4',
+    subtitle: 'Commercial Zone, Behind Malhar Mega Mall • 452010',
+    latitude: 22.753,
+    longitude: 75.891,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['scheme 54 pu4', 'pu 4', 'pu4', 'scheme 54', 'malhar mall'],
+  },
+  {
+    id: 'indore-scheme-71-sec-a',
+    title: 'Scheme 71 Sector A',
+    subtitle: 'Gumasta Nagar / Dhar Road • 452009',
+    latitude: 22.708,
+    longitude: 75.832,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['scheme 71 sector a', 'sector a', 'scheme 71'],
+  },
+  {
+    id: 'indore-scheme-71-sec-b',
+    title: 'Scheme 71 Sector B',
+    subtitle: 'Gumasta Nagar, Footi Kothi • 452009',
+    latitude: 22.71,
+    longitude: 75.833,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['scheme 71 sector b', 'sector b', 'scheme 71'],
+  },
+  {
+    id: 'indore-scheme-71-sec-c',
+    title: 'Scheme 71 Sector C',
+    subtitle: 'Near Chandan Nagar & Dhar Road • 452009',
+    latitude: 22.712,
+    longitude: 75.834,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['scheme 71 sector c', 'sector c', 'scheme 71'],
+  },
+  {
+    id: 'indore-scheme-71-sec-d',
+    title: 'Scheme 71 Sector D',
+    subtitle: 'Near Footi Kothi Square • 452009',
+    latitude: 22.714,
+    longitude: 75.835,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['scheme 71 sector d', 'sector d', 'scheme 71'],
+  },
+  {
+    id: 'indore-silicon-city-sec-a',
+    title: 'Silicon City Sector A',
+    subtitle: 'Silicon City, Nihalpur Mundi / Rau • 453331',
+    latitude: 22.645,
+    longitude: 75.828,
+    pincode: '453331',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['silicon city sector a', 'sector a', 'silicon city', 'rau'],
+  },
+  {
+    id: 'indore-silicon-city-sec-b',
+    title: 'Silicon City Sector B',
+    subtitle: 'Silicon City Main Sector, Rau • 453331',
+    latitude: 22.643,
+    longitude: 75.83,
+    pincode: '453331',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['silicon city sector b', 'sector b', 'silicon city'],
+  },
+  {
+    id: 'indore-silicon-city-sec-c',
+    title: 'Silicon City Sector C',
+    subtitle: 'Silicon City, AB Road / Rau • 453331',
+    latitude: 22.641,
+    longitude: 75.832,
+    pincode: '453331',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['silicon city sector c', 'sector c', 'silicon city'],
+  },
+  {
+    id: 'indore-silicon-city-sec-d',
+    title: 'Silicon City Sector D',
+    subtitle: 'Silicon City, Rau Bypass • 453331',
+    latitude: 22.639,
+    longitude: 75.834,
+    pincode: '453331',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['silicon city sector d', 'sector d', 'silicon city'],
+  },
+  {
+    id: 'indore-sudama-nagar-sec-a',
+    title: 'Sudama Nagar Sector A',
+    subtitle: 'Near Gopur Square & Annapurna • 452009',
+    latitude: 22.695,
+    longitude: 75.831,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['sudama nagar sector a', 'sector a', 'sudama nagar', 'gopur'],
+  },
+  {
+    id: 'indore-sudama-nagar-sec-b',
+    title: 'Sudama Nagar Sector B',
+    subtitle: 'Narendra Tiwari Marg • 452009',
+    latitude: 22.697,
+    longitude: 75.833,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['sudama nagar sector b', 'sector b', 'sudama nagar'],
+  },
+  {
+    id: 'indore-sudama-nagar-sec-c',
+    title: 'Sudama Nagar Sector C',
+    subtitle: 'Central Sudama Nagar, Near Market • 452009',
+    latitude: 22.699,
+    longitude: 75.835,
+    pincode: '452009',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['sudama nagar sector c', 'sector c', 'sudama nagar'],
+  },
+  {
+    id: 'indore-mahalakshmi-sec-a',
+    title: 'Mahalakshmi Nagar Sector A',
+    subtitle: 'Near Bombay Hospital & Ring Road • 452010',
+    latitude: 22.758,
+    longitude: 75.901,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['mahalakshmi nagar sector a', 'sector a', 'mahalakshmi nagar'],
+  },
+  {
+    id: 'indore-mahalakshmi-sec-b',
+    title: 'Mahalakshmi Nagar Sector B',
+    subtitle: 'Behind Bombay Hospital • 452010',
+    latitude: 22.76,
+    longitude: 75.903,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['mahalakshmi nagar sector b', 'sector b', 'mahalakshmi nagar'],
+  },
+  {
+    id: 'indore-mahalakshmi-sec-c',
+    title: 'Mahalakshmi Nagar Sector C',
+    subtitle: 'Mahalakshmi Nagar Main Sector • 452010',
+    latitude: 22.762,
+    longitude: 75.905,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['mahalakshmi nagar sector c', 'sector c', 'mahalakshmi nagar'],
+  },
+  {
+    id: 'indore-mahalakshmi-sec-r',
+    title: 'Mahalakshmi Nagar Sector R',
+    subtitle: 'Near Ring Road & MR-9 • 452010',
+    latitude: 22.764,
+    longitude: 75.907,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['mahalakshmi nagar sector r', 'sector r', 'mahalakshmi nagar'],
+  },
+  {
+    id: 'indore-shalimar-township-poi',
+    title: 'Shalimar Township',
+    subtitle: 'AB Road, Near Dewas Naka • 452010',
+    latitude: 22.768,
+    longitude: 75.894,
+    pincode: '452010',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['shalimar township', 'shalimar', 'ab road'],
+  },
+  {
+    id: 'indore-silver-springs-poi',
+    title: 'Silver Springs',
+    subtitle: 'AB Road Bypass, Near DPS • 452020',
+    latitude: 22.685,
+    longitude: 75.925,
+    pincode: '452020',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['silver springs', 'silver spring', 'bypass road'],
+  },
+  {
+    id: 'indore-omaxe-city-poi',
+    title: 'Omaxe City',
+    subtitle: 'Bypass Road, Mayakhedi, Indore • 452016',
+    latitude: 22.785,
+    longitude: 75.915,
+    pincode: '452016',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['omaxe city', 'omaxe', 'mayakhedi', 'bypass'],
+  },
+  {
+    id: 'indore-treasure-fantasy-poi',
+    title: 'Treasure Fantasy',
+    subtitle: 'Cat Road / Rau, Indore • 453331',
+    latitude: 22.668,
+    longitude: 75.815,
+    pincode: '453331',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['treasure fantasy', 'cat road', 'rau'],
+  },
+  {
+    id: 'indore-singapore-township-poi',
+    title: 'Singapore Township',
+    subtitle: 'Talawali Chanda, AB Road • 453771',
+    latitude: 22.795,
+    longitude: 75.895,
+    pincode: '453771',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['singapore township', 'talawali chanda'],
+  },
+  {
+    id: 'indore-tulsi-nagar-poi',
+    title: 'Tulsi Nagar',
+    subtitle: 'Nipania Road, Near Mahalaxmi Nagar • 452016',
+    latitude: 22.765,
+    longitude: 75.915,
+    pincode: '452016',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['tulsi nagar', 'nipania road'],
+  },
+  {
+    id: 'indore-sanwer-rd-sec-a',
+    title: 'Sanwer Road Sector A',
+    subtitle: 'Sanwer Road Industrial Area • 452015',
+    latitude: 22.782,
+    longitude: 75.865,
+    pincode: '452015',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['sanwer road sector a', 'sanwer road', 'sector a'],
+  },
+  {
+    id: 'indore-sanwer-rd-sec-b',
+    title: 'Sanwer Road Sector B',
+    subtitle: 'Sanwer Road Industrial Area • 452015',
+    latitude: 22.785,
+    longitude: 75.867,
+    pincode: '452015',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['sanwer road sector b', 'sanwer road', 'sector b'],
+  },
+  {
+    id: 'indore-sanwer-rd-sec-c',
+    title: 'Sanwer Road Sector C',
+    subtitle: 'Sanwer Road Industrial Area • 452015',
+    latitude: 22.788,
+    longitude: 75.869,
+    pincode: '452015',
+    city: 'Indore',
+    state: 'Madhya Pradesh',
+    source: 'INDORE_POI',
+    keywords: ['sanwer road sector c', 'sanwer road', 'sector c'],
+  },
 ];
 
 /**
@@ -3526,30 +4259,98 @@ const GENERIC_LOCATION_WORDS = new Set([
 ]);
 
 /**
- * Parses user input to separate private premise numbers (e.g., "Flat 302", "Plot 142-A", "Shop 12", "4th Floor")
- * from geographical landmark / street / colony queries (e.g., "Scheme No. 71", "Royal Residency", "Electronic Complex").
+ * Intelligent bidirectional address decomposition parser:
+ * Separates private premise / micro-details ("Plot 142", "Flat 302", "Gali 2", "104", "Shop 12", "Sector A")
+ * whether entered at the beginning OR the end of the query (e.g. "Plot 142 MOG Lines" or "MOG Lines Plot 142").
  */
 export function parseAddressQuery(input: string): { houseNo: string; locationQuery: string } {
-  const clean = input.trim();
-  const pattern = /^(?:(flat|house|plot|h\.?no\.?|door|shop|block|room|office|unit)\s*)?(\d+(?:st|nd|rd|th)\s+floor|[0-9]+[a-zA-Z]?(?:[\/-][0-9]+[a-zA-Z]?)?|[A-Z]-[0-9]+)\s*[,/-]?\s*(.*)$/i;
-  const match = clean.match(pattern);
-  if (match) {
-    const prefix = (match[1] || '').trim();
-    const num = (match[2] || '').trim();
-    const rest = (match[3] || '').trim();
-    // Guard: If there is no premise prefix and the number is followed by scheme/sector/ward/road/nagar, don't treat as house number!
-    // e.g. "71 scheme", "54 vijay nagar", "140 bypass", "31 scheme"
-    if (!prefix && /^(scheme|sec|sector|ward|road|rd|nagar|colony|bypass|chauraha|square|vijay nagar)\b/i.test(rest)) {
-      return { houseNo: '', locationQuery: clean };
+  let clean = input.trim().replace(/\s+/g, ' ');
+  if (!clean) return { houseNo: '', locationQuery: '' };
+
+  let houseNo = '';
+  let locationQuery = clean;
+
+  const PREMISE_TYPES = 'flat|house|plot|h\\.?no\\.?|door|shop|block|room|office|unit|gali|lane|street|building|bldg|sector|sec|ward|floor';
+
+  // 1. Prefix WITH premise type: e.g. "Plot 142 MOG Lines", "Gali 2 Chhatribagh", "Flat 302 Scheme 71", "Sector A Silicon City", "Shop 12 Sarafa"
+  const prefixWithTypeRegex = new RegExp(
+    '^(' + PREMISE_TYPES + ')\\s+(\\d+(?:st|nd|rd|th)?\\s+floor|[0-9]+[a-zA-Z]?(?:[/\\-][0-9]+[a-zA-Z]?)?|[A-Z]-[0-9]+|[a-zA-Z0-9/\\-]+)\\s*[,/\\-]?\\s*(.*)$',
+    'i'
+  );
+
+  // 2. Prefix WITHOUT premise type (starts with a number): e.g. "104 MOG Lines", "45 Sudama Nagar", "4th Floor Jawahar Marg"
+  const prefixBareNumRegex = /^(\\d+(?:st|nd|rd|th)\\s+floor|[0-9]+[a-zA-Z]?(?:[/\\-][0-9]+[a-zA-Z]?)?|[A-Z]-[0-9]+)\\s*[,/-]?\\s*(.*)$/i;
+
+  // 3. Suffix WITH premise type: e.g. "MOG Lines Plot 142", "MOG Lines Gali 2", "Chhatribagh Gali 3", "Sarafa Shop 12", "Scheme 71 Flat 302", "Silicon City Sector A"
+  const suffixWithTypeRegex = new RegExp(
+    '^(.*?)\\s*[,/\\-]?\\s*(' + PREMISE_TYPES + ')\\s*([a-zA-Z0-9/\\-]+)\\s*$',
+    'i'
+  );
+
+  // 4. Suffix WITHOUT premise type (ends with a number): e.g. "MOG Lines 104", "Sudama Nagar 45"
+  const suffixBareNumRegex = /^(.*?)\\s*[,/-]?\\s*(\\d+[a-zA-Z]?)\\s*$/i;
+
+  // Try Prefix with Type first:
+  const pwtMatch = clean.match(prefixWithTypeRegex);
+  if (pwtMatch) {
+    const pfx = (pwtMatch[1] || '').trim();
+    const num = (pwtMatch[2] || '').trim();
+    const rest = (pwtMatch[3] || '').trim();
+    if (rest.length >= 2) {
+      houseNo = `${pfx} ${num}`.trim();
+      locationQuery = rest;
     }
-    const houseParts = [prefix, num].filter(Boolean);
-    const houseNo = houseParts.join(' ').replace(/\b([a-z])\b/g, (c) => c.toUpperCase());
-    return {
-      houseNo,
-      locationQuery: rest || clean,
-    };
   }
-  return { houseNo: '', locationQuery: clean };
+
+  // Try Prefix with Bare Number:
+  if (!houseNo) {
+    const pbnMatch = clean.match(prefixBareNumRegex);
+    if (pbnMatch) {
+      const num = (pbnMatch[1] || '').trim();
+      const rest = (pbnMatch[2] || '').trim();
+      const isSchemeOrLocality = /^(scheme|sec|sector|ward|road|rd|nagar|colony|bypass|chauraha|square|vijay nagar)\\b/i.test(rest);
+      if (!isSchemeOrLocality && rest.length >= 2) {
+        houseNo = num;
+        locationQuery = rest;
+      }
+    }
+  }
+
+  // Try Suffix with Type:
+  if (!houseNo) {
+    const swtMatch = clean.match(suffixWithTypeRegex);
+    if (swtMatch) {
+      const baseLoc = (swtMatch[1] || '').trim();
+      const pfx = (swtMatch[2] || '').trim();
+      const num = (swtMatch[3] || '').trim();
+      if (baseLoc.length >= 2) {
+        houseNo = `${pfx} ${num}`.trim();
+        locationQuery = baseLoc;
+      }
+    }
+  }
+
+  // Try Suffix with Bare Number:
+  if (!houseNo) {
+    const sbnMatch = clean.match(suffixBareNumRegex);
+    if (sbnMatch) {
+      const baseLoc = (sbnMatch[1] || '').trim();
+      const num = (sbnMatch[2] || '').trim();
+      const isSchemeNum = /\\b(scheme|sch|sec|sector|phase|mr|nh)\\s*$/i.test(baseLoc);
+      if (!isSchemeNum && baseLoc.length >= 2) {
+        houseNo = num;
+        locationQuery = baseLoc;
+      }
+    }
+  }
+
+  if (houseNo) {
+    houseNo = houseNo
+      .replace(/\\b([a-z])/g, (c) => c.toUpperCase())
+      .replace(/\\bH\\.?No\\.?\\b/i, 'House No.');
+  }
+
+  return { houseNo, locationQuery: locationQuery.trim() || clean };
 }
 
 /**
@@ -3558,17 +4359,21 @@ export function parseAddressQuery(input: string): { houseNo: string; locationQue
 export function normalizeSearchText(input: string): string {
   return input
     .toLowerCase()
-    .replace(/\b(sch|sch\.|scheme no\.?|sec|sector)\b/gi, 'scheme ')
-    .replace(/\b(sq|sqr|sq\.|chauraha|chowk|circle)\b/gi, 'square ')
-    .replace(/\b(rd|rd\.|marg)\b/gi, 'road ')
-    .replace(/\b(elec|elect)\b/gi, 'electronic ')
-    .replace(/\b(comp|cplx)\b/gi, 'complex ')
-    .replace(/\b(hosp|hos)\b/gi, 'hospital ')
-    .replace(/\b(coll|clg|univ)\b/gi, 'college ')
-    .replace(/\b(apt|apts|soc)\b/gi, 'society ')
-    .replace(/\bnh\b/gi, 'highway ')
-    .replace(/[^\w\s]/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/\\b(sch|sch\\.|scheme no\\.?)\\b/gi, 'scheme ')
+    .replace(/\\b(sec|sec\\.|sector no\\.?)\\b/gi, 'sector ')
+    .replace(/\\b(gali no\\.?|gali number|lane no\\.?|street no\\.?)\\b/gi, 'gali ')
+    .replace(/\\b(makan no\\.?|house no\\.?)\\b/gi, 'house ')
+    .replace(/\\b(dookan no\\.?|shop no\\.?)\\b/gi, 'shop ')
+    .replace(/\\b(sq|sqr|sq\\.|chauraha|chowk|circle)\\b/gi, 'square ')
+    .replace(/\\b(rd|rd\\.|marg)\\b/gi, 'road ')
+    .replace(/\\b(elec|elect)\\b/gi, 'electronic ')
+    .replace(/\\b(comp|cplx)\\b/gi, 'complex ')
+    .replace(/\\b(hosp|hos)\\b/gi, 'hospital ')
+    .replace(/\\b(coll|clg|univ)\\b/gi, 'college ')
+    .replace(/\\b(apt|apts|soc)\\b/gi, 'society ')
+    .replace(/\\bnh\\b/gi, 'highway ')
+    .replace(/[^\\w\\s]/g, ' ')
+    .replace(/\\s+/g, ' ')
     .trim();
 }
 
@@ -3582,7 +4387,7 @@ function scorePlaceMatch(item: PlaceSearchResult, rawQuery: string, normalizedQu
   const fullText = `${normTitle} ${normSub} ${normKws.join(' ')} ${item.pincode || ''}`;
 
   const queryWords = normalizedQuery
-    .split(/\s+/)
+    .split(/\\s+/)
     .filter((w) => w.length > 0 && !['in', 'at', 'near', 'the', 'of', 'to'].includes(w));
   if (queryWords.length === 0) return 0;
 
@@ -3621,7 +4426,7 @@ function scorePlaceMatch(item: PlaceSearchResult, rawQuery: string, normalizedQu
     if (w.length < 2) continue;
     let wordMatched = false;
 
-    if (normTitle.split(/\s+/).some((tw) => tw.startsWith(w))) {
+    if (normTitle.split(/\\s+/).some((tw) => tw.startsWith(w))) {
       score += 18;
       wordMatched = true;
     } else if (normTitle.includes(w)) {
@@ -3650,7 +4455,7 @@ function scorePlaceMatch(item: PlaceSearchResult, rawQuery: string, normalizedQu
  * Filters out generic city/state/country centroids that add no navigational value
  */
 function isGenericJunk(title: string, subtitle: string): boolean {
-  const t = title.trim().toLowerCase().replace(/[,.-]/g, ' ').replace(/\s+/g, ' ').trim();
+  const t = title.trim().toLowerCase().replace(/[,.-]/g, ' ').replace(/\\s+/g, ' ').trim();
   const junkTitles = [
     'indore',
     'madhya pradesh',
@@ -3677,9 +4482,9 @@ function isCandidateRelevant(title: string, subtitle: string, searchTerms: strin
 
 /**
  * Intelligent Indore Location Search Engine (Rapido / Zepto Architecture):
- * 1. Automatically parses house/flat/building details ("Plot 142", "Flat 302", "4th Floor")
- * 2. Instant (0ms) scoring across comprehensive 200+ Indore Locality, Road & POI Database
- * 3. Query relaxation fallback (searches anchor keyword when multi-word phrases return few matches)
+ * 1. Symmetrical Premise Extraction: "Plot 142 MOG Lines" & "MOG Lines Plot 142" -> Premise: "Plot 142", Location: "MOG Lines"
+ * 2. Instant (0ms) scoring across comprehensive 250+ Indore Locality, Road, Gali, Bazaar & Sector Database
+ * 3. Progressive query relaxation fallback (auto-resolves micro-details to parent colony)
  * 4. Strict anti-junk filter to permanently eliminate generic "Indore, Madhya Pradesh" centroids
  * 5. Parallel live geocoders (Photon with Indore center bias, ArcGIS, Nominatim)
  * 6. STRICT BOUNDARY: Discards any location outside Indore metropolitan delivery limits
@@ -3687,14 +4492,39 @@ function isCandidateRelevant(title: string, subtitle: string, searchTerms: strin
  */
 export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> {
   const clean = query.trim();
-  if (clean.length < 2) return [];
+  if (clean.length < 1) return [];
+
+  // Fast-path for single-character input: instant local lookup of Indore landmarks starting with that character
+  if (clean.length === 1) {
+    const char = clean.toLowerCase();
+    const oneLetterMatches: PlaceSearchResult[] = [];
+    const seen = new Set<string>();
+
+    for (const item of INDORE_LANDMARKS) {
+      const titleWords = item.title.toLowerCase().split(/\s+/);
+      const kwWords = (item.keywords || []).flatMap((k) => k.toLowerCase().split(/\s+/));
+      const startsWithLetter =
+        titleWords.some((w) => w.startsWith(char)) ||
+        kwWords.some((w) => w.startsWith(char));
+
+      if (startsWithLetter) {
+        const key = `${item.latitude.toFixed(3)},${item.longitude.toFixed(3)}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          oneLetterMatches.push(item);
+          if (oneLetterMatches.length >= 10) break;
+        }
+      }
+    }
+    return oneLetterMatches;
+  }
 
   const { houseNo, locationQuery } = parseAddressQuery(clean);
   const effectiveQuery = locationQuery && locationQuery.length >= 2 ? locationQuery : clean;
   const normalizedQuery = normalizeSearchText(effectiveQuery);
 
   const queryWords = normalizedQuery
-    .split(/\s+/)
+    .split(/\\s+/)
     .filter((w) => w.length >= 2 && !['in', 'at', 'near', 'the', 'of', 'to'].includes(w));
   const distinctiveWords = queryWords.filter((w) => !GENERIC_LOCATION_WORDS.has(w));
   const primaryAnchor = (distinctiveWords.length > 0 ? distinctiveWords : queryWords)
@@ -3744,7 +4574,7 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> 
     return true;
   };
 
-  // 1. High-Performance Local Indore POI / Locality Search (0ms latency, 200+ items)
+  // 1. High-Performance Local Indore POI / Locality Search (0ms latency, 250+ items)
   const scoredLocal = INDORE_LANDMARKS.map((item) => {
     const score = scorePlaceMatch(item, effectiveQuery, normalizedQuery);
     return { item, score };
@@ -4019,6 +4849,24 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult[]> 
   }
 
   await Promise.allSettled(onlinePromises);
+
+  // 3. Fallback for bare premise numbers / galis (e.g. "Gali 2", "104", "Plot 142") where no locality was specified
+  if (results.length === 0 && houseNo) {
+    const popularLocs = [
+      INDORE_LANDMARKS.find((i) => i.id === 'indore-mog-lines-poi'),
+      INDORE_LANDMARKS.find((i) => i.id === 'indore-sarafa-street-poi'),
+      INDORE_LANDMARKS.find((i) => i.id === 'indore-chhatribagh-1'),
+      INDORE_LANDMARKS.find((i) => i.id === 'indore-sch-54-1'),
+      INDORE_LANDMARKS.find((i) => i.id === 'indore-sch-71-1'),
+      INDORE_LANDMARKS.find((i) => i.id === 'indore-sudama-1'),
+      INDORE_LANDMARKS.find((i) => i.id === 'indore-silicon-city-sec-a'),
+      INDORE_LANDMARKS.find((i) => i.id === 'indore-elec-1'),
+    ].filter(Boolean) as PlaceSearchResult[];
+
+    for (const loc of popularLocs) {
+      addCandidate(loc);
+    }
+  }
 
   return results.slice(0, 12);
 }

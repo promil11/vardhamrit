@@ -609,7 +609,7 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
               showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="on-drag"
+              keyboardDismissMode="none"
               contentContainerStyle={styles.scrollContent}
               style={styles.scrollContainer}
             >

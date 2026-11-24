@@ -73,6 +73,8 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     typeof longitude === 'number' && !isNaN(longitude) && longitude !== 0
       ? longitude
       : 75.8577;
+  const initialLatRef = useRef(effectiveLat);
+  const initialLonRef = useRef(effectiveLon);
   const activeLat = effectiveLat;
   const activeLon = effectiveLon;
 
@@ -88,7 +90,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
       rememberedHouseNoRef.current = houseNo;
     }
 
-    if (text.trim().length < 2) {
+    if (text.trim().length === 0) {
       setSearchResults([]);
       setShowDropdown(false);
       setIsSearching(false);
@@ -393,8 +395,8 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    var startLat = ${effectiveLat};
-    var startLon = ${effectiveLon};
+    var startLat = ${initialLatRef.current};
+    var startLon = ${initialLonRef.current};
 
     // Deep zoom range: minZoom 10 (city-wide) to maxZoom 22 (ultra-close building & rooftop level)
     var map = L.map('map', {
@@ -575,7 +577,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
     });
   </script>
 </body>
-</html>`, [effectiveLat, effectiveLon]);
+</html>`, []);
 
   return (
     <View style={styles.container}>
@@ -633,7 +635,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
         </ScrollView>
 
         {/* Search Results Dropdown Card */}
-        {showDropdown && (searchResults.length > 0 || isSearching || searchQuery.trim().length >= 2) ? (
+        {showDropdown && (searchResults.length > 0 || isSearching || searchQuery.trim().length >= 1) ? (
           <View style={styles.dropdownCard}>
             <View style={styles.dropdownHeader}>
               <Text style={styles.dropdownHeaderText}>
