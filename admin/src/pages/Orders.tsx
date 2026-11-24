@@ -830,11 +830,10 @@ export const Orders: React.FC = () => {
                           <div className="flex flex-col gap-1.5 min-w-[175px]">
                             {/* Branded Method Line */}
                             <div className="flex items-center gap-2">
-                              <span className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 border shadow-2xs ${
-                                o.payment_method === 'COD'
-                                  ? 'bg-amber-50 text-amber-700 border-amber-200/90'
-                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200/90'
-                              }`}>
+                              <span className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 border shadow-2xs ${o.payment_method === 'COD'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200/90'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200/90'
+                                }`}>
                                 {o.payment_method === 'COD' ? (
                                   <Banknote className="w-3.5 h-3.5" />
                                 ) : (
@@ -849,11 +848,10 @@ export const Orders: React.FC = () => {
                             {/* Status Badge + Mark Paid Action */}
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border whitespace-nowrap shadow-2xs ${
-                                  o.payment_status === 'PAID'
-                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200/90'
-                                    : 'bg-amber-50 text-amber-900 border-amber-200/90'
-                                }`}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border whitespace-nowrap shadow-2xs ${o.payment_status === 'PAID'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200/90'
+                                  : 'bg-amber-50 text-amber-900 border-amber-200/90'
+                                  }`}
                               >
                                 <span className={`w-1.5 h-1.5 rounded-full ${o.payment_status === 'PAID' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                                 <span>{o.payment_status === 'PAID' ? 'Paid / Settled' : 'Unpaid (COD)'}</span>
@@ -991,11 +989,10 @@ export const Orders: React.FC = () => {
                         </span>
 
                         <span
-                          className={`inline-flex items-center gap-1.5 text-[10.5px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-xs ${
-                            singleOrder.payment_method === 'COD'
-                              ? 'bg-amber-400 text-slate-950 font-bold border border-amber-300'
-                              : 'bg-emerald-400 text-slate-950 font-bold border border-emerald-300'
-                          }`}
+                          className={`inline-flex items-center gap-1.5 text-[10.5px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-xs ${singleOrder.payment_method === 'COD'
+                            ? 'bg-amber-400 text-slate-950 font-bold border border-amber-300'
+                            : 'bg-emerald-400 text-slate-950 font-bold border border-emerald-300'
+                            }`}
                         >
                           {singleOrder.payment_method === 'COD' ? '💵 Cash on Delivery' : '💳 Prepaid Online'}
                         </span>
@@ -1068,11 +1065,10 @@ export const Orders: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setDrawerTab('overview')}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-                        drawerTab === 'overview'
-                          ? 'bg-amber-400 text-slate-950 shadow-md font-extrabold'
-                          : 'text-emerald-200/90 hover:text-white hover:bg-white/10'
-                      }`}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${drawerTab === 'overview'
+                        ? 'bg-amber-400 text-slate-950 shadow-md font-extrabold'
+                        : 'text-emerald-200/90 hover:text-white hover:bg-white/10'
+                        }`}
                     >
                       <Package className="w-3.5 h-3.5" />
                       <span>Fulfillment & Dispatch</span>
@@ -1080,20 +1076,18 @@ export const Orders: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setDrawerTab('audit')}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-                        drawerTab === 'audit'
-                          ? 'bg-amber-400 text-slate-950 shadow-md font-extrabold'
-                          : 'text-emerald-200/90 hover:text-white hover:bg-white/10'
-                      }`}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${drawerTab === 'audit'
+                        ? 'bg-amber-400 text-slate-950 shadow-md font-extrabold'
+                        : 'text-emerald-200/90 hover:text-white hover:bg-white/10'
+                        }`}
                     >
                       <History className="w-3.5 h-3.5" />
                       <span>Audit Trail & Event Log</span>
                       <span
-                        className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                          drawerTab === 'audit'
-                            ? 'bg-black/20 text-slate-950'
-                            : 'bg-white/15 text-emerald-200'
-                        }`}
+                        className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${drawerTab === 'audit'
+                          ? 'bg-black/20 text-slate-950'
+                          : 'bg-white/15 text-emerald-200'
+                          }`}
                       >
                         {(singleOrder.status_history || []).length}
                       </span>
@@ -1146,13 +1140,12 @@ export const Orders: React.FC = () => {
                               return (
                                 <div key={st.step} className="flex flex-col items-center text-center max-w-[95px]">
                                   <div
-                                    className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200 ${
-                                      isComplete
-                                        ? 'bg-emerald-700 text-white shadow-md ring-4 ring-emerald-50'
-                                        : isCurrent
+                                    className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200 ${isComplete
+                                      ? 'bg-emerald-700 text-white shadow-md ring-4 ring-emerald-50'
+                                      : isCurrent
                                         ? 'bg-gradient-to-br from-emerald-950 to-[#0A3521] text-amber-300 shadow-lg ring-4 ring-emerald-200 scale-110'
                                         : 'bg-white text-slate-300 border-2 border-slate-200 shadow-2xs'
-                                    }`}
+                                      }`}
                                   >
                                     {isComplete ? (
                                       <Check className="w-5 h-5 stroke-[3]" />
@@ -1161,24 +1154,22 @@ export const Orders: React.FC = () => {
                                     )}
                                   </div>
                                   <span
-                                    className={`text-[11px] font-black mt-2.5 leading-tight ${
-                                      isCurrent
-                                        ? 'text-emerald-950 font-black'
-                                        : isComplete
+                                    className={`text-[11px] font-black mt-2.5 leading-tight ${isCurrent
+                                      ? 'text-emerald-950 font-black'
+                                      : isComplete
                                         ? 'text-slate-800 font-bold'
                                         : 'text-slate-400 font-medium'
-                                    }`}
+                                      }`}
                                   >
                                     {st.label}
                                   </span>
                                   <span
-                                    className={`text-[9.5px] mt-0.5 font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                                      isCurrent
-                                        ? 'text-emerald-800 bg-emerald-50'
-                                        : isComplete
+                                    className={`text-[9.5px] mt-0.5 font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${isCurrent
+                                      ? 'text-emerald-800 bg-emerald-50'
+                                      : isComplete
                                         ? 'text-slate-500'
                                         : 'text-slate-400'
-                                    }`}
+                                      }`}
                                   >
                                     {isComplete ? 'Done' : isCurrent ? 'Current' : 'Upcoming'}
                                   </span>
@@ -1206,8 +1197,8 @@ export const Orders: React.FC = () => {
 
                         {/* Logistics & Tracking Card if dispatched */}
                         {(singleOrder.courier_name || singleOrder.tracking_number) && (
-                          <div className="bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/50 p-4.5 rounded-3xl border border-purple-200/90 shadow-card-subtle space-y-3">
-                            <div className="flex items-center justify-between">
+                          <div className="bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/50 p-9.5 rounded-3xl border border-purple-200/90 shadow-card-subtle space-y-3">
+                            <div className="flex items-center justify-between p-3">
                               <div className="flex items-center gap-2.5">
                                 <div className="w-9 h-9 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
                                   <Truck className="w-5 h-5" />
@@ -1281,20 +1272,19 @@ export const Orders: React.FC = () => {
                                 {singleOrder.status === 'PLACED'
                                   ? 'Order Placed — Waiting for Admin Confirmation'
                                   : singleOrder.status === 'CONFIRMED'
-                                  ? 'Order Confirmed — Ready for Packing & Dispatch'
-                                  : singleOrder.status === 'PACKED' || singleOrder.status === 'APPROVED'
-                                  ? 'Packed & Invoiced — Ready for Courier Handover'
-                                  : singleOrder.status === 'DISPATCHED'
-                                  ? 'In Transit with Logistics Partner'
-                                  : singleOrder.status === 'DELIVERED'
-                                  ? 'Package Delivered Successfully'
-                                  : 'Order Cancelled'}
+                                    ? 'Order Confirmed — Ready for Packing & Dispatch'
+                                    : singleOrder.status === 'PACKED' || singleOrder.status === 'APPROVED'
+                                      ? 'Packed & Invoiced — Ready for Courier Handover'
+                                      : singleOrder.status === 'DISPATCHED'
+                                        ? 'In Transit with Logistics Partner'
+                                        : singleOrder.status === 'DELIVERED'
+                                          ? 'Package Delivered Successfully'
+                                          : 'Order Cancelled'}
                               </h4>
                             </div>
                             <span
-                              className={`px-3 py-1 rounded-full text-xs font-black border ${
-                                getStatusBadge(singleOrder.status).bg
-                              }`}
+                              className={`px-3 py-1 rounded-full text-xs font-black border ${getStatusBadge(singleOrder.status).bg
+                                }`}
                             >
                               {singleOrder.status}
                             </span>
@@ -1352,19 +1342,17 @@ export const Orders: React.FC = () => {
                           {/* Dedicated COD Cash Payment Clearance Box */}
                           {singleOrder.payment_method === 'COD' && (
                             <div
-                              className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
-                                singleOrder.payment_status === 'PAID'
-                                  ? 'bg-emerald-50/80 border-emerald-200/90'
-                                  : 'bg-amber-50/80 border-amber-200/90'
-                              }`}
+                              className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${singleOrder.payment_status === 'PAID'
+                                ? 'bg-emerald-50/80 border-emerald-200/90'
+                                : 'bg-amber-50/80 border-amber-200/90'
+                                }`}
                             >
                               <div className="flex items-center gap-2.5">
                                 <div
-                                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                                    singleOrder.payment_status === 'PAID'
-                                      ? 'bg-emerald-600 text-white'
-                                      : 'bg-amber-500 text-slate-950 font-bold'
-                                  }`}
+                                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${singleOrder.payment_status === 'PAID'
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-amber-500 text-slate-950 font-bold'
+                                    }`}
                                 >
                                   <DollarSign className="w-5 h-5" />
                                 </div>
@@ -1423,11 +1411,9 @@ export const Orders: React.FC = () => {
                               <button
                                 onClick={() => {
                                   const a = singleOrder.address_snapshot;
-                                  const fullAddr = `${a.name || singleOrder.customer_name}, ${a.line1}${
-                                    a.line2 ? `, ${a.line2}` : ''
-                                  }, ${a.city}, ${a.state} - ${a.pincode}, Phone: ${
-                                    a.phone || singleOrder.customer_phone
-                                  }`;
+                                  const fullAddr = `${a.name || singleOrder.customer_name}, ${a.line1}${a.line2 ? `, ${a.line2}` : ''
+                                    }, ${a.city}, ${a.state} - ${a.pincode}, Phone: ${a.phone || singleOrder.customer_phone
+                                    }`;
                                   handleCopy(fullAddr, 'address');
                                 }}
                                 className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
@@ -1754,9 +1740,8 @@ export const Orders: React.FC = () => {
                                       Net Payable Amount
                                     </span>
                                     <span
-                                      className={`text-[11px] font-bold ${
-                                        singleOrder.payment_status === 'PAID' ? 'text-emerald-700' : 'text-amber-700'
-                                      }`}
+                                      className={`text-[11px] font-bold ${singleOrder.payment_status === 'PAID' ? 'text-emerald-700' : 'text-amber-700'
+                                        }`}
                                     >
                                       {singleOrder.payment_status === 'PAID'
                                         ? '✓ Fully Paid (Settled)'
@@ -1816,22 +1801,20 @@ export const Orders: React.FC = () => {
                                 <div key={event.id || idx} className="relative group">
                                   {/* Dot */}
                                   <div
-                                    className={`absolute -left-6 top-1 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                                      isLatest
-                                        ? 'bg-emerald-600 border-white ring-4 ring-emerald-100 text-white'
-                                        : 'bg-white border-slate-300 text-slate-400'
-                                    }`}
+                                    className={`absolute -left-6 top-1 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isLatest
+                                      ? 'bg-emerald-600 border-white ring-4 ring-emerald-100 text-white'
+                                      : 'bg-white border-slate-300 text-slate-400'
+                                      }`}
                                   >
                                     <span className={`w-1.5 h-1.5 rounded-full ${isLatest ? 'bg-white' : 'bg-slate-400'}`} />
                                   </div>
 
                                   {/* Event Card */}
                                   <div
-                                    className={`p-4 rounded-2xl border transition-all ${
-                                      isLatest
-                                        ? 'bg-gradient-to-r from-emerald-50/50 to-white border-emerald-200/90 shadow-2xs'
-                                        : 'bg-slate-50/60 border-slate-200/80'
-                                    }`}
+                                    className={`p-4 rounded-2xl border transition-all ${isLatest
+                                      ? 'bg-gradient-to-r from-emerald-50/50 to-white border-emerald-200/90 shadow-2xs'
+                                      : 'bg-slate-50/60 border-slate-200/80'
+                                      }`}
                                   >
                                     <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                                       <div className="flex items-center gap-2">
@@ -1893,11 +1876,10 @@ export const Orders: React.FC = () => {
                                 <div className="space-y-0.5">
                                   <div className="flex items-center gap-2">
                                     <span className="font-bold text-slate-900">{p.payment_method || singleOrder.payment_method}</span>
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                                      p.status === 'PAID' || p.status === 'SUCCESS' || p.status === 'CAPTURED'
-                                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                                        : 'bg-amber-50 text-amber-800 border border-amber-200'
-                                    }`}>
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${p.status === 'PAID' || p.status === 'SUCCESS' || p.status === 'CAPTURED'
+                                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                      : 'bg-amber-50 text-amber-800 border border-amber-200'
+                                      }`}>
                                       {p.status}
                                     </span>
                                   </div>
