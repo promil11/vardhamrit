@@ -1038,7 +1038,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     letterSpacing: 1.2,
     color: theme.colors.textPrimary,
     height: '100%',

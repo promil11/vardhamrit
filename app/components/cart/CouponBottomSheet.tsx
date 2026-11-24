@@ -271,7 +271,7 @@ export const CouponBottomSheet: React.FC<CouponBottomSheetProps> = ({
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Enter promo code (e.g. WELCOMEFIRST)"
+            placeholder="Enter promo code"
             placeholderTextColor={theme.colors.textHint}
             value={customCode}
             onChangeText={(txt) => {
