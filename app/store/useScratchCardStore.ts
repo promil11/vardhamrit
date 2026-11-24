@@ -233,7 +233,7 @@ export const useScratchCardStore = create<ScratchCardState>((set, get) => ({
 
         if (!exists) {
           const grandTotal = Number(ord.total_amount || ord.total || 0);
-          const coins = Math.max(5, Math.round(grandTotal * 0.02));
+          const coins = Math.max(5, Math.round(grandTotal * 0.01));
           updatedList.push({
             id: cardId,
             orderNumber: orderNum,

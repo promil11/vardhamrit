@@ -411,7 +411,7 @@ export default function LoginScreen() {
                 <View style={styles.userNotFoundTextCol}>
                   <Text style={styles.userNotFoundTitle}>Number or Email not registered</Text>
                   <Text style={styles.userNotFoundSub}>
-                    Create account & get <Text style={styles.userNotFoundCoins}>50 Coins</Text>
+                    Create account & get <Text style={styles.userNotFoundCoins}>25 Coins</Text>
                   </Text>
                 </View>
               </View>

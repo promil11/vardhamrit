@@ -309,7 +309,7 @@ export default function ProfileScreen() {
 
   const getInviteMessage = (code: string) => {
     const inviteLink = `https://vardhamrit.onrender.com/auth/register?code=${code}`;
-    return `Hey! ☕ I'm inviting you to try fresh single-estate Assam tea from *Vardhamrit*.\n\nUse my invite code *${code}* during signup to get *50 free Tea Coins (₹50 value)* on your account!\n\nOrder fresh from estate here:\n${inviteLink}`;
+    return `Hey! ☕ I'm inviting you to try fresh single-estate Assam tea from *Vardhamrit*.\n\nUse my invite code *${code}* during signup to get *25 free Tea Coins (₹25 value)* on your account!\n\nOrder fresh from estate here:\n${inviteLink}`;
   };
 
   const handleCopyReferralCode = async () => {
@@ -816,7 +816,7 @@ export default function ProfileScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.referTitle} numberOfLines={1}>Invite a Fellow Chai Lover</Text>
                 <Text style={styles.referSubtitle}>
-                  Give ₹50 in Tea Coins to friends & earn ₹50 when they join!
+                  Give ₹25 in Tea Coins to friends & earn ₹25 when they join!
                 </Text>
               </View>
             </View>
@@ -868,7 +868,7 @@ export default function ProfileScreen() {
             <View style={styles.referPerksRow}>
               <View style={styles.referPerkItem}>
                 <Icon name="badge-check" size={12} color="#15803D" />
-                <Text style={styles.referPerkText}>50 Coins on Signup</Text>
+                <Text style={styles.referPerkText}>25 Coins on Signup</Text>
               </View>
               <View style={styles.referPerkDivider} />
               <View style={styles.referPerkItem}>

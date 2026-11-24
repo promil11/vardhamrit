@@ -369,7 +369,6 @@ export default function CartScreen() {
                     style={styles.deliverToSelector}
                   >
                     <View style={styles.deliverToRow}>
-                      <Icon name="map-pin" size={13} color={theme.colors.textSecondary} style={{ marginRight: 4 }} />
                       <Text style={[styles.deliverToText, isTablet && { fontSize: 13.5 }]} numberOfLines={1}>
                         {selectedAddress
                           ? `Delivering to ${selectedAddress.tag === "Current Location" ? "Home" : selectedAddress.tag}: ${selectedAddress.line1}, ${selectedAddress.city}`

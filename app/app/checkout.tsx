@@ -571,7 +571,7 @@ export default function CheckoutScreen() {
                           <Text>Wallet Balance: ₹{userCoins}</Text>
                           <Text>1 Coin = ₹1 instant discount</Text>
                         </View>
-                        : 'Earn ₹50 coins for every friend who joins with your code!'}
+                        : 'Earn ₹25 coins for every friend who joins with your code!'}
                     </Text>
                   </View>
                 </View>

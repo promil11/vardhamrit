@@ -320,9 +320,9 @@ export async function createOrder(params: CreateOrderParams) {
       );
     }
 
-    // 11c. Calculate Order Cashback loyalty coins (2% of order subtotal, min 5 coins)
+    // 11c. Calculate Order Cashback loyalty coins (1% of order subtotal, min 5 coins)
     // Awarded to wallet when customer scratches the card!
-    const cashbackPercent = Number(process.env.ORDER_CASHBACK_PERCENT) || 2;
+    const cashbackPercent = Number(process.env.ORDER_CASHBACK_PERCENT) || 1;
     const cashbackMinCoins = Number(process.env.ORDER_CASHBACK_MIN_COINS) || 5;
     const earnedCashback = Math.max(cashbackMinCoins, Math.round(subtotal * (cashbackPercent / 100)));
 

@@ -40,11 +40,11 @@ export default function OrderSuccessScreen() {
   const [scratchModalVisible, setScratchModalVisible] = useState(false);
   const [rewardClaimed, setRewardClaimed] = useState(false);
 
-  // Fallback 2% min 5 coins if not passed from backend
+  // Fallback 1% min 5 coins if not passed from backend
   const parsedCoins =
     coinsEarned !== undefined && Number(coinsEarned) > 0
       ? Number(coinsEarned)
-      : Math.max(5, Math.round(Number(total) * 0.02));
+      : Math.max(5, Math.round(Number(total) * 0.01));
 
   // Celebration scale & bounce animations
   const scaleAnim = useRef(new Animated.Value(0.3)).current;

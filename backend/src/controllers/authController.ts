@@ -122,10 +122,10 @@ export async function verifyInviteCode(req: Request, res: Response, next: NextFu
         code: referrer.referral_code,
         referrerName: referrer.name,
         referrerFirstName: firstName,
-        bonusCoins: 50,
-        welcomeCoins: 50,
-        totalCoinsOnSignup: 100,
-        description: `Invite code from ${firstName}! You both get 50 Tea Coins (₹50).`,
+        bonusCoins: 25,
+        welcomeCoins: 25,
+        totalCoinsOnSignup: 50,
+        description: `Invite code from ${firstName}! You both get 25 Tea Coins (₹25).`,
       },
       'Invite code verified successfully'
     );
@@ -190,7 +190,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
     }
 
     const newReferralCode = await generateUniqueReferralCode(name, connection);
-    const initialCoins = referrer ? 100 : 50;
+    const initialCoins = referrer ? 50 : 25;
 
     const [result]: any = await connection.query(
       `INSERT INTO users (name, email, phone, role, coins_balance, referral_code, referred_by, preferred_blend, avatar_url)
@@ -201,26 +201,26 @@ export async function register(req: Request, res: Response, next: NextFunction) 
     const userId = result.insertId;
 
     if (referrer) {
-      // 1. Welcome Bonus for new user (50 coins)
+      // 1. Welcome Bonus for new user (25 coins)
       await connection.query(
         `INSERT INTO coin_transactions (user_id, amount, transaction_type, description, balance_after)
-         VALUES (?, 50, 'WELCOME_BONUS', 'Welcome to Vardhamrit Tea Club', 50)`,
+         VALUES (?, 25, 'WELCOME_BONUS', 'Welcome to Vardhamrit Tea Club', 25)`,
         [userId]
       );
 
-      // 2. Referral Joiner Bonus for new user (50 coins)
+      // 2. Referral Joiner Bonus for new user (25 coins)
       await connection.query(
         `INSERT INTO coin_transactions (user_id, amount, transaction_type, description, balance_after)
-         VALUES (?, 50, 'REFERRAL_BONUS', ?, 100)`,
+         VALUES (?, 25, 'REFERRAL_BONUS', ?, 50)`,
         [userId, `Invite bonus: Joined using ${referrer.name}'s invite code (${referrer.referral_code})`]
       );
 
-      // 3. Reward Referrer with 50 coins (Strictly capped at MAX_TEA_COINS = 500)
+      // 3. Reward Referrer with 25 coins (Strictly capped at MAX_TEA_COINS = 500)
       const MAX_TEA_COINS = 500;
       const currentReferrerBal = Number(referrer.coins_balance || 0);
 
       if (currentReferrerBal < MAX_TEA_COINS) {
-        const coinsToAdd = Math.min(50, MAX_TEA_COINS - currentReferrerBal);
+        const coinsToAdd = Math.min(25, MAX_TEA_COINS - currentReferrerBal);
         const updatedReferrerBal = currentReferrerBal + coinsToAdd;
 
         await connection.query(
@@ -235,10 +235,10 @@ export async function register(req: Request, res: Response, next: NextFunction) 
         );
       }
     } else {
-      // Standard Welcome Bonus (50 coins)
+      // Standard Welcome Bonus (25 coins)
       await connection.query(
         `INSERT INTO coin_transactions (user_id, amount, transaction_type, description, balance_after)
-         VALUES (?, 50, 'WELCOME_BONUS', 'Welcome to Vardhamrit Tea Club', 50)`,
+         VALUES (?, 25, 'WELCOME_BONUS', 'Welcome to Vardhamrit Tea Club', 25)`,
         [userId]
       );
     }
@@ -270,8 +270,8 @@ export async function register(req: Request, res: Response, next: NextFunction) 
         inviteBonusAwarded: !!referrer,
       },
       referrer
-        ? `Account created! You received 50 Welcome Coins + 50 Invite Bonus Coins (Total: 100 Coins)!`
-        : 'User registered successfully with 50 Welcome Coins!',
+        ? `Account created! You received 25 Welcome Coins + 25 Invite Bonus Coins (Total: 50 Coins)!`
+        : 'User registered successfully with 25 Welcome Coins!',
       201
     );
   } catch (err) {
@@ -409,21 +409,21 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
         });
       }
 
-      // Auto-register new user seamlessly with 50 welcome coins!
+      // Auto-register new user seamlessly with 25 welcome coins!
       isNewUser = true;
       const rawName = providedName || email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').trim() || 'Chai Connoisseur';
       const formattedName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
       const referralCode = await generateUniqueReferralCode(formattedName, connection);
 
       const [insertResult]: any = await connection.query(
-        'INSERT INTO users (name, email, role, status, coins_balance, referral_code, preferred_blend) VALUES (?, ?, "customer", "active", 50, ?, ?)',
+        'INSERT INTO users (name, email, role, status, coins_balance, referral_code, preferred_blend) VALUES (?, ?, "customer", "active", 25, ?, ?)',
         [formattedName, email, referralCode, preferredBlend]
       );
 
       const newUserId = insertResult.insertId;
 
       await connection.query(
-        'INSERT INTO coin_transactions (user_id, amount, balance_after, transaction_type, description) VALUES (?, 50, 50, "WELCOME_BONUS", "Welcome Bonus Coins for joining Vardhamrit")',
+        'INSERT INTO coin_transactions (user_id, amount, balance_after, transaction_type, description) VALUES (?, 25, 25, "WELCOME_BONUS", "Welcome Bonus Coins for joining Vardhamrit")',
         [newUserId]
       );
 
@@ -433,7 +433,7 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
         email,
         phone: null,
         role: 'customer',
-        coins_balance: 50,
+        coins_balance: 25,
         referral_code: referralCode,
         referred_by: null,
         preferred_blend: preferredBlend,
@@ -473,7 +473,7 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
         refreshToken,
         isNewUser,
       },
-      isNewUser ? 'Welcome to Vardhamrit! 50 Welcome Coins credited.' : 'Logged in successfully'
+      isNewUser ? 'Welcome to Vardhamrit! 25 Welcome Coins credited.' : 'Logged in successfully'
     );
   } catch (err) {
     return next(err);
@@ -834,20 +834,20 @@ export async function firebasePhoneLogin(req: Request, res: Response, next: Next
         return sendError(res, 'Your account has been suspended. Please contact support.', 403);
       }
     } else {
-      // Auto-register new phone user with 50 welcome coins!
+      // Auto-register new phone user with 25 welcome coins!
       isNewUser = true;
       const formattedName = name?.trim() || `User ${cleanPhone.slice(-4)}`;
       const referralCode = await generateUniqueReferralCode(formattedName, pool);
 
       const [insertResult]: any = await pool.query(
-        'INSERT INTO users (name, phone, role, status, coins_balance, referral_code, preferred_blend) VALUES (?, ?, "customer", "active", 50, ?, ?)',
+        'INSERT INTO users (name, phone, role, status, coins_balance, referral_code, preferred_blend) VALUES (?, ?, "customer", "active", 25, ?, ?)',
         [formattedName, `+91${cleanPhone}`, referralCode, favoriteMorningCup || 'Normal Chai']
       );
 
       const newUserId = insertResult.insertId;
 
       await pool.query(
-        'INSERT INTO coin_transactions (user_id, amount, balance_after, transaction_type, description) VALUES (?, 50, 50, "WELCOME_BONUS", "Welcome Bonus Coins for joining Vardhamrit")',
+        'INSERT INTO coin_transactions (user_id, amount, balance_after, transaction_type, description) VALUES (?, 25, 25, "WELCOME_BONUS", "Welcome Bonus Coins for joining Vardhamrit")',
         [newUserId]
       );
 
@@ -857,7 +857,7 @@ export async function firebasePhoneLogin(req: Request, res: Response, next: Next
         email: null,
         phone: `+91${cleanPhone}`,
         role: 'customer',
-        coins_balance: 50,
+        coins_balance: 25,
         referral_code: referralCode,
         preferred_blend: favoriteMorningCup || 'Normal Chai',
         avatar_url: null,

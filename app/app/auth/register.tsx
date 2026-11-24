@@ -252,8 +252,8 @@ export default function RegisterScreen() {
 
       if (res?.inviteBonusAwarded) {
         Alert.alert(
-          '🎉 100 Tea Coins Unlocked!',
-          `Welcome to Vardhamrit! You received 50 Welcome Coins + 50 Invite Bonus Coins (₹100 value) in your wallet to use on orders.`,
+          '🎉 50 Tea Coins Unlocked!',
+          `Welcome to Vardhamrit! You received 25 Welcome Coins + 25 Invite Bonus Coins (₹50 value) in your wallet to use on orders.`,
           [{ text: 'Start Shopping', onPress: () => router.replace('/(tabs)') }]
         );
       } else {
@@ -270,7 +270,7 @@ export default function RegisterScreen() {
     }
   };
 
-  const totalRewardCoins = appliedInvite ? 100 : 50;
+  const totalRewardCoins = appliedInvite ? 50 : 25;
 
   return (
     <>
@@ -637,7 +637,7 @@ export default function RegisterScreen() {
                       Invited by <Text style={{ fontWeight: '700' }}>{appliedInvite.referrerName}</Text>
                     </Text>
                     <Text style={styles.appliedBonusHighlight}>
-                      50 Welcome + 50 Bonus = 100 Tea Coins (₹100)
+                      25 Welcome + 25 Bonus = 50 Tea Coins (₹50)
                     </Text>
                   </View>
                 </View>
@@ -662,7 +662,7 @@ export default function RegisterScreen() {
                     </View>
                   </View>
                   <View style={styles.coinsBonusPill}>
-                    <Text style={styles.coinsBonusPillText}>🎁 +50 Coins</Text>
+                    <Text style={styles.coinsBonusPillText}>🎁 +25 Coins</Text>
                   </View>
                 </View>
 
@@ -726,7 +726,7 @@ export default function RegisterScreen() {
                   </View>
                 ) : (
                   <Text style={styles.inviteHelperHint}>
-                    Enter a friend's code to get 50 bonus Tea Coins (₹50)
+                    Enter a friend's code to get 25 bonus Tea Coins (₹25)
                   </Text>
                 )}
               </View>
