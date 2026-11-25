@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   RefreshControl,
   Share,
   Animated,
+  Easing,
   Linking,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -105,6 +106,65 @@ export default function ProfileScreen() {
     normalizeMorningCup(user?.preferred_blend || user?.favorite_morning_cup || 'Normal Chai')
   );
   const [refreshing, setRefreshing] = useState(false);
+
+  // Collapsible Blinkit-style header animation
+  const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 90 : 80);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const isHeaderHidden = useRef(false);
+  const lastScrollY = useRef(0);
+
+  const showHeader = useCallback(() => {
+    if (isHeaderHidden.current) {
+      isHeaderHidden.current = false;
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY]);
+
+  const hideHeader = useCallback(() => {
+    if (!isHeaderHidden.current) {
+      isHeaderHidden.current = true;
+      Animated.timing(headerTranslateY, {
+        toValue: -headerHeight,
+        duration: 250,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY, headerHeight]);
+
+  const handleScroll = (e: any) => {
+    const currentScrollY = e.nativeEvent.contentOffset.y;
+    const contentHeight = e.nativeEvent.contentSize?.height || 0;
+    const layoutHeight = e.nativeEvent.layoutMeasurement?.height || 0;
+
+    // Keep header visible near the top
+    if (currentScrollY <= 15) {
+      showHeader();
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    // Do not hide near bottom bounce
+    if (contentHeight > 0 && currentScrollY + layoutHeight >= contentHeight - 30) {
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    const diff = currentScrollY - lastScrollY.current;
+    if (Math.abs(diff) < 6) return;
+
+    if (diff > 0 && currentScrollY > 50) {
+      hideHeader();
+    } else if (diff < 0) {
+      showHeader();
+    }
+    lastScrollY.current = currentScrollY;
+  };
 
   // Floating notification toast for taste profile change
   const [toastMessage, setToastMessage] = useState<{ title: string; body: string; tea: string } | null>(null);
@@ -437,33 +497,52 @@ export default function ProfileScreen() {
         </Animated.View>
       )}
 
-      {/* 1. TOP NAVBAR */}
-      <View style={[styles.topNav, isTablet && styles.topNavTablet]}>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={handleBack}
-          style={[styles.backButton, isTablet && styles.backButtonTablet]}
-        >
-          <Icon name="arrow-left" size={isTablet ? 18 : 16} color={theme.colors.textPrimary} />
-          <Text style={[styles.backText, isTablet && { fontSize: 13.5 }]}>Shopping</Text>
-        </TouchableOpacity>
+      {/* 1. TOP NAVBAR (COLLAPSIBLE) */}
+      <Animated.View
+        style={[
+          styles.headerWrapper,
+          {
+            transform: [{ translateY: headerTranslateY }],
+          },
+        ]}
+        onLayout={(e) => {
+          const h = e.nativeEvent.layout.height;
+          if (h > 0 && Math.abs(h - headerHeight) > 1) {
+            setHeaderHeight(h);
+          }
+        }}
+      >
+        <View style={[styles.topNav, isTablet && styles.topNavTablet]}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleBack}
+            style={[styles.backButton, isTablet && styles.backButtonTablet]}
+          >
+            <Icon name="arrow-left" size={isTablet ? 18 : 16} color={theme.colors.textPrimary} />
+            <Text style={[styles.backText, isTablet && { fontSize: 13.5 }]}>Shopping</Text>
+          </TouchableOpacity>
 
-        <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, isTablet && { fontSize: 19 }]}>My Profile</Text>
-          <Text style={[styles.headerSubtitle, isTablet && { fontSize: 13 }]}>Royal Connoisseur Club</Text>
-        </View>
+          <View style={styles.headerCenter}>
+            <Text style={[styles.headerTitle, isTablet && { fontSize: 19 }]}>My Profile</Text>
+            <Text style={[styles.headerSubtitle, isTablet && { fontSize: 13 }]}>Royal Connoisseur Club</Text>
+          </View>
 
-        <View style={[styles.vipBadge, isTablet && { minWidth: 90 }]}>
-          <Text style={styles.vipBadgeText}></Text>
+          <View style={[styles.vipBadge, isTablet && { minWidth: 90 }]}>
+            <Text style={styles.vipBadgeText}></Text>
+          </View>
         </View>
-      </View>
+      </Animated.View>
 
       {loading && !userProfile ? (
-        <ProfileSkeleton />
+        <View style={{ flex: 1, paddingTop: headerHeight + 8 }}>
+          <ProfileSkeleton />
+        </View>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 12 }]}
+          scrollEventThrottle={16}
+          onScroll={handleScroll}
         >
           {/* 2. LUXURY ESTATE MEMBER HERO CARD */}
           <LinearGradient
@@ -1096,6 +1175,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
     position: 'relative',
+  },
+  headerWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    elevation: 8,
+    backgroundColor: '#FFFFFF',
   },
   notificationToastWrapper: {
     position: 'absolute',

@@ -12,6 +12,7 @@ import {
   Dimensions,
   Animated,
   ActivityIndicator,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -101,6 +102,80 @@ export default function HomeScreen() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Blinkit-style Collapsible Header State & Animation
+  const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 180 : 160);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const isHeaderHidden = useRef(false);
+  const lastScrollY = useRef(0);
+
+  const showHeader = useCallback(() => {
+    if (isHeaderHidden.current) {
+      isHeaderHidden.current = false;
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY]);
+
+  const hideHeader = useCallback(() => {
+    if (!isHeaderHidden.current && searchQuery.trim().length === 0) {
+      isHeaderHidden.current = true;
+      Animated.timing(headerTranslateY, {
+        toValue: -headerHeight,
+        duration: 250,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY, headerHeight, searchQuery]);
+
+  // Keep header visible whenever user enters search text
+  useEffect(() => {
+    if (searchQuery.trim().length > 0) {
+      showHeader();
+    }
+  }, [searchQuery, showHeader]);
+
+  const handleScroll = (e: any) => {
+    const currentScrollY = e.nativeEvent.contentOffset.y;
+    const contentHeight = e.nativeEvent.contentSize?.height || 0;
+    const layoutHeight = e.nativeEvent.layoutMeasurement?.height || 0;
+    scrollYRef.current = currentScrollY;
+
+    // 1. If at/near top of screen, always reveal header smoothly
+    if (currentScrollY <= 15) {
+      showHeader();
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    // 2. If user is actively searching or at bottom bounce, keep header state
+    if (searchQuery.trim().length > 0 || (contentHeight > 0 && currentScrollY + layoutHeight >= contentHeight - 30)) {
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    const diff = currentScrollY - lastScrollY.current;
+
+    // 3. Filter micro-tremors (threshold 6px)
+    if (Math.abs(diff) < 6) {
+      return;
+    }
+
+    if (diff > 0 && currentScrollY > 50) {
+      // Scrolling DOWN -> smoothly hide header upwards (Blinkit style)
+      hideHeader();
+    } else if (diff < 0) {
+      // Scrolling UP -> smoothly slide header back down (Blinkit style)
+      showHeader();
+    }
+
+    lastScrollY.current = currentScrollY;
+  };
 
   // Dynamic database API state
   const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -672,27 +747,45 @@ export default function HomeScreen() {
           }
         : {})}
     >
-      {/* Signature Home Header */}
-      <HomeHeader
-        selectedAddress={selectedAddress}
-        onAddressPress={() => setAddressSheetVisible(true)}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+      {/* Signature Collapsible Home Header (Blinkit Style) */}
+      <Animated.View
+        style={[
+          styles.headerWrapper,
+          {
+            transform: [{ translateY: headerTranslateY }],
+          },
+        ]}
+        onLayout={(e) => {
+          const h = e.nativeEvent.layout.height;
+          if (h > 0 && Math.abs(h - headerHeight) > 1) {
+            setHeaderHeight(h);
+          }
+        }}
+      >
+        <HomeHeader
+          selectedAddress={selectedAddress}
+          onAddressPress={() => setAddressSheetVisible(true)}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+      </Animated.View>
 
       {/* Main Content Area */}
       {isLoading && products.length === 0 ? (
-        <HomeScreenSkeleton />
+        <View style={{ flex: 1, paddingTop: headerHeight }}>
+          <HomeScreenSkeleton />
+        </View>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: headerHeight },
+          ]}
           bounces={true}
           alwaysBounceVertical={true}
           scrollEventThrottle={16}
-          onScroll={(e) => {
-            scrollYRef.current = e.nativeEvent.contentOffset.y;
-          }}
+          onScroll={handleScroll}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -700,7 +793,7 @@ export default function HomeScreen() {
               tintColor={theme.colors.primary}
               colors={[theme.colors.primary]}
               progressBackgroundColor="#FFFFFF"
-              progressViewOffset={Platform.OS === 'android' ? 20 : 0}
+              progressViewOffset={Platform.OS === 'android' ? headerHeight + 10 : headerHeight}
             />
           }
         >
@@ -1309,6 +1402,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F6F4EF',
+  },
+  headerWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    elevation: 8,
   },
   webPullIndicatorContainer: {
     width: '100%',

@@ -13,6 +13,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Animated,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -75,6 +76,72 @@ export default function OrdersScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Collapsible Blinkit-style header animation
+  const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 180 : 160);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const isHeaderHidden = useRef(false);
+  const lastScrollY = useRef(0);
+
+  const showHeader = useCallback(() => {
+    if (isHeaderHidden.current) {
+      isHeaderHidden.current = false;
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY]);
+
+  const hideHeader = useCallback(() => {
+    if (!isHeaderHidden.current && searchQuery.trim().length === 0) {
+      isHeaderHidden.current = true;
+      Animated.timing(headerTranslateY, {
+        toValue: -headerHeight,
+        duration: 250,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY, headerHeight, searchQuery]);
+
+  useEffect(() => {
+    if (searchQuery.trim().length > 0) {
+      showHeader();
+    }
+  }, [searchQuery, showHeader]);
+
+  const handleScroll = (e: any) => {
+    const currentScrollY = e.nativeEvent.contentOffset.y;
+    const contentHeight = e.nativeEvent.contentSize?.height || 0;
+    const layoutHeight = e.nativeEvent.layoutMeasurement?.height || 0;
+    scrollYRef.current = currentScrollY;
+
+    // Keep header visible near the top
+    if (currentScrollY <= 15) {
+      showHeader();
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    // Do not hide if search has text or near bottom bounce
+    if (searchQuery.trim().length > 0 || (contentHeight > 0 && currentScrollY + layoutHeight >= contentHeight - 30)) {
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    const diff = currentScrollY - lastScrollY.current;
+    if (Math.abs(diff) < 6) return;
+
+    if (diff > 0 && currentScrollY > 50) {
+      hideHeader();
+    } else if (diff < 0) {
+      showHeader();
+    }
+    lastScrollY.current = currentScrollY;
+  };
 
   // Reorder cup popup state
   const [reorderModalVisible, setReorderModalVisible] = useState(false);
@@ -1035,233 +1102,251 @@ export default function OrdersScreen() {
           }
         : {})}
     >
-      {/* 1. TOP NAVBAR */}
-      <View style={[styles.topNav, isTablet && { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16 }]}>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={handleBack}
-          style={[styles.backButton, isTablet && { paddingVertical: 8, paddingHorizontal: 16 }]}
-        >
-          <Icon name="arrow-left" size={isTablet ? 18 : 16} color={theme.colors.textPrimary} />
-          <Text style={[styles.backText, isTablet && { fontSize: 13.5 }]}>Shopping</Text>
-        </TouchableOpacity>
+      {/* COLLAPSIBLE HEADER (TOP NAVBAR + OPTIONAL ACTIVE CALLOUT + SEARCH/FILTER TABS) */}
+      <Animated.View
+        style={[
+          styles.headerWrapper,
+          {
+            transform: [{ translateY: headerTranslateY }],
+          },
+        ]}
+        onLayout={(e) => {
+          const h = e.nativeEvent.layout.height;
+          if (h > 0 && Math.abs(h - headerHeight) > 1) {
+            setHeaderHeight(h);
+          }
+        }}
+      >
+        {/* 1. TOP NAVBAR */}
+        <View style={[styles.topNav, isTablet && { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16 }]}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleBack}
+            style={[styles.backButton, isTablet && { paddingVertical: 8, paddingHorizontal: 16 }]}
+          >
+            <Icon name="arrow-left" size={isTablet ? 18 : 16} color={theme.colors.textPrimary} />
+            <Text style={[styles.backText, isTablet && { fontSize: 13.5 }]}>Shopping</Text>
+          </TouchableOpacity>
 
-        <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, isTablet && { fontSize: 19 }]}>My Orders</Text>
-          <Text style={[styles.headerSubtitle, isTablet && { fontSize: 13 }]}>
-            {orders.length} Harvest Shipments
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => router.push('/(tabs)/cart')}
-          style={[styles.cartBtn, isTablet && { width: 44, height: 44, borderRadius: 22 }]}
-        >
-          <Icon name="shopping-bag" size={isTablet ? 22 : 18} color={theme.colors.primary} />
-        </TouchableOpacity>
-      </View>
-
-      {/* 2. ON THE WAY CALLOUT BANNER (ONLY FOR DISPATCHED / ON THE WAY DELIVERIES) */}
-      {onTheWayOrders.length > 0 ? (() => {
-        const isMultiple = onTheWayOrders.length > 1;
-        const bannerTitle = isMultiple
-          ? `${onTheWayOrders.length} Tea Deliveries on the way!`
-          : '1 Tea Delivery is on the way!';
-
-        const bannerSubtitle = isMultiple
-          ? `${onTheWayOrders.map((o) => '#' + o.id).join(' & ')} • Express delivery in progress`
-          : `${onTheWayOrders[0]?.items?.[0]?.name || 'Fresh Garden Tea'}${(onTheWayOrders[0]?.items?.length || 0) > 1 ? ` +${onTheWayOrders[0].items.length - 1} more` : ''} • #${onTheWayOrders[0]?.id || ''}`;
-
-        const handleTrackPress = () => {
-          router.push({
-            pathname: '/order-tracking',
-            params: {
-              orderIds: onTheWayOrders.map((o) => o.id).join(','),
-              orderId: onTheWayOrders[0].id,
-              total: String(onTheWayOrders[0].total),
-            },
-          });
-        };
-
-        return (
-          <View style={[styles.activeNoticeSection, isTablet && { paddingHorizontal: 24, paddingTop: 16 }]}>
-            <LinearGradient
-              colors={['#FFFBEB', '#FEF3C7']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[styles.activeNoticeCard, isTablet && { padding: 16, borderRadius: 16 }]}
-            >
-              <View style={[styles.activeNoticeIconCircle, isTablet && { width: 44, height: 44, borderRadius: 22 }]}>
-                <Icon name="truck" size={isTablet ? 20 : 16} color="#B45309" />
-              </View>
-
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.activeNoticeTitle, isTablet && { fontSize: 15.5 }]} numberOfLines={1}>
-                  {bannerTitle}
-                </Text>
-                <Text style={[styles.activeNoticeSubtitle, isTablet && { fontSize: 13.5, marginTop: 3 }]} numberOfLines={1}>
-                  {bannerSubtitle}
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={handleTrackPress}
-                style={[styles.activeNoticePill, isTablet && { paddingHorizontal: 14, paddingVertical: 7 }]}
-              >
-                <Text style={[styles.activeNoticePillText, isTablet && { fontSize: 13.5 }]}>Track</Text>
-                <Icon name="chevron-right" size={isTablet ? 14 : 11} color="#B45309" />
-              </TouchableOpacity>
-            </LinearGradient>
+          <View style={styles.headerCenter}>
+            <Text style={[styles.headerTitle, isTablet && { fontSize: 19 }]}>My Orders</Text>
+            <Text style={[styles.headerSubtitle, isTablet && { fontSize: 13 }]}>
+              {orders.length} Harvest Shipments
+            </Text>
           </View>
-        );
-      })() : null}
 
-      {/* 3. SEARCH & FILTER TABS */}
-      <View style={[styles.filterSection, isTablet && { paddingHorizontal: 24, paddingTop: 16 }]}>
-        {/* Search input */}
-        <View style={[styles.searchBar, isTablet && { height: 46, paddingHorizontal: 16, borderRadius: 14 }]}>
-          <Icon name="search" size={isTablet ? 17 : 13} color="#9CA3AF" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by Order ID or tea name..."
-            placeholderTextColor="#9CA3AF"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            underlineColorAndroid="transparent"
-          />
-          {searchQuery.length > 0 ? (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Icon name="x" size={isTablet ? 17 : 13} color="#9CA3AF" />
-            </TouchableOpacity>
-          ) : null}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push('/(tabs)/cart')}
+            style={[styles.cartBtn, isTablet && { width: 44, height: 44, borderRadius: 22 }]}
+          >
+            <Icon name="shopping-bag" size={isTablet ? 22 : 18} color={theme.colors.primary} />
+          </TouchableOpacity>
         </View>
 
-        {/* Tab switcher */}
-        <View style={[styles.tabTrack, isTablet && { gap: 12 }]}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setActiveTab('all')}
-            style={[styles.tabChip, isTablet && { paddingHorizontal: 16, paddingVertical: 9 }, activeTab === 'all' && styles.tabChipActive]}
-          >
-            <Text
-              style={[
-                styles.tabChipText,
-                isTablet && { fontSize: 14 },
-                activeTab === 'all' && styles.tabChipTextActive,
-              ]}
-            >
-              All Orders ({orders.length})
-            </Text>
-          </TouchableOpacity>
+        {/* 2. ON THE WAY CALLOUT BANNER (ONLY FOR DISPATCHED / ON THE WAY DELIVERIES) */}
+        {onTheWayOrders.length > 0 ? (() => {
+          const isMultiple = onTheWayOrders.length > 1;
+          const bannerTitle = isMultiple
+            ? `${onTheWayOrders.length} Tea Deliveries on the way!`
+            : '1 Tea Delivery is on the way!';
 
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setActiveTab('active')}
-            style={[
-              styles.tabChip,
-              isTablet && { paddingHorizontal: 16, paddingVertical: 9 },
-              activeTab === 'active' && styles.tabChipActive,
-            ]}
-          >
-            <View
-              style={[
-                styles.tabDot,
-                isTablet && { width: 8, height: 8, borderRadius: 4 },
-                activeTab === 'active' && styles.tabDotActive,
-              ]}
+          const bannerSubtitle = isMultiple
+            ? `${onTheWayOrders.map((o) => '#' + o.id).join(' & ')} • Express delivery in progress`
+            : `${onTheWayOrders[0]?.items?.[0]?.name || 'Fresh Garden Tea'}${(onTheWayOrders[0]?.items?.length || 0) > 1 ? ` +${onTheWayOrders[0].items.length - 1} more` : ''} • #${onTheWayOrders[0]?.id || ''}`;
+
+          const handleTrackPress = () => {
+            router.push({
+              pathname: '/order-tracking',
+              params: {
+                orderIds: onTheWayOrders.map((o) => o.id).join(','),
+                orderId: onTheWayOrders[0].id,
+                total: String(onTheWayOrders[0].total),
+              },
+            });
+          };
+
+          return (
+            <View style={[styles.activeNoticeSection, isTablet && { paddingHorizontal: 24, paddingTop: 16 }]}>
+              <LinearGradient
+                colors={['#FFFBEB', '#FEF3C7']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.activeNoticeCard, isTablet && { padding: 16, borderRadius: 16 }]}
+              >
+                <View style={[styles.activeNoticeIconCircle, isTablet && { width: 44, height: 44, borderRadius: 22 }]}>
+                  <Icon name="truck" size={isTablet ? 20 : 16} color="#B45309" />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.activeNoticeTitle, isTablet && { fontSize: 15.5 }]} numberOfLines={1}>
+                    {bannerTitle}
+                  </Text>
+                  <Text style={[styles.activeNoticeSubtitle, isTablet && { fontSize: 13.5, marginTop: 3 }]} numberOfLines={1}>
+                    {bannerSubtitle}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={handleTrackPress}
+                  style={[styles.activeNoticePill, isTablet && { paddingHorizontal: 14, paddingVertical: 7 }]}
+                >
+                  <Text style={[styles.activeNoticePillText, isTablet && { fontSize: 13.5 }]}>Track</Text>
+                  <Icon name="chevron-right" size={isTablet ? 14 : 11} color="#B45309" />
+                </TouchableOpacity>
+              </LinearGradient>
+            </View>
+          );
+        })() : null}
+
+        {/* 3. SEARCH & FILTER TABS */}
+        <View style={[styles.filterSection, isTablet && { paddingHorizontal: 24, paddingTop: 16 }]}>
+          {/* Search input */}
+          <View style={[styles.searchBar, isTablet && { height: 46, paddingHorizontal: 16, borderRadius: 14 }]}>
+            <Icon name="search" size={isTablet ? 17 : 13} color="#9CA3AF" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by Order ID or tea name..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              underlineColorAndroid="transparent"
             />
-            <Text
-              style={[
-                styles.tabChipText,
-                isTablet && { fontSize: 14 },
-                activeTab === 'active' && styles.tabChipTextActive,
-              ]}
-            >
-              In Transit ({activeOrders.length})
-            </Text>
-          </TouchableOpacity>
+            {searchQuery.length > 0 ? (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Icon name="x" size={isTablet ? 17 : 13} color="#9CA3AF" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
 
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setActiveTab('delivered')}
-            style={[
-              styles.tabChip,
-              isTablet && { paddingHorizontal: 16, paddingVertical: 9 },
-              activeTab === 'delivered' && styles.tabChipActive,
-            ]}
-          >
-            <Text
-              style={[
-                styles.tabChipText,
-                isTablet && { fontSize: 14 },
-                activeTab === 'delivered' && styles.tabChipTextActive,
-              ]}
-            >
-              Delivered ({deliveredOrders.length})
-            </Text>
-          </TouchableOpacity>
-
-          {cancelledOrders.length > 0 && (
+          {/* Tab switcher */}
+          <View style={[styles.tabTrack, isTablet && { gap: 12 }]}>
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setActiveTab('cancelled')}
+              onPress={() => setActiveTab('all')}
+              style={[styles.tabChip, isTablet && { paddingHorizontal: 16, paddingVertical: 9 }, activeTab === 'all' && styles.tabChipActive]}
+            >
+              <Text
+                style={[
+                  styles.tabChipText,
+                  isTablet && { fontSize: 14 },
+                  activeTab === 'all' && styles.tabChipTextActive,
+                ]}
+              >
+                All Orders ({orders.length})
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setActiveTab('active')}
               style={[
                 styles.tabChip,
                 isTablet && { paddingHorizontal: 16, paddingVertical: 9 },
-                activeTab === 'cancelled' && styles.tabChipActive,
+                activeTab === 'active' && styles.tabChipActive,
+              ]}
+            >
+              <View
+                style={[
+                  styles.tabDot,
+                  isTablet && { width: 8, height: 8, borderRadius: 4 },
+                  activeTab === 'active' && styles.tabDotActive,
+                ]}
+              />
+              <Text
+                style={[
+                  styles.tabChipText,
+                  isTablet && { fontSize: 14 },
+                  activeTab === 'active' && styles.tabChipTextActive,
+                ]}
+              >
+                In Transit ({activeOrders.length})
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setActiveTab('delivered')}
+              style={[
+                styles.tabChip,
+                isTablet && { paddingHorizontal: 16, paddingVertical: 9 },
+                activeTab === 'delivered' && styles.tabChipActive,
               ]}
             >
               <Text
                 style={[
                   styles.tabChipText,
                   isTablet && { fontSize: 14 },
-                  activeTab === 'cancelled' && styles.tabChipTextActive,
+                  activeTab === 'delivered' && styles.tabChipTextActive,
                 ]}
               >
-                Cancelled ({cancelledOrders.length})
+                Delivered ({deliveredOrders.length})
               </Text>
             </TouchableOpacity>
-          )}
-        </View>
 
-        {/* Compact pagination summary bar at the top */}
-        {totalFilteredCount > 0 && (
-          <View style={[styles.topPaginationBar, isTablet && { paddingTop: 12, marginTop: 4 }]}>
-            <Text style={[styles.topPaginationText, isTablet && { fontSize: 13.5 }]}>
-              Showing <Text style={[styles.topPaginationBold, isTablet && { fontSize: 13.5 }]}>{startIndex + 1}–{endIndex}</Text> of <Text style={[styles.topPaginationBold, isTablet && { fontSize: 13.5 }]}>{totalFilteredCount}</Text> orders
-            </Text>
-            {totalPages > 1 && (
-              <View style={[styles.topPageNavQuick, isTablet && { paddingVertical: 5, paddingHorizontal: 12 }]}>
-                <TouchableOpacity
-                  disabled={currentPage === 1}
-                  onPress={() => handlePageChange(currentPage - 1)}
-                  style={[styles.topPageNavArrow, currentPage === 1 && { opacity: 0.35 }]}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            {cancelledOrders.length > 0 && (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setActiveTab('cancelled')}
+                style={[
+                  styles.tabChip,
+                  isTablet && { paddingHorizontal: 16, paddingVertical: 9 },
+                  activeTab === 'cancelled' && styles.tabChipActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.tabChipText,
+                    isTablet && { fontSize: 14 },
+                    activeTab === 'cancelled' && styles.tabChipTextActive,
+                  ]}
                 >
-                  <Icon name="chevron-left" size={isTablet ? 16 : 13} color={theme.colors.primary} />
-                </TouchableOpacity>
-                <Text style={[styles.topPageNavStatus, isTablet && { fontSize: 13 }]}>
-                  Page {currentPage} of {totalPages}
+                  Cancelled ({cancelledOrders.length})
                 </Text>
-                <TouchableOpacity
-                  disabled={currentPage === totalPages}
-                  onPress={() => handlePageChange(currentPage + 1)}
-                  style={[styles.topPageNavArrow, currentPage === totalPages && { opacity: 0.35 }]}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Icon name="chevron-right" size={isTablet ? 16 : 13} color={theme.colors.primary} />
-                </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             )}
           </View>
-        )}
-      </View>
+
+          {/* Compact pagination summary bar at the top */}
+          {totalFilteredCount > 0 && (
+            <View style={[styles.topPaginationBar, isTablet && { paddingTop: 12, marginTop: 4 }]}>
+              <Text style={[styles.topPaginationText, isTablet && { fontSize: 13.5 }]}>
+                Showing <Text style={[styles.topPaginationBold, isTablet && { fontSize: 13.5 }]}>{startIndex + 1}–{endIndex}</Text> of <Text style={[styles.topPaginationBold, isTablet && { fontSize: 13.5 }]}>{totalFilteredCount}</Text> orders
+              </Text>
+              {totalPages > 1 && (
+                <View style={[styles.topPageNavQuick, isTablet && { paddingVertical: 5, paddingHorizontal: 12 }]}>
+                  <TouchableOpacity
+                    disabled={currentPage === 1}
+                    onPress={() => handlePageChange(currentPage - 1)}
+                    style={[styles.topPageNavArrow, currentPage === 1 && { opacity: 0.35 }]}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Icon name="chevron-left" size={isTablet ? 16 : 13} color={theme.colors.primary} />
+                  </TouchableOpacity>
+                  <Text style={[styles.topPageNavStatus, isTablet && { fontSize: 13 }]}>
+                    Page {currentPage} of {totalPages}
+                  </Text>
+                  <TouchableOpacity
+                    disabled={currentPage === totalPages}
+                    onPress={() => handlePageChange(currentPage + 1)}
+                    style={[styles.topPageNavArrow, currentPage === totalPages && { opacity: 0.35 }]}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Icon name="chevron-right" size={isTablet ? 16 : 13} color={theme.colors.primary} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+      </Animated.View>
 
       {/* 4. ORDERS LIST OR EMPTY STATE WITH PULL-TO-REFRESH */}
       {loading && orders.length === 0 ? (
-        <OrdersSkeleton />
+        <View style={{ flex: 1, paddingTop: headerHeight + 8 }}>
+          <OrdersSkeleton />
+        </View>
       ) : (
         <FlatList
           ref={flatListRef}
@@ -1270,15 +1355,14 @@ export default function OrdersScreen() {
           renderItem={renderOrderCard}
           contentContainerStyle={[
             styles.listContent,
+            { paddingTop: headerHeight + 8 },
             filteredOrders.length === 0 && { flexGrow: 1, justifyContent: 'center' },
           ]}
           showsVerticalScrollIndicator={false}
           bounces={true}
           alwaysBounceVertical={true}
           scrollEventThrottle={16}
-          onScroll={(e) => {
-            scrollYRef.current = e.nativeEvent.contentOffset.y;
-          }}
+          onScroll={handleScroll}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -1286,7 +1370,7 @@ export default function OrdersScreen() {
               tintColor={theme.colors.primary}
               colors={[theme.colors.primary]}
               progressBackgroundColor="#FFFFFF"
-              progressViewOffset={Platform.OS === 'android' ? 20 : 0}
+              progressViewOffset={Platform.OS === 'android' ? headerHeight + 10 : headerHeight}
             />
           }
           ListHeaderComponent={
@@ -1670,6 +1754,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
+  },
+  headerWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    elevation: 8,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.06)',
   },
   webPullIndicatorContainer: {
     width: '100%',

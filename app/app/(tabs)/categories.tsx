@@ -11,6 +11,7 @@ import {
   Image,
   RefreshControl,
   Animated,
+  Easing,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -132,6 +133,80 @@ export default function CategoriesScreen() {
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+
+  // Blinkit-style Collapsible Header State & Animation
+  const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 140 : 120);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const isHeaderHidden = useRef(false);
+  const lastScrollY = useRef(0);
+
+  const showHeader = useCallback(() => {
+    if (isHeaderHidden.current) {
+      isHeaderHidden.current = false;
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY]);
+
+  const hideHeader = useCallback(() => {
+    if (!isHeaderHidden.current && searchQuery.trim().length === 0) {
+      isHeaderHidden.current = true;
+      Animated.timing(headerTranslateY, {
+        toValue: -headerHeight,
+        duration: 250,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY, headerHeight, searchQuery]);
+
+  // Keep header visible whenever user enters search text
+  useEffect(() => {
+    if (searchQuery.trim().length > 0) {
+      showHeader();
+    }
+  }, [searchQuery, showHeader]);
+
+  const handleScroll = (e: any) => {
+    const currentScrollY = e.nativeEvent.contentOffset.y;
+    const contentHeight = e.nativeEvent.contentSize?.height || 0;
+    const layoutHeight = e.nativeEvent.layoutMeasurement?.height || 0;
+    scrollYRef.current = currentScrollY;
+
+    // 1. If at/near top of screen, always reveal header smoothly
+    if (currentScrollY <= 15) {
+      showHeader();
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    // 2. If user is actively searching or at bottom bounce, keep header state
+    if (searchQuery.trim().length > 0 || (contentHeight > 0 && currentScrollY + layoutHeight >= contentHeight - 30)) {
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    const diff = currentScrollY - lastScrollY.current;
+
+    // 3. Filter micro-tremors (threshold 6px)
+    if (Math.abs(diff) < 6) {
+      return;
+    }
+
+    if (diff > 0 && currentScrollY > 50) {
+      // Scrolling DOWN -> smoothly hide header upwards (Blinkit style)
+      hideHeader();
+    } else if (diff < 0) {
+      // Scrolling UP -> smoothly slide header back down (Blinkit style)
+      showHeader();
+    }
+
+    lastScrollY.current = currentScrollY;
+  };
 
   // Synchronize category & discount filters whenever navigation params change
   useEffect(() => {
@@ -668,78 +743,96 @@ export default function CategoriesScreen() {
           }
         : {})}
     >
-      {/* 1. TOP APP HEADER & SEARCH BAR */}
-      <View style={styles.topHeader}>
-        <View style={styles.headerTitleRow}>
-          <View>
-            <Text style={styles.headerTitle}>Tea Collection</Text>
-            <Text style={styles.headerSubtitle}>
-              Direct harvest orthodox leaves & single-origin CTC
-            </Text>
+      {/* 1. TOP APP HEADER & SEARCH BAR (Blinkit Collapsible Slide Animation) */}
+      <Animated.View
+        style={[
+          styles.headerWrapper,
+          {
+            transform: [{ translateY: headerTranslateY }],
+          },
+        ]}
+        onLayout={(e) => {
+          const h = e.nativeEvent.layout.height;
+          if (h > 0 && Math.abs(h - headerHeight) > 1) {
+            setHeaderHeight(h);
+          }
+        }}
+      >
+        <View style={styles.topHeader}>
+          <View style={styles.headerTitleRow}>
+            <View>
+              <Text style={styles.headerTitle}>Tea Collection</Text>
+              <Text style={styles.headerSubtitle}>
+                Direct harvest orthodox leaves & single-origin CTC
+              </Text>
+            </View>
+
+            {/* Quick Drawer Button with Badge */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setIsDrawerOpen(true)}
+              style={[styles.headerFilterBtn, activeCount > 0 && styles.headerFilterBtnActive]}
+            >
+              <Icon
+                name="sliders"
+                size={13}
+                color={activeCount > 0 ? '#FFFFFF' : theme.colors.primary}
+              />
+              <Text
+                style={[
+                  styles.headerFilterBtnText,
+                  activeCount > 0 && styles.headerFilterBtnTextActive,
+                ]}
+              >
+                Filter
+              </Text>
+              {activeCount > 0 ? (
+                <View style={styles.headerFilterBadge}>
+                  <Text style={styles.headerFilterBadgeText}>{activeCount}</Text>
+                </View>
+              ) : null}
+            </TouchableOpacity>
           </View>
 
-          {/* Quick Drawer Button with Badge */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setIsDrawerOpen(true)}
-            style={[styles.headerFilterBtn, activeCount > 0 && styles.headerFilterBtnActive]}
-          >
-            <Icon
-              name="sliders"
-              size={13}
-              color={activeCount > 0 ? '#FFFFFF' : theme.colors.primary}
+          {/* Search Input Bar */}
+          <View style={styles.searchBarContainer}>
+            <Icon name="search" size={14} color={theme.colors.textSecondary} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search within blends, ingredients..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+              underlineColorAndroid="transparent"
             />
-            <Text
-              style={[
-                styles.headerFilterBtnText,
-                activeCount > 0 && styles.headerFilterBtnTextActive,
-              ]}
-            >
-              Filter
-            </Text>
-            {activeCount > 0 ? (
-              <View style={styles.headerFilterBadge}>
-                <Text style={styles.headerFilterBadgeText}>{activeCount}</Text>
-              </View>
+            {searchQuery.length > 0 ? (
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon name="x" size={14} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
             ) : null}
-          </TouchableOpacity>
+          </View>
         </View>
-
-        {/* Search Input Bar */}
-        <View style={styles.searchBarContainer}>
-          <Icon name="search" size={14} color={theme.colors.textSecondary} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search within blends, ingredients..."
-            placeholderTextColor="#9CA3AF"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            returnKeyType="search"
-            underlineColorAndroid="transparent"
-          />
-          {searchQuery.length > 0 ? (
-            <TouchableOpacity
-              onPress={() => setSearchQuery('')}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Icon name="x" size={14} color={theme.colors.textSecondary} />
-            </TouchableOpacity>
-          ) : null}
-        </View>
-      </View>
+      </Animated.View>
 
       {isLoading && allProducts.length === 0 ? (
-        <CatalogSkeleton />
+        <View style={{ flex: 1, paddingTop: headerHeight }}>
+          <CatalogSkeleton />
+        </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: headerHeight },
+          ]}
           showsVerticalScrollIndicator={false}
           bounces={true}
           alwaysBounceVertical={true}
           scrollEventThrottle={16}
-          onScroll={(e) => {
-            scrollYRef.current = e.nativeEvent.contentOffset.y;
-          }}
+          onScroll={handleScroll}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -747,7 +840,7 @@ export default function CategoriesScreen() {
               tintColor={theme.colors.primary}
               colors={[theme.colors.primary]}
               progressBackgroundColor="#FFFFFF"
-              progressViewOffset={Platform.OS === 'android' ? 20 : 0}
+              progressViewOffset={Platform.OS === 'android' ? headerHeight + 10 : headerHeight}
             />
           }
         >
@@ -1068,6 +1161,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  headerWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    elevation: 8,
+    backgroundColor: '#FFFFFF',
   },
   webPullIndicatorContainer: {
     width: '100%',

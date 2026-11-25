@@ -11,6 +11,7 @@ import {
   Alert,
   Animated,
   ActivityIndicator,
+  Easing,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,6 +39,66 @@ export default function RewardsScreen() {
   const [coinsBalance, setCoinsBalance] = useState<number>(0);
   const [selectedScratchCard, setSelectedScratchCard] = useState<ScratchCardItem | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // Collapsible Blinkit-style header animation
+  const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 100 : 80);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const isHeaderHidden = useRef(false);
+  const lastScrollY = useRef(0);
+
+  const showHeader = useCallback(() => {
+    if (isHeaderHidden.current) {
+      isHeaderHidden.current = false;
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY]);
+
+  const hideHeader = useCallback(() => {
+    if (!isHeaderHidden.current) {
+      isHeaderHidden.current = true;
+      Animated.timing(headerTranslateY, {
+        toValue: -headerHeight,
+        duration: 250,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY, headerHeight]);
+
+  const handleScroll = (e: any) => {
+    const currentScrollY = e.nativeEvent.contentOffset.y;
+    const contentHeight = e.nativeEvent.contentSize?.height || 0;
+    const layoutHeight = e.nativeEvent.layoutMeasurement?.height || 0;
+    scrollYRef.current = currentScrollY;
+
+    // Keep header visible near the top
+    if (currentScrollY <= 15) {
+      showHeader();
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    // Do not hide near bottom bounce
+    if (contentHeight > 0 && currentScrollY + layoutHeight >= contentHeight - 30) {
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    const diff = currentScrollY - lastScrollY.current;
+    if (Math.abs(diff) < 6) return;
+
+    if (diff > 0 && currentScrollY > 50) {
+      hideHeader();
+    } else if (diff < 0) {
+      showHeader();
+    }
+    lastScrollY.current = currentScrollY;
+  };
 
   const initData = async (isRefresh = false) => {
     try {
@@ -350,53 +411,66 @@ export default function RewardsScreen() {
             }
           : {})}
       >
-        {/* 1. TOP APP BAR */}
-        <LinearGradient
-          colors={theme.colors.primaryGradient as any}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
+        {/* 1. TOP APP BAR (COLLAPSIBLE) */}
+        <Animated.View
+          style={[
+            styles.headerWrapper,
+            {
+              transform: [{ translateY: headerTranslateY }],
+            },
+          ]}
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height;
+            if (h > 0 && Math.abs(h - headerHeight) > 1) {
+              setHeaderHeight(h);
+            }
+          }}
         >
-          <View style={styles.headerNavRow}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => router.back()}
-              style={styles.backButton}
-            >
-              <Icon name="arrow-left" size={17} color="#FFFFFF" />
-            </TouchableOpacity>
+          <LinearGradient
+            colors={theme.colors.primaryGradient as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.header}
+          >
+            <View style={styles.headerNavRow}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Icon name="arrow-left" size={17} color="#FFFFFF" />
+              </TouchableOpacity>
 
-            <View style={styles.headerTitleWrap}>
-              <View style={styles.headerTitleRow}>
-                <Icon name="gift" size={16} color="#FBBF24" />
-                <Text style={styles.headerTitle}>Rewards & Scratch Cards</Text>
+              <View style={styles.headerTitleWrap}>
+                <View style={styles.headerTitleRow}>
+                  <Icon name="gift" size={16} color="#FBBF24" />
+                  <Text style={styles.headerTitle}>Rewards & Scratch Cards</Text>
+                </View>
               </View>
-            </View>
 
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() =>
-                Alert.alert(
-                  'How Vardhamrit Rewards Work 🎁',
-                  '1. Every completed order unlocks an exclusive mystery scratch card.\n\n2. Scratch with your finger to reveal instant Tea Coins (₹1 = 1 Coin).\n\n3. Coins are credited directly to your wallet for instant discounts at checkout!'
-                )
-              }
-              style={styles.helpButton}
-            >
-              <Icon name="help-circle" size={17} color="#A7F3D0" />
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() =>
+                  Alert.alert(
+                    'How Vardhamrit Rewards Work 🎁',
+                    '1. Every completed order unlocks an exclusive mystery scratch card.\n\n2. Scratch with your finger to reveal instant Tea Coins (₹1 = 1 Coin).\n\n3. Coins are credited directly to your wallet for instant discounts at checkout!'
+                  )
+                }
+                style={styles.helpButton}
+              >
+                <Icon name="help-circle" size={17} color="#A7F3D0" />
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </Animated.View>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 12 }]}
           bounces={true}
           alwaysBounceVertical={true}
           scrollEventThrottle={16}
-          onScroll={(e) => {
-            scrollYRef.current = e.nativeEvent.contentOffset.y;
-          }}
+          onScroll={handleScroll}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -404,7 +478,7 @@ export default function RewardsScreen() {
               tintColor={theme.colors.primary}
               colors={[theme.colors.primary]}
               progressBackgroundColor="#FFFFFF"
-              progressViewOffset={Platform.OS === 'android' ? 20 : 0}
+              progressViewOffset={Platform.OS === 'android' ? headerHeight + 10 : headerHeight}
             />
           }
         >
@@ -694,6 +768,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+  },
+  headerWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    elevation: 8,
+    backgroundColor: 'transparent',
   },
   webPullIndicatorContainer: {
     width: '100%',

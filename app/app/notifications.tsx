@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   RefreshControl,
   Image,
   Dimensions,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -52,6 +54,65 @@ export default function NotificationsScreen() {
 
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [refreshing, setRefreshing] = useState(false);
+
+  // Collapsible Blinkit-style header animation
+  const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 140 : 120);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const isHeaderHidden = useRef(false);
+  const lastScrollY = useRef(0);
+
+  const showHeader = useCallback(() => {
+    if (isHeaderHidden.current) {
+      isHeaderHidden.current = false;
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY]);
+
+  const hideHeader = useCallback(() => {
+    if (!isHeaderHidden.current) {
+      isHeaderHidden.current = true;
+      Animated.timing(headerTranslateY, {
+        toValue: -headerHeight,
+        duration: 250,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY, headerHeight]);
+
+  const handleScroll = (e: any) => {
+    const currentScrollY = e.nativeEvent.contentOffset.y;
+    const contentHeight = e.nativeEvent.contentSize?.height || 0;
+    const layoutHeight = e.nativeEvent.layoutMeasurement?.height || 0;
+
+    // Keep header visible near the top
+    if (currentScrollY <= 15) {
+      showHeader();
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    // Do not hide near bottom bounce
+    if (contentHeight > 0 && currentScrollY + layoutHeight >= contentHeight - 30) {
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    const diff = currentScrollY - lastScrollY.current;
+    if (Math.abs(diff) < 6) return;
+
+    if (diff > 0 && currentScrollY > 50) {
+      hideHeader();
+    } else if (diff < 0) {
+      showHeader();
+    }
+    lastScrollY.current = currentScrollY;
+  };
 
   useEffect(() => {
     loadNotifications();
@@ -167,86 +228,108 @@ export default function NotificationsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Top Header */}
-      <LinearGradient
-        colors={theme.colors.primaryGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
+      {/* Collapsible Top Header */}
+      <Animated.View
+        style={[
+          styles.headerWrapper,
+          {
+            transform: [{ translateY: headerTranslateY }],
+          },
+        ]}
+        onLayout={(e) => {
+          const h = e.nativeEvent.layout.height;
+          if (h > 0 && Math.abs(h - headerHeight) > 1) {
+            setHeaderHeight(h);
+          }
+        }}
       >
-        <View style={styles.headerContent}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Icon name="arrow-left" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
+        <LinearGradient
+          colors={theme.colors.primaryGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}
+        >
+          <View style={styles.headerContent}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Icon name="arrow-left" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
 
-          <View style={styles.headerTitleWrap}>
-            <Text style={styles.headerTitle}>Notifications</Text>
+            <View style={styles.headerTitleWrap}>
+              <Text style={styles.headerTitle}>Notifications</Text>
+              {unreadCount > 0 ? (
+                <View style={styles.unreadChip}>
+                  <Text style={styles.unreadChipText}>{unreadCount} New</Text>
+                </View>
+              ) : null}
+            </View>
+
             {unreadCount > 0 ? (
-              <View style={styles.unreadChip}>
-                <Text style={styles.unreadChipText}>{unreadCount} New</Text>
-              </View>
-            ) : null}
+              <TouchableOpacity
+                onPress={markAllAsRead}
+                style={styles.markAllBtn}
+                activeOpacity={0.8}
+              >
+                <Icon name="check" size={13} color="#D1FAE5" />
+                <Text style={styles.markAllText}>Mark all read</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={{ width: 40 }} />
+            )}
           </View>
 
-          {unreadCount > 0 ? (
-            <TouchableOpacity
-              onPress={markAllAsRead}
-              style={styles.markAllBtn}
-              activeOpacity={0.8}
-            >
-              <Icon name="check" size={13} color="#D1FAE5" />
-              <Text style={styles.markAllText}>Mark all read</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={{ width: 40 }} />
-          )}
-        </View>
-
-        {/* Filter Pills */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterScroll}
-        >
-          {FILTER_TABS.map((tab) => {
-            const active = activeFilter === tab.id;
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                onPress={() => {
-                  if (Platform.OS !== 'web') {
-                    try {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    } catch {}
-                  }
-                  setActiveFilter(tab.id);
-                }}
-                style={[styles.filterPill, active && styles.filterPillActive]}
-              >
-                <Icon
-                  name={tab.icon}
-                  size={13}
-                  color={active ? theme.colors.primary : 'rgba(255, 255, 255, 0.95)'}
-                />
-                <Text style={[styles.filterLabel, active && styles.filterLabelActive]}>
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </LinearGradient>
+          {/* Filter Pills */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScroll}
+          >
+            {FILTER_TABS.map((tab) => {
+              const active = activeFilter === tab.id;
+              return (
+                <TouchableOpacity
+                  key={tab.id}
+                  onPress={() => {
+                    if (Platform.OS !== 'web') {
+                      try {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      } catch {}
+                    }
+                    setActiveFilter(tab.id);
+                  }}
+                  style={[styles.filterPill, active && styles.filterPillActive]}
+                >
+                  <Icon
+                    name={tab.icon}
+                    size={13}
+                    color={active ? theme.colors.primary : 'rgba(255, 255, 255, 0.95)'}
+                  />
+                  <Text style={[styles.filterLabel, active && styles.filterLabelActive]}>
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </LinearGradient>
+      </Animated.View>
 
       {/* Main List */}
       <ScrollView
         style={styles.listContainer}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingTop: headerHeight + 12 }]}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.accentGold} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.colors.accentGold}
+            progressViewOffset={Platform.OS === 'android' ? headerHeight + 10 : headerHeight}
+          />
         }
       >
         {filteredNotifications.length === 0 ? (
@@ -342,12 +425,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
+  headerWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    elevation: 8,
+    backgroundColor: 'transparent',
+  },
   header: {
     paddingTop: Platform.OS === 'ios' ? 52 : 20,
     paddingBottom: 14,
     paddingHorizontal: 16,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
   },
   headerContent: {
     flexDirection: 'row',

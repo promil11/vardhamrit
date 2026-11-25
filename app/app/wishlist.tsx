@@ -11,6 +11,7 @@ import {
   RefreshControl,
   Animated,
   ActivityIndicator,
+  Easing,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -56,6 +57,66 @@ export default function WishlistScreen() {
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Collapsible Blinkit-style header animation
+  const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 140 : 120);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const isHeaderHidden = useRef(false);
+  const lastScrollY = useRef(0);
+
+  const showHeader = useCallback(() => {
+    if (isHeaderHidden.current) {
+      isHeaderHidden.current = false;
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY]);
+
+  const hideHeader = useCallback(() => {
+    if (!isHeaderHidden.current) {
+      isHeaderHidden.current = true;
+      Animated.timing(headerTranslateY, {
+        toValue: -headerHeight,
+        duration: 250,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY, headerHeight]);
+
+  const handleScroll = (e: any) => {
+    const currentScrollY = e.nativeEvent.contentOffset.y;
+    const contentHeight = e.nativeEvent.contentSize?.height || 0;
+    const layoutHeight = e.nativeEvent.layoutMeasurement?.height || 0;
+    scrollYRef.current = currentScrollY;
+
+    // Keep header visible near the top
+    if (currentScrollY <= 15) {
+      showHeader();
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    // Do not hide near bottom bounce
+    if (contentHeight > 0 && currentScrollY + layoutHeight >= contentHeight - 30) {
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    const diff = currentScrollY - lastScrollY.current;
+    if (Math.abs(diff) < 6) return;
+
+    if (diff > 0 && currentScrollY > 50) {
+      hideHeader();
+    } else if (diff < 0) {
+      showHeader();
+    }
+    lastScrollY.current = currentScrollY;
+  };
 
   const loadData = async (isRefresh = false) => {
     try {
@@ -388,96 +449,110 @@ export default function WishlistScreen() {
             }
           : {})}
       >
-        {/* 1. LUXURY 2026 GRADIENT HEADER */}
-        <LinearGradient
-          colors={theme.colors.primaryGradient as any}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.topHeader}
+        {/* 1. LUXURY 2026 GRADIENT HEADER (COLLAPSIBLE) */}
+        <Animated.View
+          style={[
+            styles.headerWrapper,
+            {
+              transform: [{ translateY: headerTranslateY }],
+            },
+          ]}
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height;
+            if (h > 0 && Math.abs(h - headerHeight) > 1) {
+              setHeaderHeight(h);
+            }
+          }}
         >
-          {/* Top Brand Hallmark */}
-          <View style={styles.brandHallmarkRow}>
-            <View style={styles.brandBadge}>
-              <Icon name="coffee" size={12} color="#F59E0B" />
-              <Text style={styles.brandTitle}>VARDHAMRIT</Text>
-              <View style={styles.brandDot} />
-              <Text style={styles.brandSubtitle}>PRIVATE CELLAR</Text>
-            </View>
-            <View style={styles.liveFreshBadge}>
-              <View style={styles.liveFreshDot} />
-              <Text style={styles.liveFreshText}>100% ESTATE FRESH</Text>
-            </View>
-          </View>
-
-          {/* Navigation & Title Bar */}
-          <View style={styles.headerMainRow}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={handleBack}
-              style={styles.backButton}
-            >
-              <Icon name="arrow-left" size={17} color="#FFFFFF" />
-            </TouchableOpacity>
-
-            <View style={styles.headerTitleWrap}>
-              <View style={styles.titleRow}>
-                <View style={styles.heartIconWrap}>
-                  <Icon name="heart" size={15} color="#F87171" fill="#DC2626" />
-                </View>
-                <Text style={styles.headerTitle}>My Wishlist</Text>
+          <LinearGradient
+            colors={theme.colors.primaryGradient as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.topHeader}
+          >
+            {/* Top Brand Hallmark */}
+            <View style={styles.brandHallmarkRow}>
+              <View style={styles.brandBadge}>
+                <Icon name="coffee" size={12} color="#F59E0B" />
+                <Text style={styles.brandTitle}>VARDHAMRIT</Text>
+                <View style={styles.brandDot} />
+                <Text style={styles.brandSubtitle}>PRIVATE CELLAR</Text>
               </View>
-              <Text style={styles.headerSubtitle}>
-                {totalCount > 0
-                  ? `${totalCount} handpicked blend${totalCount > 1 ? 's' : ''} saved`
-                  : 'Curate your favorite brews'}
-              </Text>
+              <View style={styles.liveFreshBadge}>
+                <View style={styles.liveFreshDot} />
+                <Text style={styles.liveFreshText}>100% ESTATE FRESH</Text>
+              </View>
             </View>
 
-            {/* Header Right Actions: View Toggle & Clear */}
-            <View style={styles.headerRightActions}>
-              {totalCount > 0 ? (
-                <>
-                  <TouchableOpacity
-                    activeOpacity={0.75}
-                    onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                    style={styles.viewToggleBtn}
-                  >
-                    <Icon
-                      name={viewMode === 'grid' ? 'layers' : 'grid'}
-                      size={15}
-                      color="#FFFFFF"
-                    />
-                  </TouchableOpacity>
+            {/* Navigation & Title Bar */}
+            <View style={styles.headerMainRow}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleBack}
+                style={styles.backButton}
+              >
+                <Icon name="arrow-left" size={17} color="#FFFFFF" />
+              </TouchableOpacity>
 
-                  <TouchableOpacity
-                    activeOpacity={0.75}
-                    onPress={handleClearAll}
-                    style={styles.clearBtn}
-                  >
-                    <Text style={styles.clearBtnText}>Clear</Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <View style={{ width: 36 }} />
-              )}
+              <View style={styles.headerTitleWrap}>
+                <View style={styles.titleRow}>
+                  <View style={styles.heartIconWrap}>
+                    <Icon name="heart" size={15} color="#F87171" fill="#DC2626" />
+                  </View>
+                  <Text style={styles.headerTitle}>My Wishlist</Text>
+                </View>
+                <Text style={styles.headerSubtitle}>
+                  {totalCount > 0
+                    ? `${totalCount} handpicked blend${totalCount > 1 ? 's' : ''} saved`
+                    : 'Curate your favorite brews'}
+                </Text>
+              </View>
+
+              {/* Header Right Actions: View Toggle & Clear */}
+              <View style={styles.headerRightActions}>
+                {totalCount > 0 ? (
+                  <>
+                    <TouchableOpacity
+                      activeOpacity={0.75}
+                      onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                      style={styles.viewToggleBtn}
+                    >
+                      <Icon
+                        name={viewMode === 'grid' ? 'layers' : 'grid'}
+                        size={15}
+                        color="#FFFFFF"
+                      />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      activeOpacity={0.75}
+                      onPress={handleClearAll}
+                      style={styles.clearBtn}
+                    >
+                      <Text style={styles.clearBtnText}>Clear</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <View style={{ width: 36 }} />
+                )}
+              </View>
             </View>
-          </View>
-
-        </LinearGradient>
+          </LinearGradient>
+        </Animated.View>
 
         {/* 2. MAIN SCROLL AREA */}
         {loading && products.length === 0 ? (
-          <WishlistSkeleton />
+          <View style={{ flex: 1, paddingTop: headerHeight + 8 }}>
+            <WishlistSkeleton />
+          </View>
         ) : (
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 12 }]}
             bounces={true}
             alwaysBounceVertical={true}
             scrollEventThrottle={16}
-            onScroll={(e) => {
-              scrollYRef.current = e.nativeEvent.contentOffset.y;
-            }}
+            onScroll={handleScroll}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -485,7 +560,7 @@ export default function WishlistScreen() {
                 tintColor={theme.colors.primary}
                 colors={[theme.colors.primary]}
                 progressBackgroundColor="#FFFFFF"
-                progressViewOffset={Platform.OS === 'android' ? 20 : 0}
+                progressViewOffset={Platform.OS === 'android' ? headerHeight + 10 : headerHeight}
               />
             }
           >
@@ -759,6 +834,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F6F0',
+  },
+  headerWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    elevation: 8,
+    backgroundColor: 'transparent',
   },
   webPullIndicatorContainer: {
     width: '100%',
