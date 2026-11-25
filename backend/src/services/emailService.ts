@@ -316,3 +316,175 @@ export async function sendOtpEmail({ to, otp, userName, purpose = 'Login' }: Sen
 
   return { sent: true };
 }
+
+/**
+ * Generic helper to dispatch emails using all configured providers (Resend, SendGrid, Brevo, SMTP, or console dev mode)
+ */
+export async function sendRawEmail({
+  to,
+  subject,
+  html,
+  plainText,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  plainText: string;
+}): Promise<{ sent: boolean; messageId?: string }> {
+  const fromName = process.env.EMAIL_FROM_NAME || process.env.SMTP_FROM_NAME || 'Vardhamrit Tea';
+  const fromEmail = process.env.GMAIL_USER || process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@vardhamrit.com';
+
+  const isCustomDomain = Boolean(process.env.RESEND_FROM && !process.env.RESEND_FROM.includes('resend.dev'));
+  const isOwnerEmail = to.trim().toLowerCase() === 'promiljain11@gmail.com';
+
+  if ((isCustomDomain || isOwnerEmail) && getResendApiKey()) {
+    const sent = await sendViaResendHttp(to, subject, html, plainText, fromName);
+    if (sent) return { sent: true };
+  }
+
+  if (process.env.SENDGRID_API_KEY) {
+    const sent = await sendViaSendGridHttp(to, subject, html, plainText, fromName, fromEmail);
+    if (sent) return { sent: true };
+  }
+
+  if (process.env.BREVO_API_KEY) {
+    const sent = await sendViaBrevoHttp(to, subject, html, plainText, fromName, fromEmail);
+    if (sent) return { sent: true };
+  }
+
+  const isRenderWithoutCustomSmtp = Boolean(process.env.RENDER && !process.env.SMTP_HOST);
+  const activeTransporter = isRenderWithoutCustomSmtp ? null : getTransporter();
+
+  if (activeTransporter) {
+    try {
+      const senderEmail = (process.env.GMAIL_USER || 'promiljain11@gmail.com').trim();
+      const info = await activeTransporter.sendMail({
+        from: `"${fromName}" <${senderEmail}>`,
+        to,
+        subject,
+        text: plainText,
+        html,
+      });
+      console.log(`[EmailService] ✅ Email sent via SMTP to ${to} (Message ID: ${info.messageId})`);
+      return { sent: true, messageId: info.messageId };
+    } catch (err: any) {
+      console.error('[EmailService] ❌ Failed to send email via SMTP transporter:', err.message);
+    }
+  }
+
+  if (!isCustomDomain && !isOwnerEmail && getResendApiKey()) {
+    const sent = await sendViaResendHttp(to, subject, html, plainText, fromName);
+    if (sent) return { sent: true };
+  }
+
+  console.log('\n============================================================');
+  console.log(`📨 [Vardhamrit Email Service - Dev Console]`);
+  console.log(`   To:         ${to}`);
+  console.log(`   Subject:    ${subject}`);
+  console.log(`   Text:\n${plainText}`);
+  console.log('============================================================\n');
+
+  return { sent: true };
+}
+
+export interface SendRestockEmailOptions {
+  to: string;
+  userName?: string;
+  productName: string;
+  variantLabel: string;
+  price?: number;
+  productId?: number;
+  productSlug?: string;
+  imageUrl?: string;
+}
+
+/**
+ * Sends a rich HTML Restock Notification Email to the subscribed customer
+ */
+export async function sendRestockAlertEmail({
+  to,
+  userName,
+  productName,
+  variantLabel,
+  price,
+  productId,
+  productSlug,
+  imageUrl,
+}: SendRestockEmailOptions): Promise<{ sent: boolean; messageId?: string }> {
+  const storeUrl =
+    process.env.STORE_FRONTEND_URL ||
+    (process.env.NODE_ENV === 'production' ? 'https://vardhamrit.com' : 'http://localhost:8081');
+
+  // Use numeric productId first because Expo Router's dynamic route is /product/[id]
+  const targetRoute = productId
+    ? `/product/${productId}`
+    : productSlug
+    ? `/product/${productSlug}`
+    : '/(tabs)/categories';
+
+  const productLink = `${storeUrl.replace(/\/+$/, '')}${targetRoute}`;
+
+  const subject = `🍃 Back in Stock: ${productName} (${variantLabel}) is ready for you!`;
+  const greeting = userName ? `Dear ${userName},` : 'Dear Tea Connoisseur,';
+  const priceDisplay = price ? `₹${price}` : '';
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f7fafc; margin: 0; padding: 24px; color: #1e293b;">
+      <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 18px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+        <div style="background: linear-gradient(135deg, #0F5132 0%, #15803D 100%); padding: 32px 24px; text-align: center;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">VARDHAMRIT</h1>
+          <p style="color: #d1fae5; margin: 6px 0 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px;">Artisanal Tea Masters • Estate Direct</p>
+        </div>
+        <div style="padding: 32px 28px;">
+          <div style="display: inline-block; background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 20px; padding: 4px 12px; margin-bottom: 16px;">
+            <span style="color: #065f46; font-size: 11px; font-weight: bold; text-transform: uppercase;">✨ Back In Stock Alert</span>
+          </div>
+          <h2 style="color: #0f172a; margin: 0 0 12px 0; font-size: 20px; font-weight: 800;">Fresh Harvest Ready For Your Cup</h2>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+            ${greeting}<br/>
+            You asked us to notify you when <strong>${productName} (${variantLabel})</strong> returned to stock. Our master blenders have just freshly harvested and packed a limited inventory!
+          </p>
+
+          <div style="background-color: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 24px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                ${imageUrl ? `<td style="width: 70px; vertical-align: middle;"><img src="${imageUrl}" width="60" height="60" style="border-radius: 8px; object-fit: cover;" alt="${productName}"/></td>` : ''}
+                <td style="vertical-align: middle; padding-left: ${imageUrl ? '14px' : '0'};">
+                  <div style="font-size: 15px; font-weight: 800; color: #0f172a;">${productName}</div>
+                  <div style="font-size: 12.5px; color: #64748b; margin-top: 3px;">Pack Size: <strong>${variantLabel}</strong></div>
+                  ${priceDisplay ? `<div style="font-size: 16px; font-weight: 800; color: #0F5132; margin-top: 4px;">${priceDisplay}</div>` : ''}
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="text-align: center; margin: 28px 0 12px 0;">
+            <a href="${productLink}" style="display: inline-block; background-color: #0F5132; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 30px; font-size: 14px; font-weight: bold; letter-spacing: 0.3px; box-shadow: 0 4px 10px rgba(15,81,50,0.3);">
+              Order Now Before It Sells Out &rarr;
+            </a>
+          </div>
+
+          <p style="color: #94a3b8; font-size: 11.5px; text-align: center; margin-top: 24px;">
+            You received this notification because you subscribed to stock updates for this blend on Vardhamrit.
+          </p>
+        </div>
+        <div style="background-color: #fafafa; border-top: 1px solid #f1f5f9; padding: 16px; text-align: center; font-size: 11px; color: #94a3b8;">
+          © ${new Date().getFullYear()} Vardhamrit Tea Estates Pvt Ltd. All rights reserved.
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const plainText = `${greeting}\n\nGreat news! ${productName} (${variantLabel}) is officially back in stock at Vardhamrit for ${priceDisplay}.\n\nOrder now before limited inventory sells out:\n${productLink}\n\nWarm regards,\nVardhamrit Tea Masters`;
+
+  return sendRawEmail({
+    to,
+    subject,
+    html,
+    plainText,
+  });
+}

@@ -188,6 +188,16 @@ if (adminDist) {
 }
 
 // 2. Visitor Storefront UI (Catch-all for all customer routes)
+// Convenient redirect for email & WhatsApp notification links
+app.get(['/r/product/:id', '/product/:id'], (req, res, next) => {
+  const productId = req.params.id;
+  const storeUrl = process.env.STORE_FRONTEND_URL || 'http://localhost:8081';
+  if (process.env.NODE_ENV !== 'production' && storeUrl && !storeUrl.includes(':5000')) {
+    return res.redirect(`${storeUrl.replace(/\/+$/, '')}/product/${productId}`);
+  }
+  return next();
+});
+
 if (appDist) {
   app.use(express.static(appDist));
   app.get('*', (req, res, next) => {

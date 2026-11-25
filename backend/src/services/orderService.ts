@@ -5,6 +5,7 @@ import { validateCoupon } from './couponService';
 import { calculateOrderTotals, calculateTax, calculateDynamicDistanceFees } from '../utils/pricing';
 import { processRefund } from './paymentService';
 import { io } from '../index';
+import { dispatchOrderWhatsAppNotification } from './notificationService';
 
 const formatImageUrl = (url?: string | null): string => {
   if (!url) return 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&q=80&w=800';
@@ -346,6 +347,11 @@ export async function createOrder(params: CreateOrderParams) {
 
     const createdOrder = await getOrderById(orderId, userId);
 
+    // 13b. Automatically dispatch WhatsApp Order Confirmation to customer
+    dispatchOrderWhatsAppNotification(createdOrder, 'PLACED').catch((err) =>
+      console.warn('[OrderService] WhatsApp order alert warning:', err)
+    );
+
     // 14. Emit real-time alert to Admin Panel & Visitor Panel
     if (io) {
       io.emit('order.created', {
@@ -627,6 +633,10 @@ export async function cancelOrder(orderId: number, userId: number, reason?: stri
         updatedAt: new Date().toISOString(),
       });
     }
+
+    dispatchOrderWhatsAppNotification(order, 'CANCELLED').catch((err) =>
+      console.warn('[OrderService] WhatsApp cancellation alert warning:', err)
+    );
 
     return getOrderById(orderId, userId);
   } catch (err) {
