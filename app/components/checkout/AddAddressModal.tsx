@@ -718,7 +718,7 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
             <TextInput
               style={[styles.input, errors.name && styles.inputError]}
               placeholder="e.g. Aarav Sharma"
-              placeholderTextColor={theme.colors.textHint}
+              placeholderTextColor="#9CA3AF"
               value={name}
               onChangeText={handleFieldChange('name', setName)}
             />
@@ -745,7 +745,7 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
             <TextInput
               style={[styles.input, errors.phone && styles.inputError]}
               placeholder="e.g. 9876543210"
-              placeholderTextColor={theme.colors.textHint}
+              placeholderTextColor="#9CA3AF"
               value={phone}
               onChangeText={handleFieldChange('phone', setPhone)}
               keyboardType="phone-pad"
@@ -779,7 +779,7 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
                 errors.line1 && styles.inputError,
               ]}
               placeholder="e.g. Flat 302, 3rd Floor, Silver Crest / House No. 14"
-              placeholderTextColor={theme.colors.textHint}
+              placeholderTextColor="#9CA3AF"
               value={line1}
               onChangeText={handleFieldChange('line1', setLine1)}
             />
@@ -806,7 +806,7 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
             <TextInput
               style={[styles.input, errors.line2 && styles.inputError]}
               placeholder="e.g. Martand Chowk, MG Road, South Tukoganj"
-              placeholderTextColor={theme.colors.textHint}
+              placeholderTextColor="#9CA3AF"
               value={line2}
               onChangeText={handleFieldChange('line2', setLine2)}
             />
@@ -824,7 +824,7 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
             <TextInput
               style={styles.input}
               placeholder="e.g. Near Shiv Temple / Behind Apollo Pharmacy"
-              placeholderTextColor={theme.colors.textHint}
+              placeholderTextColor="#9CA3AF"
               value={landmark}
               onChangeText={(text) => {
                 setLandmark(text);
@@ -845,7 +845,7 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
                 <TextInput
                   style={[styles.input, errors.pincode && styles.inputError]}
                   placeholder="e.g. 452009"
-                  placeholderTextColor={theme.colors.textHint}
+                  placeholderTextColor="#9CA3AF"
                   value={pincode}
                   onChangeText={handlePincodeChange}
                   keyboardType="numeric"
@@ -871,7 +871,7 @@ export const AddAddressModal: React.FC<AddAddressModalProps> = ({
                 <TextInput
                   style={[styles.input, errors.city && styles.inputError]}
                   placeholder="e.g. Indore"
-                  placeholderTextColor={theme.colors.textHint}
+                  placeholderTextColor="#9CA3AF"
                   value={city}
                   onChangeText={handleFieldChange('city', setCity)}
                   editable={true}
@@ -1268,8 +1268,8 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.sm,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm + 1,
-    fontSize: 16,
-    fontWeight: theme.typography.weights.medium,
+    fontSize: 12,
+    fontWeight: '400',
     color: theme.colors.textPrimary,
     marginBottom: theme.spacing.sm + 2,
     outlineWidth: 0,

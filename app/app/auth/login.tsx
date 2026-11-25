@@ -887,8 +887,8 @@ const styles = StyleSheet.create({
   phoneInput: {
     flex: 1,
     paddingHorizontal: 12,
-    fontSize: 16,
-    fontWeight: theme.typography.weights.bold,
+    fontSize: 12,
+    fontWeight: '400',
     color: theme.colors.textPrimary,
     height: '100%',
     borderWidth: 0,
@@ -944,7 +944,8 @@ const styles = StyleSheet.create({
   standardInput: {
     flex: 1,
     paddingHorizontal: 10,
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: '400',
     color: theme.colors.textPrimary,
     height: '100%',
     borderWidth: 0,

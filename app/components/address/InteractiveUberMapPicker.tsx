@@ -596,7 +596,7 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
           <TextInput
             style={styles.searchInput}
             placeholder="Search Indore colony, scheme, landmark..."
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#9CA3AF"
             value={searchQuery}
             onChangeText={handleSearchChange}
             onFocus={() => {
@@ -893,9 +893,9 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 12,
     color: '#111827',
-    fontWeight: '500',
+    fontWeight: '400',
     paddingVertical: 0,
     outlineWidth: 0,
     outlineStyle: 'none',

@@ -33,6 +33,9 @@ export interface Order {
   created_at: string;
   items: OrderItem[];
   status_history?: any[];
+  scratch_card_claimed?: boolean;
+  scratch_card_coins?: number;
+  scratch_card_claimed_at?: string | null;
 }
 
 export async function fetchUserOrders(page = 1, limit = 50): Promise<{

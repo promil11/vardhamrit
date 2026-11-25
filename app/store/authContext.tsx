@@ -289,7 +289,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     useCartStore.getState().setCurrentUser(null);
     useCartStore.getState().clearCart();
-    useScratchCardStore.getState().clearCards();
+    useScratchCardStore.getState().setCurrentUser(null);
     useWishlistStore.getState().clearWishlist();
     useAddressStore.getState().clearAddresses();
   };

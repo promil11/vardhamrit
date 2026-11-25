@@ -517,7 +517,7 @@ export function GokwikUpiModal({
                     <TextInput
                       style={styles.vpaInput}
                       placeholder="e.g. mobile@paytm or name@okhdfcbank"
-                      placeholderTextColor={theme.colors.textSecondary}
+                      placeholderTextColor="#9CA3AF"
                       value={vpaInput}
                       onChangeText={setVpaInput}
                       autoCapitalize="none"
@@ -871,9 +871,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   vpaInput: {
-    fontSize: 16,
+    fontSize: 12,
     color: theme.colors.textPrimary,
-    fontWeight: '600',
+    fontWeight: '400',
   },
   chipsRow: {
     flexDirection: 'row',

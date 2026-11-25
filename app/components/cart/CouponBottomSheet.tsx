@@ -272,7 +272,7 @@ export const CouponBottomSheet: React.FC<CouponBottomSheetProps> = ({
           <TextInput
             style={styles.input}
             placeholder="Enter promo code"
-            placeholderTextColor={theme.colors.textHint}
+            placeholderTextColor="#9CA3AF"
             value={customCode}
             onChangeText={(txt) => {
               setCustomCode(txt);
@@ -434,8 +434,8 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm + 2,
-    fontSize: 16,
-    fontWeight: theme.typography.weights.bold,
+    fontSize: 12,
+    fontWeight: '400',
     color: theme.colors.textPrimary,
   },
   applyBtn: {

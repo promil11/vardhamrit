@@ -89,15 +89,7 @@ export const useScratchCardStore = create<ScratchCardState>((set, get) => ({
   },
 
   clearCards: async () => {
-    const effectiveUserId = get().currentUserId;
-    if (effectiveUserId) {
-      const key = getStorageKey(effectiveUserId);
-      if (key) {
-        await storage.removeItem(key).catch(() => {});
-      }
-    }
-    // Also remove legacy key
-    await storage.removeItem('vardhamrit_scratch_cards_v1').catch(() => {});
+    // Only reset in-memory state; DO NOT delete user's persisted key so cards survive re-logins!
     set({ cards: [], currentUserId: null });
   },
 
@@ -205,10 +197,8 @@ export const useScratchCardStore = create<ScratchCardState>((set, get) => ({
       const key = getStorageKey(effectiveUserId);
       if (!key) return;
 
-      // If user has NO orders (e.g. newly registered account), cards must be empty
+      // If user has NO orders or order fetch failed, do not wipe existing cards!
       if (!Array.isArray(orders) || orders.length === 0) {
-        set({ cards: [], currentUserId: effectiveUserId });
-        await storage.setItem(key, JSON.stringify([]));
         return;
       }
 
@@ -226,23 +216,38 @@ export const useScratchCardStore = create<ScratchCardState>((set, get) => ({
       for (const ord of orders) {
         const orderNum = String(ord.order_number || ord.id);
         const cardId = String(ord.id || ord.order_number);
+        const isClaimedInDb = Boolean(ord.scratch_card_claimed);
 
-        const exists = updatedList.some(
+        const existingIndex = updatedList.findIndex(
           (c) => String(c.id) === cardId || String(c.orderNumber) === orderNum
         );
 
-        if (!exists) {
+        if (existingIndex >= 0) {
+          const existing = updatedList[existingIndex];
+          // If server says it's claimed, ensure card is marked as scratched & claimed
+          if (isClaimedInDb && (!existing.isClaimed || !existing.isScratched)) {
+            updatedList[existingIndex] = {
+              ...existing,
+              isScratched: true,
+              isClaimed: true,
+              claimedAt: ord.scratch_card_claimed_at || existing.claimedAt || new Date().toISOString(),
+              coinsEarned: ord.scratch_card_coins || existing.coinsEarned,
+            };
+            hasChanges = true;
+          }
+        } else {
+          // Card doesn't exist locally yet (e.g. fresh install, new device, login after rebuild)
           const grandTotal = Number(ord.total_amount || ord.total || 0);
-          const coins = Math.max(5, Math.round(grandTotal * 0.01));
+          const coins = ord.scratch_card_coins || Math.max(5, Math.round(grandTotal * 0.01));
           updatedList.push({
             id: cardId,
             orderNumber: orderNum,
             coinsEarned: coins,
             totalAmount: grandTotal,
             createdAt: ord.created_at || new Date().toISOString(),
-            isScratched: false,
-            isClaimed: false,
-            claimedAt: null,
+            isScratched: isClaimedInDb,
+            isClaimed: isClaimedInDb,
+            claimedAt: isClaimedInDb ? (ord.scratch_card_claimed_at || ord.created_at || new Date().toISOString()) : null,
           });
           hasChanges = true;
         }

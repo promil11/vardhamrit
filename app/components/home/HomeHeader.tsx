@@ -171,9 +171,9 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
         <View style={[styles.searchBar, isTablet && styles.searchBarTablet]}>
           <Icon name="search" size={isTablet ? 21 : 18} color={theme.colors.textSecondary} style={styles.searchIcon} />
           <TextInput
-            style={[styles.searchInput, isTablet && { fontSize: scaleFont(16) }]}
+            style={styles.searchInput}
             placeholder={PLACEHOLDERS[placeholderIndex]}
-            placeholderTextColor={theme.colors.textHint}
+            placeholderTextColor="#9CA3AF"
             value={searchQuery}
             onChangeText={onSearchChange}
             autoCorrect={false}
@@ -407,9 +407,9 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 12,
     color: theme.colors.textPrimary,
-    fontWeight: theme.typography.weights.medium,
+    fontWeight: '400',
     height: '100%',
     padding: 0,
     borderWidth: 0,

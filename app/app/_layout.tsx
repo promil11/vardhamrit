@@ -120,7 +120,7 @@ function NavigationGate() {
 }
 
 const RESPONSIVE_ENGINE_CSS = `
-/* 100% PREVENT AUTO-ZOOM ON INPUT FOCUS ACROSS ALL MOBILE BROWSERS */
+/* 100% PREVENT AUTO-ZOOM & ENFORCE 12PX REGULAR FONT STYLE ACROSS ALL TEXT FIELDS */
   input,
   textarea,
   select,
@@ -134,7 +134,8 @@ const RESPONSIVE_ENGINE_CSS = `
   input[type="tel"],
   input[type="password"],
   input[type="search"] {
-    font-size: 16px !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
     touch-action: manipulation !important;
   }
 
@@ -146,6 +147,28 @@ const RESPONSIVE_ENGINE_CSS = `
   /* Enable smooth in-app pull-to-refresh without full-page browser reload */
   html, body, #root {
     overscroll-behavior-y: contain !important;
+  }
+
+  /* Universal Text Field Placeholder Size & Font Design (12px, non-bold) */
+  input::placeholder,
+  textarea::placeholder,
+  .css-textinput-11aywtz::placeholder,
+  .css-11aywtz::placeholder,
+  input::-webkit-input-placeholder,
+  textarea::-webkit-input-placeholder,
+  input:-moz-placeholder,
+  textarea:-moz-placeholder,
+  input::-moz-placeholder,
+  textarea::-moz-placeholder,
+  input:-ms-input-placeholder,
+  textarea:-ms-input-placeholder {
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    color: #9CA3AF !important;
+    opacity: 1 !important;
+    letter-spacing: 0px !important;
+    font-family: inherit !important;
+    line-height: normal !important;
   }
 
   /* Ensure bottom navigation tab bar and labels never clip descenders */
@@ -162,19 +185,11 @@ const RESPONSIVE_ENGINE_CSS = `
     .css-146c3p1 {
       font-size: 17.5px !important;
     }
-    .css-textinput-11aywtz,
-    .css-11aywtz {
-      font-size: 16px !important;
-    }
   }
   @media (min-width: 840px) {
     .css-text-146c3p1,
     .css-146c3p1 {
       font-size: 19px !important;
-    }
-    .css-textinput-11aywtz,
-    .css-11aywtz {
-      font-size: 17.5px !important;
     }
   }
 

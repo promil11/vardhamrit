@@ -318,6 +318,52 @@ export async function claimScratchCard(req: Request, res: Response, next: NextFu
     try {
       await connection.beginTransaction();
 
+      // Resolve order ID and order number for reliability
+      let resolvedOrderId: number | null = null;
+      let resolvedOrderNum: string | null = orderNumber ? String(orderNumber) : null;
+
+      if (orderId && !isNaN(Number(orderId))) {
+        resolvedOrderId = Number(orderId);
+      }
+
+      if (resolvedOrderId || resolvedOrderNum) {
+        const [orderRows]: any = await connection.query(
+          'SELECT id, order_number FROM orders WHERE (id = ? OR order_number = ?) AND user_id = ? LIMIT 1',
+          [resolvedOrderId || 0, resolvedOrderNum || '', userId]
+        );
+        if (orderRows.length > 0) {
+          resolvedOrderId = orderRows[0].id;
+          resolvedOrderNum = orderRows[0].order_number;
+        }
+
+        // Idempotency: verify this order has not already had its scratch card claimed!
+        const [existingClaims]: any = await connection.query(
+          `SELECT id, amount, created_at FROM coin_transactions 
+           WHERE user_id = ? AND transaction_type = 'ORDER_EARNED' 
+             AND (order_id = ? OR description LIKE ?) 
+           LIMIT 1`,
+          [userId, resolvedOrderId || 0, `%${resolvedOrderNum || ''}%`]
+        );
+
+        if (existingClaims.length > 0) {
+          const [uRows]: any = await connection.query(
+            'SELECT coins_balance FROM users WHERE id = ?',
+            [userId]
+          );
+          const currentBalance = Number(uRows[0]?.coins_balance) || 0;
+
+          await connection.commit();
+          return sendSuccess(res, {
+            claimed: true,
+            alreadyClaimed: true,
+            coinsAdded: 0,
+            newBalance: currentBalance,
+            orderNumber: resolvedOrderNum || orderNumber,
+            message: 'Scratch card reward has already been claimed for this order.',
+          });
+        }
+      }
+
       // 1. Fetch current coin balance with row lock
       const [uRows]: any = await connection.query(
         'SELECT coins_balance FROM users WHERE id = ? FOR UPDATE',
@@ -333,7 +379,7 @@ export async function claimScratchCard(req: Request, res: Response, next: NextFu
           coinsAdded: 0,
           newBalance: currentBalance,
           maxReached: true,
-          orderNumber,
+          orderNumber: resolvedOrderNum || orderNumber,
           message: 'Maximum limit of 500 Tea Coins reached. Redeem your coins at checkout to earn more!',
         });
       }
@@ -350,15 +396,15 @@ export async function claimScratchCard(req: Request, res: Response, next: NextFu
         );
 
         // 3. Record in coin_transactions ledger
-        const desc = orderNumber
-          ? `Scratch card reward on Order #${orderNumber}`
+        const desc = (resolvedOrderNum || orderNumber)
+          ? `Scratch card reward on Order #${resolvedOrderNum || orderNumber}`
           : 'Scratch card cashback reward';
 
         await connection.query(
           `INSERT INTO coin_transactions 
            (user_id, order_id, amount, transaction_type, description, balance_after)
            VALUES (?, ?, ?, 'ORDER_EARNED', ?, ?)`,
-          [userId, orderId && !isNaN(Number(orderId)) ? Number(orderId) : null, allowedCoinsToAdd, desc, newBalance]
+          [userId, resolvedOrderId, allowedCoinsToAdd, desc, newBalance]
         );
       }
 
@@ -369,7 +415,7 @@ export async function claimScratchCard(req: Request, res: Response, next: NextFu
         coinsAdded: allowedCoinsToAdd,
         newBalance,
         maxReached: newBalance >= MAX_TEA_COINS,
-        orderNumber,
+        orderNumber: resolvedOrderNum || orderNumber,
       });
     } catch (err) {
       await connection.rollback();

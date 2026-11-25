@@ -681,7 +681,7 @@ export default function RegisterScreen() {
                   <TextInput
                     style={styles.unifiedInput}
                     placeholder="eg: CODE"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor="#9CA3AF"
                     value={inviteCodeInput}
                     onChangeText={(t) => {
                       setInviteCodeInput(t.toUpperCase());
@@ -957,7 +957,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingHorizontal: 10,
-    fontSize: 16,
+    fontSize: 12,
+    fontWeight: '400',
     color: theme.colors.textPrimary,
     height: '100%',
     borderWidth: 0,
@@ -1037,9 +1038,9 @@ const styles = StyleSheet.create({
   unifiedInput: {
     flex: 1,
     paddingHorizontal: 10,
-    fontSize: 16,
-    fontWeight: '500',
-    letterSpacing: 1.2,
+    fontSize: 12,
+    fontWeight: '400',
+    letterSpacing: 0.8,
     color: theme.colors.textPrimary,
     height: '100%',
     borderWidth: 0,

@@ -445,6 +445,18 @@ export async function getOrderById(orderId: number, userId?: number) {
   order.has_reviewed = existingReviews.length > 0;
   order.review = existingReviews[0] || null;
 
+  // Check scratch card claimed status from coin_transactions
+  const [orderClaim]: any = await pool.query(
+    `SELECT order_id, description, amount, created_at 
+     FROM coin_transactions 
+     WHERE (order_id = ? OR description LIKE ?) AND transaction_type = 'ORDER_EARNED' 
+     LIMIT 1`,
+    [orderId, `%${order.order_number}%`]
+  );
+  order.scratch_card_claimed = orderClaim.length > 0;
+  order.scratch_card_coins = orderClaim.length > 0 ? orderClaim[0].amount : undefined;
+  order.scratch_card_claimed_at = orderClaim.length > 0 ? orderClaim[0].created_at : null;
+
   return order;
 }
 
@@ -492,6 +504,27 @@ export async function getUserOrders(userId: number, page = 1, limit = 10) {
       reviewMap.set(rev.order_id, rev);
     }
 
+    // Check claimed scratch cards / cashback from coin_transactions
+    const [claimedTransactions]: any = await pool.query(
+      `SELECT order_id, description, amount, created_at 
+       FROM coin_transactions 
+       WHERE user_id = ? AND transaction_type = 'ORDER_EARNED'`,
+      [userId]
+    );
+
+    const claimedMap = new Map<string, any>();
+    for (const ct of claimedTransactions) {
+      if (ct.order_id) {
+        claimedMap.set(String(ct.order_id), ct);
+      }
+      for (const ord of orders) {
+        if (ord.order_number && ct.description && ct.description.includes(ord.order_number)) {
+          claimedMap.set(String(ord.id), ct);
+          claimedMap.set(String(ord.order_number), ct);
+        }
+      }
+    }
+
     for (const order of orders) {
       if (typeof order.address_snapshot === 'string') {
         try {
@@ -501,6 +534,11 @@ export async function getUserOrders(userId: number, page = 1, limit = 10) {
       order.items = itemsMap.get(order.id) || [];
       order.has_reviewed = reviewMap.has(order.id);
       order.review = reviewMap.get(order.id) || null;
+
+      const claimInfo = claimedMap.get(String(order.id)) || claimedMap.get(String(order.order_number));
+      order.scratch_card_claimed = Boolean(claimInfo);
+      order.scratch_card_coins = claimInfo ? claimInfo.amount : undefined;
+      order.scratch_card_claimed_at = claimInfo ? claimInfo.created_at : null;
     }
   }
 

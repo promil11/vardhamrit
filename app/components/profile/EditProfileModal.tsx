@@ -318,7 +318,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 <TextInput
                   style={styles.textInput}
                   placeholder="Enter your full name"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor="#9CA3AF"
                   value={name}
                   onChangeText={(t) => {
                     setName(t);
@@ -337,7 +337,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 <TextInput
                   style={styles.textInput}
                   placeholder="Enter your email address"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor="#9CA3AF"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -361,7 +361,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 <TextInput
                   style={[styles.textInput, { paddingLeft: 8 }]}
                   placeholder="Enter 10-digit mobile number"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor="#9CA3AF"
                   keyboardType="phone-pad"
                   maxLength={10}
                   value={phone}
@@ -661,7 +661,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    fontSize: 16,
+    fontSize: 12,
+    fontWeight: '400',
     color: '#0F172A',
   },
   countryBox: {
