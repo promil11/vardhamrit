@@ -132,7 +132,7 @@ export default function NotificationsScreen() {
     if (Platform.OS !== 'web') {
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch {}
+      } catch { }
     }
 
     if (!item.is_read) {
@@ -296,7 +296,7 @@ export default function NotificationsScreen() {
                     if (Platform.OS !== 'web') {
                       try {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      } catch {}
+                      } catch { }
                     }
                     setActiveFilter(tab.id);
                   }}
@@ -700,5 +700,99 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+  stockAlertShortcutCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#10B981',
+    marginBottom: 14,
+    overflow: 'hidden',
+    position: 'relative',
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  stockAlertAccentStripe: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: '#10B981',
+  },
+  stockAlertContentWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingLeft: 16,
+    gap: 12,
+  },
+  stockAlertIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stockAlertTextCol: {
+    flex: 1,
+  },
+  stockAlertTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBlock: 5
+  },
+  stockAlertShortcutTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.1,
+  },
+  stockAlertLiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3.5,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  stockAlertLiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 2.5,
+    backgroundColor: '#10B981',
+  },
+  stockAlertLiveText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#059669',
+  },
+  stockAlertShortcutSub: {
+    fontSize: 11.5,
+    color: '#64748B',
+    marginTop: 2,
+    lineHeight: 16,
+    fontWeight: '500',
+  },
+  stockAlertActionBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

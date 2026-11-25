@@ -12,10 +12,17 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
+  TextInput,
+  Alert,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { theme } from '../../theme';
-import { fetchProductDetail } from '../../services/catalogService';
+import {
+  fetchProductDetail,
+  subscribeToStockNotification,
+  checkStockNotificationSubscription,
+} from '../../services/catalogService';
 import { Product, ProductVariant } from '../../types';
 import { AddButton } from '../../components/product/AddButton';
 import { RatingChip } from '../../components/common/RatingChip';
@@ -25,6 +32,8 @@ import { ProductDetailSkeleton } from '../../components/common/Skeleton';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useCartStore } from '../../store/useCartStore';
 import { useWishlistStore } from '../../store/useWishlistStore';
+import { useAuth } from '../../store/authContext';
+import { BottomSheetWrapper } from '../../components/common/BottomSheetWrapper';
 import { Icon } from '../../components/common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import { useResponsive } from '../../utils/responsive';
@@ -97,6 +106,109 @@ export default function ProductDetailScreen() {
 
   const { isInWishlist, toggleWishlist } = useWishlistStore();
   const isWishlisted = product ? isInWishlist(product.id) : false;
+
+  const { user, isAuthenticated } = useAuth();
+  const [isSubscribedStock, setIsSubscribedStock] = useState(false);
+  const [subscribingStock, setSubscribingStock] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactInput, setContactInput] = useState('');
+  const [contactType, setContactType] = useState<'PHONE' | 'EMAIL'>('PHONE');
+  const [stockAlertToast, setStockAlertToast] = useState<string | null>(null);
+
+  const triggerHaptic = (feedbackStyle: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.impactAsync(feedbackStyle);
+      } catch {
+        // Haptics fallback
+      }
+    }
+  };
+
+  const isCurrentOutOfStock = selectedVariant ? (selectedVariant.stock !== undefined && selectedVariant.stock <= 0) : false;
+
+  useEffect(() => {
+    if (selectedVariant && isCurrentOutOfStock) {
+      const contactVal = user?.email || user?.phone || null;
+      checkStockNotificationSubscription(selectedVariant.id, contactVal)
+        .then((sub) => setIsSubscribedStock(sub))
+        .catch(() => setIsSubscribedStock(false));
+    } else {
+      setIsSubscribedStock(false);
+    }
+  }, [selectedVariant?.id, isCurrentOutOfStock, isAuthenticated, user?.email, user?.phone]);
+
+  const handleNotifyMePress = async () => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+
+    if (isSubscribedStock) {
+      setStockAlertToast("You're already on the priority restock list! 🍃");
+      setTimeout(() => setStockAlertToast(null), 3500);
+      return;
+    }
+
+    if (isAuthenticated && (user?.phone || user?.email)) {
+      if (!product || !selectedVariant) return;
+      setSubscribingStock(true);
+      const res = await subscribeToStockNotification(product.id, selectedVariant.id, {
+        email: user.email || undefined,
+        phone: user.phone || undefined,
+        contactType: user.phone ? 'PHONE' : 'EMAIL',
+      });
+      setSubscribingStock(false);
+      if (res.success) {
+        setIsSubscribedStock(true);
+        triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
+        setStockAlertToast(res.message);
+        setTimeout(() => setStockAlertToast(null), 4000);
+      } else {
+        Alert.alert('Stock Notification', res.message);
+      }
+    } else {
+      setContactInput(user?.phone || user?.email || '');
+      setShowContactModal(true);
+    }
+  };
+
+  const handleSubmitContactAlert = async () => {
+    if (!contactInput.trim()) {
+      Alert.alert('Required', contactType === 'PHONE' ? 'Please enter your phone number' : 'Please enter your email address');
+      return;
+    }
+
+    if (contactType === 'PHONE') {
+      const cleaned = contactInput.replace(/\D/g, '');
+      if (cleaned.length < 10) {
+        Alert.alert('Invalid Number', 'Please enter a valid 10-digit mobile number');
+        return;
+      }
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(contactInput.trim())) {
+        Alert.alert('Invalid Email', 'Please enter a valid email address');
+        return;
+      }
+    }
+
+    if (!product || !selectedVariant) return;
+    setSubscribingStock(true);
+    const payload = contactType === 'PHONE'
+      ? { phone: contactInput.trim(), contactType: 'PHONE' as const }
+      : { email: contactInput.trim(), contactType: 'EMAIL' as const };
+
+    const res = await subscribeToStockNotification(product.id, selectedVariant.id, payload);
+    setSubscribingStock(false);
+
+    if (res.success) {
+      setShowContactModal(false);
+      setIsSubscribedStock(true);
+      triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
+      setStockAlertToast(res.message);
+      setTimeout(() => setStockAlertToast(null), 4000);
+    } else {
+      Alert.alert('Stock Notification', res.message);
+    }
+  };
 
   // Collapsible Blinkit-style header animation
   const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 88 : 62);
@@ -359,6 +471,7 @@ export default function ProductDetailScreen() {
             <View style={styles.variantsGrid}>
               {product.variants.map((v) => {
                 const isSelected = v.id === selectedVariant.id;
+                const isOutOfStock = v.stock !== undefined && v.stock <= 0;
                 const vSavings = Math.max(0, v.mrp - v.price);
                 const parsed = parseVariantLabel(v.label);
 
@@ -370,6 +483,8 @@ export default function ProductDetailScreen() {
                     style={[
                       styles.variantGridCard,
                       isSelected && styles.variantGridCardSelected,
+                      isOutOfStock && styles.variantGridCardOutOfStock,
+                      isSelected && isOutOfStock && styles.variantGridCardOutOfStockSelected,
                     ]}
                   >
                     {/* Top Row: Radio + Size + Savings Badge */}
@@ -379,14 +494,23 @@ export default function ProductDetailScreen() {
                           style={[
                             styles.radioCircle,
                             isSelected && styles.radioCircleSelected,
+                            isOutOfStock && styles.radioCircleOutOfStock,
                           ]}
                         >
-                          {isSelected ? <View style={styles.radioDot} /> : null}
+                          {isSelected ? (
+                            <View
+                              style={[
+                                styles.radioDot,
+                                isOutOfStock && styles.radioDotOutOfStock,
+                              ]}
+                            />
+                          ) : null}
                         </View>
                         <Text
                           style={[
                             styles.variantSizeText,
                             isSelected && styles.variantSizeTextSelected,
+                            isOutOfStock && styles.variantSizeTextOutOfStock,
                           ]}
                           numberOfLines={1}
                         >
@@ -394,7 +518,11 @@ export default function ProductDetailScreen() {
                         </Text>
                       </View>
 
-                      {vSavings > 0 ? (
+                      {isOutOfStock ? (
+                        <View style={styles.soldOutBadge}>
+                          <Text style={styles.soldOutBadgeText}>Sold Out</Text>
+                        </View>
+                      ) : vSavings > 0 ? (
                         <View
                           style={[
                             styles.variantSavingsBadge,
@@ -421,6 +549,7 @@ export default function ProductDetailScreen() {
                           style={[
                             styles.variantPriceText,
                             isSelected && styles.variantPriceTextSelected,
+                            isOutOfStock && styles.variantPriceTextOutOfStock,
                           ]}
                         >
                           ₹{v.price}
@@ -453,6 +582,59 @@ export default function ProductDetailScreen() {
                 );
               })}
             </View>
+
+            {/* Smart "Out of Stock" Notify Me Banner for selected variant */}
+            {isCurrentOutOfStock ? (
+              <View style={styles.restockNoticeCard}>
+                <View style={styles.restockNoticeAccent} />
+
+                <View style={styles.restockNoticeContent}>
+                  <View style={styles.restockNoticeHeader}>
+                    <View style={styles.restockNoticeIconWrapper}>
+                      <Icon name="bell" size={16} color="#D97706" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.restockNoticeTitleRow}>
+                        <Text style={styles.restockNoticeTitle}>
+                          {selectedVariant.label} is currently sold out
+                        </Text>
+                        <View style={styles.restockSoldOutPill}>
+                          <Text style={styles.restockSoldOutText}>Sold Out</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.restockNoticeSub}>
+                        {isSubscribedStock
+                          ? "You're on the priority list! We'll alert you the moment fresh garden harvest arrives 🍃"
+                          : "Fresh garden inventory is being harvested at our estate. Get alerted the moment it arrives!"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {!isSubscribedStock ? (
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      onPress={handleNotifyMePress}
+                      disabled={subscribingStock}
+                      style={styles.restockNoticeBtn}
+                    >
+                      {subscribingStock ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <>
+                          <Icon name="bell" size={14} color="#FFFFFF" />
+                          <Text style={styles.restockNoticeBtnText}>Notify Me When Available</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.restockNoticeActiveBadge}>
+                      <Icon name="badge-check" size={15} color="#059669" />
+                      <Text style={styles.restockNoticeActiveText}>Priority Stock Notification Active 🍃</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            ) : null}
           </View>
 
           {/* 4. Quick Highlights & Info Chips */}
@@ -629,24 +811,155 @@ export default function ProductDetailScreen() {
         <View style={styles.bottomBar}>
           <View style={styles.bottomBarDetails}>
             <Text style={styles.bottomPackLabel}>{selectedVariant.label}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-              <Text style={styles.bottomPrice}>₹{selectedVariant.price}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={[styles.bottomPrice, isCurrentOutOfStock && styles.bottomPriceOutOfStock]}>
+                ₹{selectedVariant.price}
+              </Text>
               {selectedVariant.mrp > selectedVariant.price ? (
                 <Text style={styles.bottomMrp}>₹{selectedVariant.mrp}</Text>
+              ) : null}
+              {isCurrentOutOfStock ? (
+                <View style={styles.bottomOutOfStockBadge}>
+                  <Text style={styles.bottomOutOfStockBadgeText}>Out of stock</Text>
+                </View>
               ) : null}
             </View>
           </View>
 
-          <AddButton
-            product={product}
-            variant={selectedVariant}
-            size="lg"
-            style={styles.bottomAddBtn}
-          />
+          {isCurrentOutOfStock ? (
+            isSubscribedStock ? (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => {
+                  triggerHaptic();
+                  setStockAlertToast("You're on the priority list! We'll alert you 🍃");
+                  setTimeout(() => setStockAlertToast(null), 3000);
+                }}
+                style={styles.subscribedBottomBtn}
+              >
+                <Icon name="badge-check" size={17} color="#0F5132" />
+                <Text style={styles.subscribedBottomBtnText}>Alert Set 🍃</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleNotifyMePress}
+                disabled={subscribingStock}
+                style={styles.notifyBottomBtn}
+              >
+                {subscribingStock ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Icon name="bell" size={16} color="#FFFFFF" />
+                    <Text style={styles.notifyBottomBtnText}>Notify Me</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )
+          ) : (
+            <AddButton
+              product={product}
+              variant={selectedVariant}
+              size="lg"
+              style={styles.bottomAddBtn}
+            />
+          )}
         </View>
 
         {/* Floating View Cart Bar if items exist */}
         <ViewCartBar bottomOffset={84} />
+
+        {/* Floating Toast Notification */}
+        {stockAlertToast ? (
+          <View style={styles.toastBanner}>
+            <Icon name="badge-check" size={16} color="#FFFFFF" />
+            <Text style={styles.toastBannerText}>{stockAlertToast}</Text>
+          </View>
+        ) : null}
+
+        {/* Contact Input Modal / BottomSheetWrapper */}
+        <BottomSheetWrapper
+          visible={showContactModal}
+          onClose={() => setShowContactModal(false)}
+          title="Stock Alert"
+          subtitle={`${product.name} (${selectedVariant.label})`}
+        >
+          <View style={styles.sheetContactContainer}>
+            <View style={styles.sheetInfoBanner}>
+              <Icon name="sprout" size={18} color={theme.colors.primary} />
+              <Text style={styles.sheetInfoText}>
+                We will notify you the moment fresh garden inventory arrives in stock for this pack size.
+              </Text>
+            </View>
+
+            <View style={styles.contactTypeTabs}>
+              <TouchableOpacity
+                onPress={() => setContactType('PHONE')}
+                style={[
+                  styles.contactTypeTab,
+                  contactType === 'PHONE' && styles.contactTypeTabActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.contactTypeTabText,
+                    contactType === 'PHONE' && styles.contactTypeTabTextActive,
+                  ]}
+                >
+                  WhatsApp / SMS
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setContactType('EMAIL')}
+                style={[
+                  styles.contactTypeTab,
+                  contactType === 'EMAIL' && styles.contactTypeTabActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.contactTypeTabText,
+                    contactType === 'EMAIL' && styles.contactTypeTabTextActive,
+                  ]}
+                >
+                  Email Notification
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.inputFieldLabel}>
+              {contactType === 'PHONE' ? 'Phone / WhatsApp Number' : 'Email Address'}
+            </Text>
+            <TextInput
+              style={styles.contactTextInput}
+              value={contactInput}
+              onChangeText={setContactInput}
+              placeholder={
+                contactType === 'PHONE' ? 'e.g. 9876543210' : 'e.g. yourname@gmail.com'
+              }
+              placeholderTextColor="#9CA3AF"
+              keyboardType={contactType === 'PHONE' ? 'phone-pad' : 'email-address'}
+              autoCapitalize="none"
+            />
+
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handleSubmitContactAlert}
+              disabled={subscribingStock}
+              style={styles.submitAlertBtn}
+            >
+              {subscribingStock ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Icon name="bell" size={15} color="#FFFFFF" />
+                  <Text style={styles.submitAlertBtnText}>Set Restock Notification</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </BottomSheetWrapper>
       </View>
     </>
   );
@@ -1175,5 +1488,301 @@ const styles = StyleSheet.create({
   },
   bottomAddBtn: {
     minWidth: 130,
+  },
+  variantGridCardOutOfStock: {
+    opacity: 0.72,
+    backgroundColor: '#FAFAFA',
+    borderColor: '#E5E7EB',
+  },
+  variantGridCardOutOfStockSelected: {
+    borderColor: '#B45309',
+    backgroundColor: '#FFFDF9',
+  },
+  radioCircleOutOfStock: {
+    borderColor: '#D1D5DB',
+  },
+  radioDotOutOfStock: {
+    backgroundColor: '#B45309',
+  },
+  variantSizeTextOutOfStock: {
+    color: '#6B7280',
+  },
+  variantPriceTextOutOfStock: {
+    color: '#6B7280',
+  },
+  soldOutBadge: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: theme.radius.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  soldOutBadgeText: {
+    color: '#DC2626',
+    fontSize: 9.5,
+    fontWeight: theme.typography.weights.bold,
+    letterSpacing: 0.2,
+  },
+  restockNoticeCard: {
+    marginTop: theme.spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#FDE68A',
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  restockNoticeAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: '#D97706',
+  },
+  restockNoticeContent: {
+    padding: 14,
+    paddingLeft: 16,
+    gap: 12,
+  },
+  restockNoticeHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  restockNoticeIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  restockNoticeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  restockNoticeTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.1,
+  },
+  restockSoldOutPill: {
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  restockSoldOutText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#DC2626',
+    textTransform: 'uppercase',
+  },
+  restockNoticeSub: {
+    fontSize: 11.5,
+    color: '#64748B',
+    marginTop: 3,
+    lineHeight: 16,
+    fontWeight: '500',
+  },
+  restockNoticeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#0F5132',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 24,
+    alignSelf: 'flex-start',
+    shadowColor: '#0F5132',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  restockNoticeBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  restockNoticeActiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  restockNoticeActiveText: {
+    color: '#065F46',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  bottomPriceOutOfStock: {
+    color: '#9CA3AF',
+    textDecorationLine: 'line-through',
+  },
+  bottomOutOfStockBadge: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: theme.radius.pill,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  bottomOutOfStockBadgeText: {
+    fontSize: 10,
+    fontWeight: theme.typography.weights.bold,
+    color: '#DC2626',
+  },
+  notifyBottomBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#0F5132',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: 12,
+    borderRadius: theme.radius.pill,
+    minWidth: 140,
+    ...theme.shadows.subtle,
+  },
+  notifyBottomBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: theme.typography.weights.bold,
+    letterSpacing: 0.3,
+  },
+  subscribedBottomBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1.5,
+    borderColor: '#6EE7B7',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: 11,
+    borderRadius: theme.radius.pill,
+    minWidth: 140,
+  },
+  subscribedBottomBtnText: {
+    color: '#0F5132',
+    fontSize: 13,
+    fontWeight: theme.typography.weights.bold,
+  },
+  toastBanner: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 95 : 75,
+    left: theme.spacing.base,
+    right: theme.spacing.base,
+    backgroundColor: '#0F5132',
+    borderRadius: theme.radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    zIndex: 100,
+    ...theme.shadows.card,
+  },
+  toastBannerText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: theme.typography.weights.medium,
+    color: '#FFFFFF',
+  },
+  sheetContactContainer: {
+    padding: theme.spacing.base,
+    gap: 14,
+  },
+  sheetInfoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: theme.radius.sm,
+    padding: 10,
+  },
+  sheetInfoText: {
+    flex: 1,
+    fontSize: 11.5,
+    color: '#0F5132',
+    lineHeight: 16,
+  },
+  contactTypeTabs: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  contactTypeTab: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+  },
+  contactTypeTabActive: {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#86EFAC',
+  },
+  contactTypeTabText: {
+    fontSize: 11.5,
+    fontWeight: theme.typography.weights.medium,
+    color: theme.colors.textSecondary,
+  },
+  contactTypeTabTextActive: {
+    color: '#0F5132',
+    fontWeight: theme.typography.weights.bold,
+  },
+  inputFieldLabel: {
+    fontSize: 11.5,
+    fontWeight: theme.typography.weights.semiBold,
+    color: theme.colors.textPrimary,
+  },
+  contactTextInput: {
+    fontSize: 12,
+    fontWeight: 'normal',
+    color: theme.colors.textPrimary,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  submitAlertBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.radius.pill,
+    paddingVertical: 12,
+    marginTop: 6,
+  },
+  submitAlertBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: theme.typography.weights.bold,
   },
 });

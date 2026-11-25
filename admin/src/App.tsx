@@ -12,6 +12,7 @@ import { Reviews } from './pages/Reviews';
 import { Customers } from './pages/Customers';
 import { Notifications } from './pages/Notifications';
 import { Deals } from './pages/Deals';
+import { StockAlerts } from './pages/StockAlerts';
 
 const ProtectedLayout: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -36,6 +37,7 @@ const ProtectedLayout: React.FC = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/products" element={<Products />} />
+        <Route path="/stock-alerts" element={<StockAlerts />} />
         <Route path="/coupons" element={<Coupons />} />
         <Route path="/deals" element={<Deals />} />
         <Route path="/notifications" element={<Notifications />} />

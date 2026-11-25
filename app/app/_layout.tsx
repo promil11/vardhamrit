@@ -115,6 +115,7 @@ function NavigationGate() {
       <Stack.Screen name="order-success" options={{ headerShown: false }} />
       <Stack.Screen name="order-tracking" options={{ headerShown: false }} />
       <Stack.Screen name="rewards" options={{ headerShown: false }} />
+      <Stack.Screen name="stock-alerts" options={{ headerShown: false }} />
     </Stack>
   );
 }

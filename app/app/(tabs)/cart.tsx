@@ -16,13 +16,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { useCartStore, getHandlingFeeTier } from '../../store/useCartStore';
 import { useAddressStore } from '../../store/useAddressStore';
-import { CartItem } from '../../types';
+import { CartItem, Product } from '../../types';
 import { EmptyState } from '../../components/common/EmptyState';
 import { CouponBottomSheet } from '../../components/cart/CouponBottomSheet';
 import { AddressBottomSheet } from '../../components/home/AddressBottomSheet';
 import { AddAddressModal } from '../../components/checkout/AddAddressModal';
 import { CartSkeleton } from '../../components/common/Skeleton';
 import { fetchUserAddresses, saveUserAddress } from '../../services/addressService';
+import { fetchProducts } from '../../services/catalogService';
+import { AddButton } from '../../components/product/AddButton';
 import { Address } from '../../types';
 import { Icon } from '../../components/common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
@@ -140,6 +142,28 @@ export default function CartScreen() {
     addNewAddress,
     updateAddress,
   } = useAddressStore();
+
+  // Zepto-style "Add More Items" recommendations
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    fetchProducts({ limit: 12 })
+      .then((res) => {
+        if (res?.items) {
+          setRecommendedProducts(res.items);
+        }
+      })
+      .catch((e) => console.warn('Error loading add-more items in cart:', e));
+  }, []);
+
+  // Filter items not already in cart, or other popular blends to add
+  const addMoreItems = React.useMemo(() => {
+    const cartProductIds = new Set(items.map((i) => Number(i.productId)));
+    // Prioritize products not yet in cart
+    const notInCart = recommendedProducts.filter((p) => !cartProductIds.has(Number(p.id)));
+    if (notInCart.length > 0) return notInCart;
+    return recommendedProducts;
+  }, [recommendedProducts, items]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -498,6 +522,108 @@ export default function CartScreen() {
             }
             ListFooterComponent={
               <>
+                {/* 2.5 ZEPTO-STYLE "ADD MORE ITEMS" BANNER & PRODUCT RAIL */}
+                <View style={styles.addMoreSection}>
+                  <View style={styles.addMoreHeaderRow}>
+                    <View style={styles.addMoreHeaderLeft}>
+                      <View style={styles.addMoreIconBadge}>
+                        <Icon name="sparkles" size={15} color="#D97706" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Text style={[styles.addMoreTitle, isTablet && { fontSize: 16.5 }]}>
+                            Add More Items
+                          </Text>
+                          <View style={styles.addMoreHotPill}>
+                            <Text style={styles.addMoreHotPillText}>POPULAR</Text>
+                          </View>
+                        </View>
+                        <Text style={[styles.addMoreSub, isTablet && { fontSize: 12.5 }]} numberOfLines={1}>
+                          Fresh garden picks to complete your daily chai cellar
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => router.push('/(tabs)/categories')}
+                      style={styles.addMoreSeeAllBtn}
+                    >
+                      <Text style={[styles.addMoreSeeAllText, isTablet && { fontSize: 13 }]}>See All</Text>
+                      <Icon name="chevron-right" size={13} color={theme.colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Horizontal Scroll Rail of Recommendation Cards */}
+                  <FlatList
+                    data={addMoreItems}
+                    keyExtractor={(item) => `add-more-${item.id}`}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.addMoreRailContent}
+                    renderItem={({ item }) => {
+                      const firstVariant = item.variants?.[0] || {
+                        id: 1,
+                        price: 199,
+                        mrp: 249,
+                        label: '200 g',
+                        stock: 10,
+                      };
+                      const discountPct = firstVariant.mrp > firstVariant.price
+                        ? Math.round(((firstVariant.mrp - firstVariant.price) / firstVariant.mrp) * 100)
+                        : 0;
+
+                      return (
+                        <View style={styles.addMoreCard}>
+                          <TouchableOpacity
+                            activeOpacity={0.88}
+                            onPress={() => router.push(`/product/${item.id}`)}
+                            style={styles.addMoreCardTop}
+                          >
+                            <View style={styles.addMoreImageWrap}>
+                              <Image
+                                source={{ uri: getFullImageUrl(item.imageUrl) }}
+                                style={styles.addMoreImage}
+                                resizeMode="cover"
+                              />
+                              {discountPct > 0 ? (
+                                <LinearGradient
+                                  colors={['#DC2626', '#B91C1C']}
+                                  start={{ x: 0, y: 0 }}
+                                  end={{ x: 1, y: 0 }}
+                                  style={styles.addMoreDiscountBadge}
+                                >
+                                  <Text style={styles.addMoreDiscountText}>{discountPct}% OFF</Text>
+                                </LinearGradient>
+                              ) : null}
+                            </View>
+                            <Text style={styles.addMoreCardName} numberOfLines={2}>
+                              {item.name}
+                            </Text>
+                            <Text style={styles.addMoreCardVariant} numberOfLines={1}>
+                              {firstVariant.label}
+                            </Text>
+                          </TouchableOpacity>
+
+                          <View style={styles.addMoreCardBottom}>
+                            <View style={styles.addMorePriceCol}>
+                              <Text style={styles.addMorePrice}>₹{firstVariant.price}</Text>
+                              {firstVariant.mrp > firstVariant.price ? (
+                                <Text style={styles.addMoreMrp}>₹{firstVariant.mrp}</Text>
+                              ) : null}
+                            </View>
+
+                            <AddButton
+                              product={item}
+                              variant={firstVariant as any}
+                              size="sm"
+                            />
+                          </View>
+                        </View>
+                      );
+                    }}
+                  />
+                </View>
+
                 {/* 3. "Savings on this order" Green Strip */}
                 {totalSavings > 0 ? (
                   <View style={styles.savingsStrip}>
@@ -1035,6 +1161,179 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.scale.md,
     fontWeight: theme.typography.weights.extraBold,
     color: theme.colors.textPrimary,
+  },
+  addMoreSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingTop: 16,
+    paddingBottom: 16,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.06)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  addMoreHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 14,
+  },
+  addMoreHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+    paddingRight: 8,
+  },
+  addMoreIconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  addMoreHotPill: {
+    backgroundColor: '#FEF2F2',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  addMoreHotPillText: {
+    color: '#DC2626',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  addMoreTitle: {
+    fontSize: 15,
+    fontWeight: theme.typography.weights.extraBold,
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+  addMoreSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  addMoreSeeAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: '#F0FDF4',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  addMoreSeeAllText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: theme.colors.primary,
+  },
+  addMoreRailContent: {
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  addMoreCard: {
+    width: 146,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  addMoreCardTop: {
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  addMoreImageWrap: {
+    width: '100%',
+    height: 106,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    position: 'relative',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  addMoreImage: {
+    width: '100%',
+    height: '100%',
+  },
+  addMoreDiscountBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  addMoreDiscountText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+  },
+  addMoreCardName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1E293B',
+    lineHeight: 16,
+    minHeight: 32,
+    marginBottom: 2,
+  },
+  addMoreCardVariant: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  addMoreCardBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 2,
+    width: '100%',
+  },
+  addMorePriceCol: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  addMorePrice: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  addMoreMrp: {
+    fontSize: 10,
+    color: '#94A3B8',
+    textDecorationLine: 'line-through',
+    marginTop: 1,
   },
   savingsStrip: {
     flexDirection: 'row',

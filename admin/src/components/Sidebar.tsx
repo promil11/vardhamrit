@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Radio,
   Bell,
+  BellRing,
   Flame,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -33,12 +34,22 @@ export const Sidebar: React.FC = () => {
     refetchInterval: 30000,
   });
 
+  const { data: pendingAlertsCount } = useQuery({
+    queryKey: ['admin-sidebar-stock-alerts-count'],
+    queryFn: async () => {
+      const res = await api.get('/admin/stock-subscriptions?status=pending');
+      return res.data?.data?.stats?.pending ?? 0;
+    },
+    refetchInterval: 30000,
+  });
+
   const pendingOrders = Number(
     dashboardData?.orderCounts?.PLACED ||
     dashboardData?.orderCounts?.CONFIRMED ||
     0
   );
   const lowStockCount = Number(dashboardData?.lowStockAlerts?.length || 0);
+  const stockAlertsCount = Number(pendingAlertsCount || 0);
 
   const navItems = [
     { to: '/', label: 'Overview & Analytics', icon: LayoutDashboard, badge: null },
@@ -53,6 +64,12 @@ export const Sidebar: React.FC = () => {
       label: 'Tea Catalog & Stock',
       icon: PackageCheck,
       badge: lowStockCount > 0 ? { text: `! ${lowStockCount}`, color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' } : null,
+    },
+    {
+      to: '/stock-alerts',
+      label: 'Out of Stock Alerts',
+      icon: BellRing,
+      badge: stockAlertsCount > 0 ? { text: `${stockAlertsCount} Wait`, color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' } : null,
     },
     { to: '/coupons', label: 'Coupons & Promos', icon: TicketPercent, badge: null },
     {

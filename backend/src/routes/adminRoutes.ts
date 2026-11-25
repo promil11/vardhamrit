@@ -23,6 +23,12 @@ import {
   updateAdminDeal,
   toggleAdminDealStatus,
   deleteAdminDeal,
+  getAdminStockSubscriptions,
+  triggerAdminManualStockNotify,
+  triggerAdminStockRestock,
+  triggerAdminNotifyVariant,
+  triggerAdminNotifyProduct,
+  triggerAdminBulkStockNotify,
 } from '../controllers/adminController';
 import {
   broadcastCampaign,
@@ -81,6 +87,14 @@ router.patch('/reviews/:id/moderate', moderateReview);
 
 // Customers
 router.get('/customers', getAdminCustomers);
+
+// Out of Stock Alerts & Customer Waitlist
+router.get('/stock-subscriptions', getAdminStockSubscriptions);
+router.post('/stock-subscriptions/:id/notify', triggerAdminManualStockNotify);
+router.post('/stock-subscriptions/variant/:variantId/notify', triggerAdminNotifyVariant);
+router.post('/stock-subscriptions/product/:productId/notify', triggerAdminNotifyProduct);
+router.post('/stock-subscriptions/bulk-notify', triggerAdminBulkStockNotify);
+router.post('/stock-subscriptions/restock-variant', triggerAdminStockRestock);
 
 // Push Notifications & Marketing Campaigns
 router.get('/notifications/stats', getStats);

@@ -26,6 +26,7 @@ import { AddAddressModal } from '../../components/checkout/AddAddressModal';
 import { DeleteAddressModal } from '../../components/address/DeleteAddressModal';
 import { EditProfileModal } from '../../components/profile/EditProfileModal';
 import { useScratchCardStore } from '../../store/useScratchCardStore';
+import { useStockAlertStore } from '../../store/useStockAlertStore';
 import { Icon } from '../../components/common/Icon';
 import { ProfileSkeleton } from '../../components/common/Skeleton';
 import { useAuth } from '../../store/authContext';
@@ -201,18 +202,23 @@ export default function ProfileScreen() {
   const { cards: scratchCards } = useScratchCardStore();
   const unclaimedScratchCards = scratchCards.filter((c) => !c.isClaimed);
 
+  // Stock Alert Store integration
+  const { hasUnreadRestock, unreadRestockCount } = useStockAlertStore();
+
   const loadProfile = async () => {
     try {
       setLoading(true);
       if (user?.id) {
         await useScratchCardStore.getState().setCurrentUser(user.id);
       }
-      const [prof, coins, _addr, _wish, _cards, ordersRes] = await Promise.all([
+      const contactVal = user?.email || user?.phone || null;
+      const [prof, coins, _addr, _wish, _cards, _alerts, ordersRes] = await Promise.all([
         fetchUserProfile(),
         fetchUserCoins(),
         loadAddresses(),
         useWishlistStore.getState().loadWishlist(),
         useScratchCardStore.getState().loadCards(user?.id),
+        useStockAlertStore.getState().loadAlerts(contactVal, user?.id),
         fetchUserOrders(1, 15).catch(() => ({ orders: [] })),
       ]);
       if (prof) {
@@ -998,9 +1004,14 @@ export default function ProfileScreen() {
             >
               <View style={[styles.menuIconContainer, { backgroundColor: '#FEF3C7' }]}>
                 <Icon name="gift" size={16} color="#B45309" />
+                {unclaimedScratchCards.length > 0 && (
+                  <View style={styles.menuIconNoticeDot} />
+                )}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.menuText}>My Scratch Cards & Rewards</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.menuText}>My Scratch Cards & Rewards</Text>
+                </View>
                 <Text style={styles.menuSubtext}>
                   {unclaimedScratchCards.length > 0
                     ? `${unclaimedScratchCards.length} scratch card${unclaimedScratchCards.length > 1 ? 's' : ''} waiting to be revealed`
@@ -1029,6 +1040,41 @@ export default function ProfileScreen() {
               </View>
               <Text style={styles.menuText}>My Saved Chai Wishlist</Text>
               <Icon name="chevron-right" size={14} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            <View style={styles.menuDivider} />
+
+            {/* My Stock & Restock Alerts */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => router.push('/stock-alerts')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.menuIconContainer, { backgroundColor: '#FEF3C7' }]}>
+                <Icon name="bell" size={16} color="#B45309" />
+                {hasUnreadRestock && (
+                  <View style={styles.menuIconNoticeDot} />
+                )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.menuText}>Restock & Stock Alerts</Text>
+                </View>
+                <Text style={styles.menuSubtext}>
+                  {hasUnreadRestock
+                    ? `${unreadRestockCount} package size${unreadRestockCount > 1 ? 's' : ''} now in stock or alerted!`
+                    : 'View package sizes awaiting garden harvest'}
+                </Text>
+              </View>
+              {hasUnreadRestock ? (
+                <View style={[styles.unclaimedBadgePill, { backgroundColor: '#059669' }]}>
+                  <Text style={styles.unclaimedBadgeText}>
+                    {unreadRestockCount} Restocked
+                  </Text>
+                </View>
+              ) : (
+                <Icon name="chevron-right" size={14} color="#9CA3AF" />
+              )}
             </TouchableOpacity>
 
             <View style={styles.menuDivider} />
@@ -2160,5 +2206,22 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: theme.typography.weights.extraBold,
     color: '#FFFFFF',
+  },
+  menuIconNoticeDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  menuTitleNoticeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#EF4444',
   },
 });

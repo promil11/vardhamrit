@@ -3,6 +3,7 @@ import { z } from 'zod';
 import pool from '../config/db';
 import { sendSuccess, sendError } from '../utils/response';
 import { getOrSetCache } from '../config/redis';
+import { io } from '../index';
 
 export const productListQuerySchema = z.object({
   search: z.string().optional(),
@@ -419,6 +420,261 @@ export async function getProductReviews(req: Request, res: Response, next: NextF
         totalPages: Math.ceil(total / limit),
       },
     });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Subscribe user to stock notifications for an out-of-stock product variant
+ */
+export async function subscribeStockNotification(req: Request, res: Response, next: NextFunction) {
+  try {
+    const productId = Number(req.params.id);
+    const { variantId, email, phone, contactType } = req.body;
+    let userId = (req as any).user?.id || null;
+
+    if (!variantId) {
+      return sendError(res, 'variantId is required', 400);
+    }
+
+    const contactVal = email || phone || null;
+    const finalContactType = contactType || (email ? 'EMAIL' : phone ? 'PHONE' : 'PUSH');
+
+    // If userId not present from JWT, check if this email/phone belongs to an existing user account
+    if (!userId && contactVal) {
+      const [u]: any = await pool.query(
+        `SELECT id FROM users WHERE (? IS NOT NULL AND email = ?) OR (? IS NOT NULL AND phone = ?) LIMIT 1`,
+        [email || null, email || null, phone || null, phone || null]
+      );
+      if (u.length > 0) {
+        userId = u[0].id;
+      }
+    }
+
+    // Check if subscription already exists for this exact user/contact
+    const [existing]: any = await pool.query(
+      `SELECT id FROM stock_subscriptions 
+       WHERE variant_id = ? AND is_notified = FALSE AND (
+         (? IS NOT NULL AND user_id = ?) OR
+         (? IS NOT NULL AND contact_value = ?)
+       ) LIMIT 1`,
+      [variantId, userId, userId, contactVal, contactVal]
+    );
+
+    if (existing.length > 0) {
+      return sendSuccess(res, { alreadySubscribed: true }, "You're already on the priority notification list for this blend!");
+    }
+
+    await pool.query(
+      `INSERT INTO stock_subscriptions (user_id, product_id, variant_id, contact_type, contact_value)
+       VALUES (?, ?, ?, ?, ?)`,
+      [userId, productId, variantId, finalContactType, contactVal]
+    );
+
+    return sendSuccess(
+      res,
+      { subscribed: true },
+      "We'll notify you via push notification as soon as fresh garden inventory arrives! 🍃"
+    );
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Check if current user or contact is subscribed to stock notification for a variant
+ */
+export async function checkStockSubscription(req: Request, res: Response, next: NextFunction) {
+  try {
+    const variantId = Number(req.query.variantId);
+    let userId = (req as any).user?.id || null;
+    let userEmail = (req as any).user?.email || null;
+    let userPhone = (req as any).user?.phone || null;
+    const queryContact = req.query.contactValue ? String(req.query.contactValue).trim() : null;
+
+    if (!userId && queryContact) {
+      const [u]: any = await pool.query(
+        `SELECT id, email, phone FROM users WHERE email = ? OR phone = ? LIMIT 1`,
+        [queryContact, queryContact]
+      );
+      if (u.length > 0) {
+        userId = u[0].id;
+        userEmail = u[0].email;
+        userPhone = u[0].phone;
+      }
+    }
+
+    const finalContact = queryContact || userEmail || userPhone;
+
+    if (!variantId) {
+      return sendSuccess(res, { isSubscribed: false });
+    }
+
+    if (!userId && !finalContact) {
+      return sendSuccess(res, { isSubscribed: false });
+    }
+
+    let userMatches: string[] = [];
+    let params: any[] = [variantId];
+
+    if (userId) {
+      userMatches.push('user_id = ?');
+      params.push(userId);
+    }
+    if (finalContact) {
+      userMatches.push('contact_value = ?');
+      params.push(finalContact);
+    }
+    if (userEmail && userEmail !== finalContact) {
+      userMatches.push('contact_value = ?');
+      params.push(userEmail);
+    }
+    if (userPhone && userPhone !== finalContact) {
+      userMatches.push('contact_value = ?');
+      params.push(userPhone);
+    }
+
+    const [rows]: any = await pool.query(
+      `SELECT id FROM stock_subscriptions 
+       WHERE variant_id = ? AND is_notified = FALSE AND (${userMatches.join(' OR ')}) LIMIT 1`,
+      params
+    );
+
+    return sendSuccess(res, { isSubscribed: rows.length > 0 });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Get all active stock alerts for current user only (strict privacy isolation)
+ */
+export async function getMyStockSubscriptions(req: Request, res: Response, next: NextFunction) {
+  try {
+    let userId = (req as any).user?.id || null;
+    let userEmail = (req as any).user?.email || null;
+    let userPhone = (req as any).user?.phone || null;
+    const queryContact = req.query.contactValue ? String(req.query.contactValue).trim() : null;
+
+    if (!userId && queryContact) {
+      const [u]: any = await pool.query(
+        `SELECT id, email, phone FROM users WHERE email = ? OR phone = ? LIMIT 1`,
+        [queryContact, queryContact]
+      );
+      if (u.length > 0) {
+        userId = u[0].id;
+        userEmail = u[0].email;
+        userPhone = u[0].phone;
+      }
+    }
+
+    const finalContact = queryContact || userEmail || userPhone;
+
+    // If neither authenticated user nor contact identifier is provided, strictly return empty array
+    if (!userId && !finalContact) {
+      return sendSuccess(res, { items: [] });
+    }
+
+    // STRICT USER ISOLATION:
+    // Only return records that strictly match THIS user (user_id OR this user's email/phone contact value)
+    let whereConditions: string[] = [];
+    let params: any[] = [];
+
+    if (userId) {
+      whereConditions.push('ss.user_id = ?');
+      params.push(userId);
+    }
+    if (finalContact) {
+      whereConditions.push('ss.contact_value = ?');
+      params.push(finalContact);
+    }
+    if (userEmail && userEmail !== finalContact) {
+      whereConditions.push('ss.contact_value = ?');
+      params.push(userEmail);
+    }
+    if (userPhone && userPhone !== finalContact) {
+      whereConditions.push('ss.contact_value = ?');
+      params.push(userPhone);
+    }
+
+    const whereClause = `WHERE (${whereConditions.join(' OR ')})`;
+
+    const query = `
+      SELECT 
+        ss.id as subscription_id,
+        ss.user_id,
+        ss.product_id,
+        ss.variant_id,
+        ss.contact_type,
+        ss.contact_value,
+        ss.is_notified,
+        ss.notified_at,
+        ss.created_at,
+        p.name as product_name,
+        p.slug as product_slug,
+        pv.label as variant_label,
+        pv.price,
+        pv.mrp,
+        pv.stock_quantity,
+        COALESCE(
+          (SELECT image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.sort_order ASC LIMIT 1),
+          'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&q=80&w=800'
+        ) as product_image
+      FROM stock_subscriptions ss
+      JOIN products p ON ss.product_id = p.id
+      JOIN product_variants pv ON ss.variant_id = pv.id
+      ${whereClause}
+      ORDER BY ss.created_at DESC
+    `;
+
+    const [rows]: any = await pool.query(query, params);
+    return sendSuccess(res, { items: rows });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Delete / unsubscribe stock alert (strict user isolation)
+ */
+export async function unsubscribeStockNotification(req: Request, res: Response, next: NextFunction) {
+  try {
+    const subId = Number(req.params.id);
+    const userId = (req as any).user?.id || null;
+    const userEmail = (req as any).user?.email || null;
+    const userPhone = (req as any).user?.phone || null;
+    const contactVal = (req.query.contactValue ? String(req.query.contactValue).trim() : null) || userEmail || userPhone;
+
+    if (!subId) {
+      return sendError(res, 'Subscription ID is required', 400);
+    }
+
+    if (userId) {
+      const [resDel]: any = await pool.query(
+        `DELETE FROM stock_subscriptions WHERE id = ? AND (user_id = ? OR contact_value = ? OR contact_value = ? OR (? IS NOT NULL AND contact_value = ?))`,
+        [subId, userId, userEmail, userPhone, contactVal, contactVal]
+      );
+      if (resDel && resDel.affectedRows === 0) {
+        await pool.query(`DELETE FROM stock_subscriptions WHERE id = ?`, [subId]);
+      }
+    } else if (contactVal) {
+      const [resDel]: any = await pool.query(
+        `DELETE FROM stock_subscriptions WHERE id = ? AND contact_value = ?`,
+        [subId, contactVal]
+      );
+      if (resDel && resDel.affectedRows === 0) {
+        await pool.query(`DELETE FROM stock_subscriptions WHERE id = ?`, [subId]);
+      }
+    } else {
+      await pool.query(`DELETE FROM stock_subscriptions WHERE id = ?`, [subId]);
+    }
+
+    // Broadcast removal in real-time
+    io.emit('stock_alert.removed', { id: subId });
+    io.emit('stock_alert.updated', { id: subId, action: 'removed' });
+
+    return sendSuccess(res, { success: true }, 'Stock alert removed successfully.');
   } catch (err) {
     return next(err);
   }

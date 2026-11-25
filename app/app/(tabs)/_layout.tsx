@@ -1,14 +1,28 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme';
 import { useCartStore } from '../../store/useCartStore';
+import { useScratchCardStore } from '../../store/useScratchCardStore';
+import { useStockAlertStore } from '../../store/useStockAlertStore';
+import { useAuth } from '../../store/authContext';
 import { Icon } from '../../components/common/Icon';
 import { useResponsive } from '../../utils/responsive';
 
 export default function TabLayout() {
   const totalCount = useCartStore((s) => s.getTotalItemsCount());
+  const { user } = useAuth();
+  const unclaimedScratchCount = useScratchCardStore((s) => s.cards.filter((c) => !c.isClaimed).length);
+  const hasUnreadRestock = useStockAlertStore((s) => s.hasUnreadRestock);
+  const hasProfileNotification = unclaimedScratchCount > 0 || hasUnreadRestock;
+
+  useEffect(() => {
+    const contactVal = user?.email || user?.phone || null;
+    const cleanup = useStockAlertStore.getState().initSocketListeners(user?.id, contactVal);
+    return () => cleanup();
+  }, [user?.id, user?.email, user?.phone]);
+
   const insets = useSafeAreaInsets();
   const { isTablet } = useResponsive();
 
@@ -142,6 +156,9 @@ export default function TabLayout() {
                 size={iconSize}
                 color={focused ? theme.colors.primary : color}
               />
+              {hasProfileNotification && (
+                <View style={styles.profileBadgeDot} />
+              )}
             </View>
           ),
         }}
@@ -189,5 +206,17 @@ const styles = StyleSheet.create({
   iconActive: {
     backgroundColor: theme.colors.primaryMuted,
     transform: [{ scale: 1.05 }],
+  },
+  profileBadgeDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    zIndex: 10,
   },
 });

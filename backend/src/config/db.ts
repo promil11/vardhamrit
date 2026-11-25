@@ -23,6 +23,7 @@ export const pool = mysql.createPool({
   keepAliveInitialDelay: 0,
   decimalNumbers: true,
   multipleStatements: true,
+  timezone: 'Z',
   ssl: useSsl ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined,
 });
 

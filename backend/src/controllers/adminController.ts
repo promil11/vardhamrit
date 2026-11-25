@@ -3,7 +3,7 @@ import { z } from 'zod';
 import pool from '../config/db';
 import { updateOrderStatus, getOrderById } from '../services/orderService';
 import { generateInvoicePDF } from '../services/invoiceService';
-import { sendOrderPushNotification } from '../services/notificationService';
+import { sendOrderPushNotification, createInAppNotification } from '../services/notificationService';
 import { recalculateProductRating } from '../services/reviewService';
 import { sendSuccess, sendError } from '../utils/response';
 import { io } from '../index';
@@ -603,6 +603,53 @@ export async function updateAdminProduct(req: Request, res: Response, next: Next
 
     await connection.commit();
 
+    // Check if any restocked variant has waiting subscribers and send push notification
+    if (variants && Array.isArray(variants)) {
+      for (const v of variants) {
+        const stockVal = Number(v.stock ?? v.stock_quantity ?? 0);
+        if (v.id && stockVal > 0) {
+          try {
+            const [subs]: any = await pool.query(
+              `SELECT s.id, s.user_id, s.contact_value, s.contact_type, p.name as product_name, pv.label as variant_label
+               FROM stock_subscriptions s
+               JOIN products p ON s.product_id = p.id
+               JOIN product_variants pv ON s.variant_id = pv.id
+               WHERE s.variant_id = ? AND s.is_notified = FALSE`,
+              [v.id]
+            );
+
+            if (subs.length > 0) {
+              const productName = subs[0].product_name || 'Garden Tea';
+              const variantLabel = subs[0].variant_label || v.label || 'Pack';
+
+              for (const sub of subs) {
+                if (sub.user_id) {
+                  await createInAppNotification({
+                    userId: sub.user_id,
+                    title: `Back in Stock: ${productName} (${variantLabel}) 🍃`,
+                    body: `Great news! Fresh harvest stock has just arrived for ${productName} - ${variantLabel}. Tap to grab yours before it sells out!`,
+                    type: 'FLASH_SALE',
+                    actionRoute: `/product/${productId}`,
+                    ctaText: 'Buy Now',
+                  });
+                }
+              }
+
+              // Mark subscribers as notified
+              await pool.query(
+                `UPDATE stock_subscriptions 
+                 SET is_notified = TRUE, notified_at = NOW() 
+                 WHERE variant_id = ? AND is_notified = FALSE`,
+                [v.id]
+              );
+            }
+          } catch (notifErr) {
+            console.warn('Error broadcasting back-in-stock alerts:', notifErr);
+          }
+        }
+      }
+    }
+
     // Fetch full updated product for real-time live sync to visitor catalog
     const [fullProduct]: any = await connection.query(
       `SELECT p.*, c.name as category_name, c.slug as category_slug,
@@ -1182,6 +1229,397 @@ export async function deleteAdminDeal(req: Request, res: Response, next: NextFun
     await broadcastActiveDeal();
 
     return sendSuccess(res, { id: dealId }, 'Deal deleted successfully');
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Get all out-of-stock subscriptions and waitlist requests
+ */
+export async function getAdminStockSubscriptions(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { status, search } = req.query;
+
+    let query = `
+      SELECT 
+        ss.id,
+        ss.user_id,
+        ss.product_id,
+        ss.variant_id,
+        ss.contact_type,
+        ss.contact_value,
+        ss.is_notified,
+        ss.notified_at,
+        ss.created_at,
+        u.name as user_name,
+        u.email as user_email,
+        u.phone as user_phone,
+        p.name as product_name,
+        p.slug as product_slug,
+        pv.label as variant_label,
+        pv.price as variant_price,
+        pv.mrp as variant_mrp,
+        pv.stock_quantity as current_stock,
+        COALESCE(
+          (SELECT image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.sort_order ASC LIMIT 1),
+          'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&q=80&w=800'
+        ) as product_image
+      FROM stock_subscriptions ss
+      LEFT JOIN users u ON ss.user_id = u.id
+      JOIN products p ON ss.product_id = p.id
+      JOIN product_variants pv ON ss.variant_id = pv.id
+      WHERE 1=1
+    `;
+
+    const params: any[] = [];
+
+    if (status === 'pending') {
+      query += ' AND ss.is_notified = FALSE';
+    } else if (status === 'notified') {
+      query += ' AND ss.is_notified = TRUE';
+    }
+
+    if (search && typeof search === 'string' && search.trim()) {
+      const q = `%${search.trim()}%`;
+      query += ` AND (
+        p.name LIKE ? OR 
+        pv.label LIKE ? OR 
+        u.name LIKE ? OR 
+        u.email LIKE ? OR 
+        u.phone LIKE ? OR 
+        ss.contact_value LIKE ?
+      )`;
+      params.push(q, q, q, q, q, q);
+    }
+
+    query += ' ORDER BY ss.is_notified ASC, ss.created_at DESC';
+
+    const [rows]: any = await pool.query(query, params);
+
+    // Compute KPI metrics
+    const total = rows.length;
+    const pending = rows.filter((r: any) => !r.is_notified).length;
+    const notified = rows.filter((r: any) => r.is_notified).length;
+    const uniqueProducts = new Set(rows.map((r: any) => r.product_id)).size;
+
+    return sendSuccess(res, {
+      items: rows,
+      stats: {
+        total,
+        pending,
+        notified,
+        uniqueProducts,
+      },
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Manually trigger stock notification for a single subscription
+ */
+export async function triggerAdminManualStockNotify(req: Request, res: Response, next: NextFunction) {
+  try {
+    const subId = Number(req.params.id);
+
+    const [rows]: any = await pool.query(
+      `SELECT s.*, p.name as product_name, pv.label as variant_label
+       FROM stock_subscriptions s
+       JOIN products p ON s.product_id = p.id
+       JOIN product_variants pv ON s.variant_id = pv.id
+       WHERE s.id = ?`,
+      [subId]
+    );
+
+    if (rows.length === 0) {
+      return sendError(res, 'Subscription not found', 404);
+    }
+
+    const sub = rows[0];
+
+    if (sub.user_id) {
+      await createInAppNotification({
+        userId: sub.user_id,
+        title: `Back in Stock: ${sub.product_name} (${sub.variant_label}) 🍃`,
+        body: `Fresh garden harvest has arrived for ${sub.product_name} (${sub.variant_label}). Order now before inventory sells out!`,
+        type: 'FLASH_SALE',
+        actionRoute: `/product/${sub.product_id}`,
+        ctaText: 'Buy Now',
+      });
+    }
+
+    await pool.query(
+      `UPDATE stock_subscriptions SET is_notified = TRUE, notified_at = NOW() WHERE id = ?`,
+      [subId]
+    );
+
+    // Emit real-time stock alert notification events
+    io.emit('stock_alert.updated', { subId, variantId: sub.variant_id, productId: sub.product_id, isNotified: true });
+    io.emit('stock_alert.notified', { subId, variantId: sub.variant_id, productId: sub.product_id });
+    if (sub.user_id) {
+      io.emit(`stock_alert.user_updated:${sub.user_id}`, { subId, variantId: sub.variant_id, isNotified: true });
+    }
+
+    return sendSuccess(res, { success: true }, 'Notification alert sent to customer successfully.');
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Quick restock a variant directly from stock alerts table and auto-notify all waiting users
+ */
+export async function triggerAdminStockRestock(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { variantId, stockQuantity } = req.body;
+    const newStock = Number(stockQuantity);
+
+    if (!variantId || isNaN(newStock) || newStock < 0) {
+      return sendError(res, 'Valid variantId and stockQuantity are required', 400);
+    }
+
+    // Update variant stock in product_variants
+    await pool.query(
+      `UPDATE product_variants SET stock_quantity = ? WHERE id = ?`,
+      [newStock, variantId]
+    );
+
+    // If stock > 0, notify all waiting subscribers
+    let notifiedCount = 0;
+    if (newStock > 0) {
+      const [subs]: any = await pool.query(
+        `SELECT s.id, s.user_id, s.contact_value, s.contact_type, p.id as product_id, p.name as product_name, pv.label as variant_label
+         FROM stock_subscriptions s
+         JOIN products p ON s.product_id = p.id
+         JOIN product_variants pv ON s.variant_id = pv.id
+         WHERE s.variant_id = ? AND s.is_notified = FALSE`,
+        [variantId]
+      );
+
+      notifiedCount = subs.length;
+
+      if (subs.length > 0) {
+        for (const sub of subs) {
+          if (sub.user_id) {
+            await createInAppNotification({
+              userId: sub.user_id,
+              title: `Back in Stock: ${sub.product_name} (${sub.variant_label}) 🍃`,
+              body: `Great news! Fresh inventory is now in stock for ${sub.product_name} (${sub.variant_label}). Tap to order your fresh tea!`,
+              type: 'FLASH_SALE',
+              actionRoute: `/product/${sub.product_id}`,
+              ctaText: 'Order Now',
+            });
+          }
+        }
+
+        await pool.query(
+          `UPDATE stock_subscriptions SET is_notified = TRUE, notified_at = NOW() WHERE variant_id = ? AND is_notified = FALSE`,
+          [variantId]
+        );
+      }
+    }
+
+    // Emit real-time stock alert and catalog updates across all connected clients
+    io.emit('stock_alert.updated', { variantId, newStock, notifiedCount, isNotified: newStock > 0 });
+    io.emit('stock_alert.restocked', { variantId, newStock, notifiedCount });
+    io.emit('product.updated', { variantId, stock: newStock });
+    io.emit('catalog.updated', { action: 'restocked', variantId, newStock });
+
+    return sendSuccess(
+      res,
+      { variantId, newStock, notifiedCount },
+      `Variant inventory updated to ${newStock} units. ${notifiedCount} waiting customer${notifiedCount === 1 ? '' : 's'} notified!`
+    );
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Trigger back-in-stock alerts to ALL waiting customers for a specific variant with a single action
+ */
+export async function triggerAdminNotifyVariant(req: Request, res: Response, next: NextFunction) {
+  try {
+    const variantId = Number(req.params.variantId);
+    const { includeAlreadyNotified } = req.body || {};
+
+    let subQuery = `
+      SELECT s.id, s.user_id, s.contact_value, s.contact_type, p.id as product_id, p.name as product_name, pv.label as variant_label
+      FROM stock_subscriptions s
+      JOIN products p ON s.product_id = p.id
+      JOIN product_variants pv ON s.variant_id = pv.id
+      WHERE s.variant_id = ?
+    `;
+    if (!includeAlreadyNotified) {
+      subQuery += ` AND s.is_notified = FALSE`;
+    }
+
+    const [subs]: any = await pool.query(subQuery, [variantId]);
+
+    if (subs.length === 0) {
+      return sendSuccess(res, { count: 0 }, 'No pending customer subscriptions found for this package size.');
+    }
+
+    const productName = subs[0].product_name || 'Garden Tea';
+    const variantLabel = subs[0].variant_label || 'Pack';
+    const productId = subs[0].product_id;
+
+    for (const sub of subs) {
+      if (sub.user_id) {
+        await createInAppNotification({
+          userId: sub.user_id,
+          title: `Back in Stock: ${productName} (${variantLabel}) 🍃`,
+          body: `Fresh garden harvest has arrived for ${productName} (${variantLabel}). Order now before inventory sells out!`,
+          type: 'FLASH_SALE',
+          actionRoute: `/product/${productId}`,
+          ctaText: 'Buy Now',
+        });
+      }
+    }
+
+    const subIds = subs.map((s: any) => s.id);
+    await pool.query(
+      `UPDATE stock_subscriptions SET is_notified = TRUE, notified_at = NOW() WHERE id IN (?)`,
+      [subIds]
+    );
+
+    // Broadcast real-time stock alert updates to all connected clients & mobile apps
+    io.emit('stock_alert.updated', { variantId, count: subs.length, isNotified: true });
+    io.emit('stock_alert.notified', { variantId, count: subs.length, subIds });
+    io.emit('catalog.updated', { action: 'alerted', variantId });
+    subs.forEach((s: any) => {
+      if (s.user_id) {
+        io.emit(`stock_alert.user_updated:${s.user_id}`, { variantId, isNotified: true });
+      }
+    });
+
+    return sendSuccess(
+      res,
+      { count: subs.length, variantId },
+      `Successfully sent alerts to all ${subs.length} customer${subs.length === 1 ? '' : 's'} waiting for ${productName} (${variantLabel})!`
+    );
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Trigger alerts to ALL waiting customers across ALL variants for a product
+ */
+export async function triggerAdminNotifyProduct(req: Request, res: Response, next: NextFunction) {
+  try {
+    const productId = Number(req.params.productId);
+    const { includeAlreadyNotified } = req.body || {};
+
+    let subQuery = `
+      SELECT s.id, s.user_id, s.contact_value, s.contact_type, p.id as product_id, p.name as product_name, pv.label as variant_label
+      FROM stock_subscriptions s
+      JOIN products p ON s.product_id = p.id
+      JOIN product_variants pv ON s.variant_id = pv.id
+      WHERE s.product_id = ?
+    `;
+    if (!includeAlreadyNotified) {
+      subQuery += ` AND s.is_notified = FALSE`;
+    }
+
+    const [subs]: any = await pool.query(subQuery, [productId]);
+
+    if (subs.length === 0) {
+      return sendSuccess(res, { count: 0 }, 'No pending customer subscriptions found for this product.');
+    }
+
+    const productName = subs[0].product_name || 'Garden Tea';
+
+    for (const sub of subs) {
+      if (sub.user_id) {
+        await createInAppNotification({
+          userId: sub.user_id,
+          title: `Back in Stock: ${productName} (${sub.variant_label}) 🍃`,
+          body: `Fresh stock is now available for ${productName} (${sub.variant_label}). Tap to order fresh today!`,
+          type: 'FLASH_SALE',
+          actionRoute: `/product/${productId}`,
+          ctaText: 'Buy Now',
+        });
+      }
+    }
+
+    const subIds = subs.map((s: any) => s.id);
+    await pool.query(
+      `UPDATE stock_subscriptions SET is_notified = TRUE, notified_at = NOW() WHERE id IN (?)`,
+      [subIds]
+    );
+
+    io.emit('stock_alert.updated', { productId, count: subs.length, isNotified: true });
+    io.emit('stock_alert.notified', { productId, count: subs.length, subIds });
+    io.emit('catalog.updated', { action: 'alerted', productId });
+    subs.forEach((s: any) => {
+      if (s.user_id) {
+        io.emit(`stock_alert.user_updated:${s.user_id}`, { productId, isNotified: true });
+      }
+    });
+
+    return sendSuccess(
+      res,
+      { count: subs.length, productId },
+      `Successfully sent alerts to all ${subs.length} customer${subs.length === 1 ? '' : 's'} waiting for ${productName}!`
+    );
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Bulk notify selected subscriptions
+ */
+export async function triggerAdminBulkStockNotify(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { subscriptionIds } = req.body;
+    if (!Array.isArray(subscriptionIds) || subscriptionIds.length === 0) {
+      return sendError(res, 'Array of subscriptionIds is required', 400);
+    }
+
+    const [subs]: any = await pool.query(
+      `SELECT s.id, s.user_id, s.contact_value, s.contact_type, p.id as product_id, p.name as product_name, pv.label as variant_label
+       FROM stock_subscriptions s
+       JOIN products p ON s.product_id = p.id
+       JOIN product_variants pv ON s.variant_id = pv.id
+       WHERE s.id IN (?)`,
+      [subscriptionIds]
+    );
+
+    for (const sub of subs) {
+      if (sub.user_id) {
+        await createInAppNotification({
+          userId: sub.user_id,
+          title: `Back in Stock: ${sub.product_name} (${sub.variant_label}) 🍃`,
+          body: `Fresh stock is now available for ${sub.product_name} (${sub.variant_label}). Tap to order fresh today!`,
+          type: 'FLASH_SALE',
+          actionRoute: `/product/${sub.product_id}`,
+          ctaText: 'Buy Now',
+        });
+      }
+    }
+
+    await pool.query(
+      `UPDATE stock_subscriptions SET is_notified = TRUE, notified_at = NOW() WHERE id IN (?)`,
+      [subscriptionIds]
+    );
+
+    io.emit('stock_alert.updated', { subscriptionIds, count: subs.length, isNotified: true });
+    io.emit('stock_alert.notified', { subscriptionIds, count: subs.length });
+    subs.forEach((s: any) => {
+      if (s.user_id) {
+        io.emit(`stock_alert.user_updated:${s.user_id}`, { id: s.id, isNotified: true });
+      }
+    });
+
+    return sendSuccess(
+      res,
+      { count: subs.length },
+      `Dispatched alerts to ${subs.length} customer${subs.length === 1 ? '' : 's'} successfully.`
+    );
   } catch (err) {
     return next(err);
   }

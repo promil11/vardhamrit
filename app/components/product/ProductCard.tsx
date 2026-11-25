@@ -265,12 +265,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               ) : null}
             </View>
 
-            {/* Tactile Add / Stepper Button */}
-            <AddButton
-              product={product}
-              variant={selectedVariant}
-              size={isTablet ? 'md' : 'sm'}
-            />
+            {/* Tactile Add / Stepper Button OR Smart Notify Me Alert */}
+            {selectedVariant.stock !== undefined && selectedVariant.stock <= 0 ? (
+              <TouchableOpacity
+                activeOpacity={0.82}
+                onPress={handleCardPress}
+                style={[styles.cardNotifyBtn, isTablet && styles.cardNotifyBtnTablet]}
+              >
+                <Icon name="bell" size={isTablet ? 12 : 10} color="#B45309" />
+                <Text style={[styles.cardNotifyBtnText, isTablet && { fontSize: 12 }]}>
+                  Notify
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <AddButton
+                product={product}
+                variant={selectedVariant}
+                size={isTablet ? 'md' : 'sm'}
+              />
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -285,6 +298,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <View style={styles.sheetVariantsList}>
           {product.variants.map((v) => {
             const isSelected = v.id === selectedVariant.id;
+            const isVariantOutOfStock = v.stock !== undefined && v.stock <= 0;
             const variantSavings = Math.max(0, v.mrp - v.price);
             return (
               <TouchableOpacity
@@ -294,6 +308,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 style={[
                   styles.variantOption,
                   isSelected && styles.variantOptionActive,
+                  isVariantOutOfStock && styles.variantOptionOutOfStock,
                 ]}
               >
                 <View style={styles.variantLeftCol}>
@@ -306,22 +321,32 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     >
                       {isSelected ? <View style={styles.radioDot} /> : null}
                     </View>
-                    <Text style={styles.variantOptionLabel}>{v.label}</Text>
-                    {isSelected ? (
+                    <Text style={[styles.variantOptionLabel, isVariantOutOfStock && styles.variantOptionLabelOutOfStock]}>
+                      {v.label}
+                    </Text>
+                    {isVariantOutOfStock ? (
+                      <View style={styles.sheetSoldOutBadge}>
+                        <Text style={styles.sheetSoldOutText}>Sold Out</Text>
+                      </View>
+                    ) : isSelected ? (
                       <View style={styles.selectedBadge}>
                         <Text style={styles.selectedBadgeText}>SELECTED</Text>
                       </View>
                     ) : null}
                   </View>
                   <Text style={styles.variantOptionSavings}>
-                    {variantSavings > 0
+                    {isVariantOutOfStock
+                      ? 'Out of stock • Alert available'
+                      : variantSavings > 0
                       ? `Save ₹${variantSavings} (${Math.round((variantSavings / v.mrp) * 100)}% OFF)`
                       : 'Standard pack'}
                   </Text>
                 </View>
 
                 <View style={styles.variantRightCol}>
-                  <Text style={styles.sheetVariantPrice}>₹{v.price}</Text>
+                  <Text style={[styles.sheetVariantPrice, isVariantOutOfStock && styles.sheetVariantPriceOutOfStock]}>
+                    ₹{v.price}
+                  </Text>
                   {v.mrp > v.price ? (
                     <Text style={styles.sheetVariantMrp}>₹{v.mrp}</Text>
                   ) : null}
@@ -683,6 +708,53 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#9CA3AF',
     textDecorationLine: 'line-through',
+  },
+  cardNotifyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: theme.radius.sm,
+    minHeight: 28,
+  },
+  cardNotifyBtnTablet: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    minHeight: 34,
+  },
+  cardNotifyBtnText: {
+    color: '#92400E',
+    fontSize: 11,
+    fontWeight: theme.typography.weights.extraBold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  variantOptionOutOfStock: {
+    opacity: 0.65,
+    backgroundColor: '#F9FAFB',
+  },
+  variantOptionLabelOutOfStock: {
+    color: '#6B7280',
+  },
+  sheetSoldOutBadge: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  sheetSoldOutText: {
+    color: '#DC2626',
+    fontSize: 8.5,
+    fontWeight: theme.typography.weights.extraBold,
+  },
+  sheetVariantPriceOutOfStock: {
+    color: '#9CA3AF',
   },
 });
 
