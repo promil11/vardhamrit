@@ -13,19 +13,6 @@ import { theme } from '../../theme';
 import { Icon } from '../common/Icon';
 import { PlaceSearchResult, searchPlaces, parseAddressQuery } from '../../services/locationService';
 
-const POPULAR_INDORE_AREAS = [
-  'Electronic Complex',
-  'Vijay Nagar',
-  'Scheme 78',
-  'Apollo DB City',
-  'Palasia',
-  'Bhawarkua',
-  'Sudama Nagar',
-  'Phoenix Citadel',
-  'Silicon City',
-  'Chhappan Dukan',
-];
-
 interface InteractiveUberMapPickerProps {
   latitude?: number;
   longitude?: number;
@@ -39,7 +26,6 @@ interface InteractiveUberMapPickerProps {
   onRequestLocateMe?: () => void;
   isLocating?: boolean;
 }
-
 
 export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> = ({
   latitude,
@@ -614,26 +600,6 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
           ) : null}
         </View>
 
-        {/* Quick Suggestion Pills Row */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.popularChipsContainer}
-          style={styles.popularChipsScroll}
-        >
-          {POPULAR_INDORE_AREAS.map((area) => (
-            <TouchableOpacity
-              key={area}
-              activeOpacity={0.7}
-              onPress={() => handleChipPress(area)}
-              style={styles.popularChip}
-            >
-              <Icon name="map-pin" size={10} color="#0A3622" style={{ marginRight: 4 }} />
-              <Text style={styles.popularChipText}>{area}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
         {/* Search Results Dropdown Card */}
         {showDropdown && (searchResults.length > 0 || isSearching || searchQuery.trim().length >= 1) ? (
           <View style={styles.dropdownCard}>
@@ -642,8 +608,8 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
                 {isSearching
                   ? 'SEARCHING INDORE...'
                   : searchResults.length > 0
-                  ? `INDORE LOCATIONS (${searchResults.length})`
-                  : 'INDORE LOCATIONS'}
+                    ? `INDORE LOCATIONS (${searchResults.length})`
+                    : 'INDORE LOCATIONS'}
               </Text>
               <TouchableOpacity onPress={() => setShowDropdown(false)}>
                 <Text style={styles.dropdownCloseText}>Close</Text>
@@ -661,17 +627,6 @@ export const InteractiveUberMapPicker: React.FC<InteractiveUberMapPickerProps> =
                 <Text style={styles.dropdownEmptyText}>
                   Try searching your colony, scheme, or major landmark:
                 </Text>
-                <View style={styles.dropdownQuickPills}>
-                  {POPULAR_INDORE_AREAS.slice(0, 4).map((area) => (
-                    <TouchableOpacity
-                      key={area}
-                      style={styles.dropdownQuickPill}
-                      onPress={() => handleChipPress(area)}
-                    >
-                      <Text style={styles.dropdownQuickPillText}>📍 {area}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
               </View>
             ) : (
               <ScrollView

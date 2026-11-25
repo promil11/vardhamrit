@@ -36,7 +36,7 @@ export default function RewardsScreen() {
 
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [refreshing, setRefreshing] = useState(false);
-  const [coinsBalance, setCoinsBalance] = useState<number>(0);
+  const [coinsBalance, setCoinsBalance] = useState<number>(user?.coins_balance ?? 0);
   const [selectedScratchCard, setSelectedScratchCard] = useState<ScratchCardItem | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -130,8 +130,11 @@ export default function RewardsScreen() {
   };
 
   useEffect(() => {
+    if (user?.coins_balance !== undefined) {
+      setCoinsBalance(user.coins_balance);
+    }
     initData();
-  }, [user?.id]);
+  }, [user?.id, user?.coins_balance]);
 
   const triggerRefreshHaptic = useCallback(() => {
     if (Platform.OS !== 'web') {
@@ -547,7 +550,7 @@ export default function RewardsScreen() {
                 <View style={styles.heroBalanceRow}>
                   <TeaCoinIcon size={32} style={{ marginRight: 8 }} />
                   <Text style={styles.heroCoinsNumber}>
-                    {coinsBalance > 0 ? coinsBalance : totalCoinsWon}
+                    {coinsBalance}
                   </Text>
                   <View style={styles.heroCoinsCol}>
                     <Text style={styles.heroCoinsLabel}>Tea Coins</Text>

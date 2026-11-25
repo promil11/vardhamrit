@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Platform,
   Alert,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -100,6 +102,65 @@ export default function CheckoutScreen() {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [processing, setProcessing] = useState(false);
+
+  // Collapsible Blinkit-style header animation
+  const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 90 : 70);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const isHeaderHidden = useRef(false);
+  const lastScrollY = useRef(0);
+
+  const showHeader = useCallback(() => {
+    if (isHeaderHidden.current) {
+      isHeaderHidden.current = false;
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY]);
+
+  const hideHeader = useCallback(() => {
+    if (!isHeaderHidden.current) {
+      isHeaderHidden.current = true;
+      Animated.timing(headerTranslateY, {
+        toValue: -headerHeight,
+        duration: 250,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY, headerHeight]);
+
+  const handleScroll = (e: any) => {
+    const currentScrollY = e.nativeEvent.contentOffset.y;
+    const contentHeight = e.nativeEvent.contentSize?.height || 0;
+    const layoutHeight = e.nativeEvent.layoutMeasurement?.height || 0;
+
+    // Keep header visible near the top
+    if (currentScrollY <= 15) {
+      showHeader();
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    // Do not hide near bottom bounce
+    if (contentHeight > 0 && currentScrollY + layoutHeight >= contentHeight - 30) {
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    const diff = currentScrollY - lastScrollY.current;
+    if (Math.abs(diff) < 6) return;
+
+    if (diff > 0 && currentScrollY > 50) {
+      hideHeader();
+    } else if (diff < 0) {
+      showHeader();
+    }
+    lastScrollY.current = currentScrollY;
+  };
 
   // GoKwik UPI Modal State
   const [gokwikModalVisible, setGokwikModalVisible] = useState(false);
@@ -381,37 +442,56 @@ export default function CheckoutScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.container}>
-        {/* Top Navbar with Back Button */}
-        <View style={styles.topNav}>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={handleBack}
-            style={styles.backButton}
-          >
-            <Icon name="arrow-left" size={18} color={theme.colors.primary} />
-            <Text style={styles.backText}>Cart</Text>
-          </TouchableOpacity>
+        {/* Top Navbar with Back Button (Collapsible) */}
+        <Animated.View
+          style={[
+            styles.headerWrapper,
+            {
+              transform: [{ translateY: headerTranslateY }],
+            },
+          ]}
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height;
+            if (h > 0 && Math.abs(h - headerHeight) > 1) {
+              setHeaderHeight(h);
+            }
+          }}
+        >
+          <View style={styles.topNav}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleBack}
+              style={styles.backButton}
+            >
+              <Icon name="arrow-left" size={18} color={theme.colors.primary} />
+              <Text style={styles.backText}>Cart</Text>
+            </TouchableOpacity>
 
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>Checkout</Text>
-            <View style={styles.headerSubtitleRow}>
-              <Icon name="zap" size={12} color={theme.colors.accentGoldDark} />
-              <Text style={styles.headerSubtitle}>Guaranteed 48 hrs Delivery</Text>
+            <View style={styles.headerCenter}>
+              <Text style={styles.headerTitle}>Checkout</Text>
+              <View style={styles.headerSubtitleRow}>
+                <Icon name="zap" size={12} color={theme.colors.accentGoldDark} />
+                <Text style={styles.headerSubtitle}>Guaranteed 48 hrs Delivery</Text>
+              </View>
+            </View>
+
+            <View style={styles.secureBadge}>
+              <Icon name="shield-check" size={12} color={theme.colors.primary} />
+              <Text style={styles.secureBadgeText}>100% Safe</Text>
             </View>
           </View>
-
-          <View style={styles.secureBadge}>
-            <Icon name="shield-check" size={12} color={theme.colors.primary} />
-            <Text style={styles.secureBadgeText}>100% Safe</Text>
-          </View>
-        </View>
+        </Animated.View>
 
         {loadingAddresses && addresses.length === 0 ? (
-          <CheckoutSkeleton />
+          <View style={{ flex: 1, paddingTop: headerHeight + 8 }}>
+            <CheckoutSkeleton />
+          </View>
         ) : (
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 12 }]}
+            scrollEventThrottle={16}
+            onScroll={handleScroll}
           >
             {/* STEP 1: DELIVERY ADDRESS */}
             <View style={styles.sectionCard}>
@@ -842,6 +922,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  headerWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    elevation: 8,
+    backgroundColor: theme.colors.surface,
   },
   topNav: {
     backgroundColor: theme.colors.surface,

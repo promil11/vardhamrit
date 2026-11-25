@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   FlatList,
   Platform,
   ActivityIndicator,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { theme } from '../../theme';
@@ -96,6 +98,65 @@ export default function ProductDetailScreen() {
   const { isInWishlist, toggleWishlist } = useWishlistStore();
   const isWishlisted = product ? isInWishlist(product.id) : false;
 
+  // Collapsible Blinkit-style header animation
+  const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 88 : 62);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const isHeaderHidden = useRef(false);
+  const lastScrollY = useRef(0);
+
+  const showHeader = useCallback(() => {
+    if (isHeaderHidden.current) {
+      isHeaderHidden.current = false;
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY]);
+
+  const hideHeader = useCallback(() => {
+    if (!isHeaderHidden.current) {
+      isHeaderHidden.current = true;
+      Animated.timing(headerTranslateY, {
+        toValue: -headerHeight,
+        duration: 250,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY, headerHeight]);
+
+  const handleVerticalScroll = (e: any) => {
+    const currentScrollY = e.nativeEvent.contentOffset.y;
+    const contentHeight = e.nativeEvent.contentSize?.height || 0;
+    const layoutHeight = e.nativeEvent.layoutMeasurement?.height || 0;
+
+    // Keep header visible near the top
+    if (currentScrollY <= 15) {
+      showHeader();
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    // Do not hide near bottom bounce
+    if (contentHeight > 0 && currentScrollY + layoutHeight >= contentHeight - 30) {
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    const diff = currentScrollY - lastScrollY.current;
+    if (Math.abs(diff) < 6) return;
+
+    if (diff > 0 && currentScrollY > 50) {
+      hideHeader();
+    } else if (diff < 0) {
+      showHeader();
+    }
+    lastScrollY.current = currentScrollY;
+  };
+
   const handleScroll = (event: any) => {
     const slide = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
     setActiveImageIndex(slide);
@@ -152,8 +213,21 @@ export default function ProductDetailScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.container}>
-        {/* Floating Top Nav (Back Button & Cart Button) */}
-        <View style={styles.topNav}>
+        {/* Floating Top Nav (Back Button & Cart Button) (Collapsible) */}
+        <Animated.View
+          style={[
+            styles.topNav,
+            {
+              transform: [{ translateY: headerTranslateY }],
+            },
+          ]}
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height;
+            if (h > 0 && Math.abs(h - headerHeight) > 1) {
+              setHeaderHeight(h);
+            }
+          }}
+        >
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={handleBack}
@@ -184,11 +258,13 @@ export default function ProductDetailScreen() {
               <Icon name="shopping-bag" size={18} color={theme.colors.textPrimary} />
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight }]}
+          scrollEventThrottle={16}
+          onScroll={handleVerticalScroll}
         >
           {/* 1. Full-Width Image Carousel */}
           <View style={styles.carouselContainer}>

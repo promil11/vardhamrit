@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   StyleSheet,
   Platform,
   Alert,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -61,6 +63,66 @@ export default function CartScreen() {
   const [addressSheetVisible, setAddressSheetVisible] = useState(false);
   const [addAddressModalVisible, setAddAddressModalVisible] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+
+  // Collapsible Blinkit-style header animation
+  const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 90 : 70);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const isHeaderHidden = useRef(false);
+  const lastScrollY = useRef(0);
+
+  const showHeader = useCallback(() => {
+    if (isHeaderHidden.current) {
+      isHeaderHidden.current = false;
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY]);
+
+  const hideHeader = useCallback(() => {
+    if (!isHeaderHidden.current) {
+      isHeaderHidden.current = true;
+      Animated.timing(headerTranslateY, {
+        toValue: -headerHeight,
+        duration: 250,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [headerTranslateY, headerHeight]);
+
+  const handleScroll = (e: any) => {
+    const currentScrollY = e.nativeEvent.contentOffset.y;
+    const contentHeight = e.nativeEvent.contentSize?.height || 0;
+    const layoutHeight = e.nativeEvent.layoutMeasurement?.height || 0;
+
+    // Keep header visible near the top
+    if (currentScrollY <= 15) {
+      showHeader();
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    // Do not hide near bottom bounce
+    if (contentHeight > 0 && currentScrollY + layoutHeight >= contentHeight - 30) {
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    const diff = currentScrollY - lastScrollY.current;
+    if (Math.abs(diff) < 6) return;
+
+    if (diff > 0 && currentScrollY > 50) {
+      hideHeader();
+    } else if (diff < 0) {
+      showHeader();
+    }
+    lastScrollY.current = currentScrollY;
+  };
+
   const [distanceInfo, setDistanceInfo] = useState<{
     distanceKm: number;
     deliveryFee: number;
@@ -285,38 +347,57 @@ export default function CartScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Top Header */}
-      <View style={[styles.topNav, isTablet && { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16 }]}>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={handleBack}
-          style={[styles.backButton, isTablet && { paddingVertical: 8, paddingHorizontal: 16 }]}
-        >
-          <Icon name="arrow-left" size={isTablet ? 18 : 16} color={theme.colors.textPrimary} style={{ marginRight: 4 }} />
-          <Text style={[styles.backText, isTablet && { fontSize: 13.5 }]}>Shopping</Text>
-        </TouchableOpacity>
+      {/* Top Header (Collapsible) */}
+      <Animated.View
+        style={[
+          styles.headerWrapper,
+          {
+            transform: [{ translateY: headerTranslateY }],
+          },
+        ]}
+        onLayout={(e) => {
+          const h = e.nativeEvent.layout.height;
+          if (h > 0 && Math.abs(h - headerHeight) > 1) {
+            setHeaderHeight(h);
+          }
+        }}
+      >
+        <View style={[styles.topNav, isTablet && { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16 }]}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleBack}
+            style={[styles.backButton, isTablet && { paddingVertical: 8, paddingHorizontal: 16 }]}
+          >
+            <Icon name="arrow-left" size={isTablet ? 18 : 16} color={theme.colors.textPrimary} style={{ marginRight: 4 }} />
+            <Text style={[styles.backText, isTablet && { fontSize: 13.5 }]}>Shopping</Text>
+          </TouchableOpacity>
 
-        <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, isTablet && { fontSize: 19 }]}>My Cart ({totalCount})</Text>
-          <Text style={[styles.headerSubtitle, isTablet && { fontSize: 13 }]}>Vardhamrit Tea Quick-Commerce</Text>
-        </View>
+          <View style={styles.headerCenter}>
+            <Text style={[styles.headerTitle, isTablet && { fontSize: 19 }]}>My Cart ({totalCount})</Text>
+            <Text style={[styles.headerSubtitle, isTablet && { fontSize: 13 }]}>Vardhamrit Tea Quick-Commerce</Text>
+          </View>
 
-        <View style={[styles.expressBadge, isTablet && { paddingHorizontal: 10, paddingVertical: 5 }]}>
-          <Icon name="zap" size={isTablet ? 13 : 11} color={theme.colors.accentGoldDark} style={{ marginRight: 3 }} />
-          <Text style={[styles.expressText, isTablet && { fontSize: 12 }]}>48 hrs</Text>
+          <View style={[styles.expressBadge, isTablet && { paddingHorizontal: 10, paddingVertical: 5 }]}>
+            <Icon name="zap" size={isTablet ? 13 : 11} color={theme.colors.accentGoldDark} style={{ marginRight: 3 }} />
+            <Text style={[styles.expressText, isTablet && { fontSize: 12 }]}>48 hrs</Text>
+          </View>
         </View>
-      </View>
+      </Animated.View>
 
       {isSyncing && items.length === 0 ? (
-        <CartSkeleton />
+        <View style={{ flex: 1, paddingTop: headerHeight + 8 }}>
+          <CartSkeleton />
+        </View>
       ) : items.length === 0 ? (
-        <EmptyState
-          iconName="shopping-bag"
-          title="Your Tea Cart is Empty"
-          subtitle="Explore our freshly packed garden CTC, Elaichi & Himalayan whole leaf blends"
-          buttonLabel="Explore Teas"
-          onButtonPress={() => router.push('/(tabs)')}
-        />
+        <View style={{ flex: 1, paddingTop: headerHeight }}>
+          <EmptyState
+            iconName="shopping-bag"
+            title="Your Tea Cart is Empty"
+            subtitle="Explore our freshly packed garden CTC, Elaichi & Himalayan whole leaf blends"
+            buttonLabel="Explore Teas"
+            onButtonPress={() => router.push('/(tabs)')}
+          />
+        </View>
       ) : (
         <>
           <FlatList
@@ -325,9 +406,11 @@ export default function CartScreen() {
             renderItem={renderCartItem}
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: Math.max(insets.bottom + 120, 150) },
+              { paddingTop: headerHeight + 8, paddingBottom: Math.max(insets.bottom + 120, 150) },
             ]}
             showsVerticalScrollIndicator={false}
+            scrollEventThrottle={16}
+            onScroll={handleScroll}
             ListHeaderComponent={
               <>
                 {/* 1. Delivery Time Banner */}
@@ -659,6 +742,15 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     width: '100%',
+  },
+  headerWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    elevation: 8,
+    backgroundColor: theme.colors.surface,
   },
   topNav: {
     backgroundColor: theme.colors.surface,
