@@ -63,6 +63,23 @@ const parseVariantLabel = (rawLabel: string) => {
   return { size: label, tag: null };
 };
 
+const getUnitPrice = (v: any, rawSize: string): string | null => {
+  let grams = v.weightGrams;
+  if (!grams || grams <= 0) {
+    const kgMatch = rawSize.match(/([\d.]+)\s*kg/i);
+    if (kgMatch) grams = parseFloat(kgMatch[1]) * 1000;
+    else {
+      const gMatch = rawSize.match(/([\d.]+)\s*g/i);
+      if (gMatch) grams = parseFloat(gMatch[1]);
+    }
+  }
+  if (grams && grams > 0 && v.price > 0) {
+    const rate = Math.round((v.price / grams) * 100);
+    return `(₹${rate}/100g)`;
+  }
+  return null;
+};
+
 export default function ProductDetailScreen() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
@@ -462,10 +479,17 @@ export default function ProductDetailScreen() {
           {/* 3. Variant Selector 2-Column Responsive Grid */}
           <View style={styles.sectionCard}>
             <View style={styles.cardHeaderRow}>
-              <Text style={styles.cardHeaderTitle}>Select Pack Size</Text>
-              <Text style={styles.cardHeaderSubtitle}>
-                {product.variants.length} options available
-              </Text>
+              <View style={styles.packHeaderLeft}>
+                <View style={styles.packHeaderIconBadge}>
+                  <Icon name="package" size={15} color="#0F5132" />
+                </View>
+                <Text style={styles.cardHeaderTitle}>Select Pack Size</Text>
+              </View>
+              <View style={styles.packOptionsCounterBadge}>
+                <Text style={styles.packOptionsCounterText}>
+                  {product.variants.length} options available
+                </Text>
+              </View>
             </View>
 
             <View style={styles.variantsGrid}>
@@ -474,6 +498,7 @@ export default function ProductDetailScreen() {
                 const isOutOfStock = v.stock !== undefined && v.stock <= 0;
                 const vSavings = Math.max(0, v.mrp - v.price);
                 const parsed = parseVariantLabel(v.label);
+                const unitPrice = getUnitPrice(v, parsed.size);
 
                 return (
                   <TouchableOpacity
@@ -487,23 +512,18 @@ export default function ProductDetailScreen() {
                       isSelected && isOutOfStock && styles.variantGridCardOutOfStockSelected,
                     ]}
                   >
-                    {/* Top Row: Radio + Size + Savings Badge */}
+                    {/* Top Row: Check Circle + Size + Savings / Sold Out Badge */}
                     <View style={styles.variantCardTopRow}>
                       <View style={styles.variantSizeRow}>
                         <View
                           style={[
-                            styles.radioCircle,
-                            isSelected && styles.radioCircleSelected,
-                            isOutOfStock && styles.radioCircleOutOfStock,
+                            styles.checkCircle,
+                            isSelected && styles.checkCircleSelected,
+                            isOutOfStock && styles.checkCircleOutOfStock,
                           ]}
                         >
                           {isSelected ? (
-                            <View
-                              style={[
-                                styles.radioDot,
-                                isOutOfStock && styles.radioDotOutOfStock,
-                              ]}
-                            />
+                            <Icon name="check" size={10} color="#FFFFFF" strokeWidth={3} />
                           ) : null}
                         </View>
                         <Text
@@ -542,7 +562,7 @@ export default function ProductDetailScreen() {
                       ) : null}
                     </View>
 
-                    {/* Bottom Row: Price + Strikethrough MRP + Optional Tag */}
+                    {/* Bottom Row: Price + Strikethrough MRP + Unit Rate */}
                     <View style={styles.variantCardBottomRow}>
                       <View style={styles.variantPriceContainer}>
                         <Text
@@ -559,23 +579,15 @@ export default function ProductDetailScreen() {
                         ) : null}
                       </View>
 
-                      {parsed.tag ? (
-                        <View
+                      {unitPrice && !isOutOfStock ? (
+                        <Text
                           style={[
-                            styles.variantTagBadge,
-                            isSelected && styles.variantTagBadgeActive,
+                            styles.variantUnitRate,
+                            isSelected && styles.variantUnitRateSelected,
                           ]}
                         >
-                          <Text
-                            style={[
-                              styles.variantTagText,
-                              isSelected && styles.variantTagTextActive,
-                            ]}
-                            numberOfLines={1}
-                          >
-                            {parsed.tag}
-                          </Text>
-                        </View>
+                          {unitPrice}
+                        </Text>
                       ) : null}
                     </View>
                   </TouchableOpacity>
@@ -1149,6 +1161,34 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: theme.spacing.xs,
   },
+  packHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  packHeaderIconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  packOptionsCounterBadge: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  packOptionsCounterText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#64748B',
+  },
   cardHeaderTitle: {
     fontSize: theme.typography.scale.sm + 1,
     fontWeight: theme.typography.weights.extraBold,
@@ -1163,25 +1203,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: theme.spacing.sm,
+    marginTop: 12,
   },
   variantGridCard: {
-    width: '48%',
-    marginBottom: 10,
-    minHeight: 74,
-    backgroundColor: theme.colors.surface,
+    width: '48.5%',
+    marginBottom: 11,
+    minHeight: 82,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.md,
-    paddingHorizontal: 10,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingHorizontal: 11,
     paddingVertical: 10,
     justifyContent: 'space-between',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 1,
   },
   variantGridCardSelected: {
-    borderColor: theme.colors.primary,
+    borderColor: '#0F5132',
     backgroundColor: '#F0FDF4',
-    borderWidth: 1.8,
-    ...theme.shadows.subtle,
+    borderWidth: 2,
+    shadowColor: '#0F5132',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 2.5,
   },
   variantCardTopRow: {
     flexDirection: 'row',
@@ -1193,6 +1242,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     flexShrink: 1,
+  },
+  checkCircle: {
+    width: 17,
+    height: 17,
+    borderRadius: 8.5,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkCircleSelected: {
+    borderColor: '#0F5132',
+    backgroundColor: '#0F5132',
+  },
+  checkCircleOutOfStock: {
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F1F5F9',
   },
   radioCircle: {
     width: 16,
@@ -1214,31 +1281,35 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   variantSizeText: {
-    fontSize: theme.typography.scale.xs + 2,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.2,
   },
   variantSizeTextSelected: {
-    color: theme.colors.primary,
-    fontWeight: theme.typography.weights.extraBold,
+    color: '#0F5132',
+    fontWeight: '900',
   },
   variantSavingsBadge: {
     backgroundColor: '#FEE2E2',
-    borderRadius: theme.radius.xs,
+    borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
+    borderWidth: 0.5,
+    borderColor: '#FECACA',
   },
   variantSavingsBadgeActive: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#DC2626',
+    borderColor: '#DC2626',
   },
   variantSavingsText: {
     color: '#DC2626',
     fontSize: 9.5,
-    fontWeight: theme.typography.weights.extraBold,
+    fontWeight: '800',
     letterSpacing: 0.2,
   },
   variantSavingsTextActive: {
-    color: theme.colors.textInverse,
+    color: '#FFFFFF',
   },
   variantCardBottomRow: {
     flexDirection: 'row',
@@ -1252,26 +1323,41 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   variantPriceText: {
-    fontSize: theme.typography.scale.sm + 1,
-    fontWeight: theme.typography.weights.extraBold,
-    color: theme.colors.textPrimary,
+    fontSize: 16.5,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: -0.3,
   },
   variantPriceTextSelected: {
-    color: theme.colors.primary,
+    color: '#0F5132',
   },
   variantMrpText: {
-    fontSize: theme.typography.scale.xs - 2,
-    color: theme.colors.textHint,
+    fontSize: 11,
+    color: '#94A3B8',
     textDecorationLine: 'line-through',
-    fontWeight: theme.typography.weights.medium,
+    fontWeight: '500',
+  },
+  variantUnitRate: {
+    fontSize: 10,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  variantUnitRateSelected: {
+    color: '#15803D',
+    fontWeight: '700',
   },
   variantTagBadge: {
-    backgroundColor: theme.colors.surfaceSecondary,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.xs,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3.5,
+    backgroundColor: '#FEF3C7',
+    borderWidth: 0.8,
+    borderColor: '#FDE68A',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
   },
   variantTagBadgeActive: {
     backgroundColor: '#DCFCE7',
@@ -1279,12 +1365,13 @@ const styles = StyleSheet.create({
   },
   variantTagText: {
     fontSize: 9,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.textSecondary,
+    fontWeight: '800',
+    color: '#B45309',
     textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   variantTagTextActive: {
-    color: '#15803D',
+    color: '#0F5132',
   },
   infoChipsGrid: {
     flexDirection: 'row',
@@ -1490,36 +1577,44 @@ const styles = StyleSheet.create({
     minWidth: 130,
   },
   variantGridCardOutOfStock: {
-    opacity: 0.72,
-    backgroundColor: '#FAFAFA',
-    borderColor: '#E5E7EB',
+    backgroundColor: '#FAFAFC',
+    borderColor: '#E2E8F0',
+    opacity: 0.88,
   },
   variantGridCardOutOfStockSelected: {
-    borderColor: '#B45309',
-    backgroundColor: '#FFFDF9',
+    borderColor: '#F59E0B',
+    borderWidth: 2,
+    backgroundColor: '#FFFBEB',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 2,
   },
   radioCircleOutOfStock: {
-    borderColor: '#D1D5DB',
+    borderColor: '#CBD5E1',
   },
   radioDotOutOfStock: {
-    backgroundColor: '#B45309',
+    backgroundColor: '#F59E0B',
   },
   variantSizeTextOutOfStock: {
-    color: '#6B7280',
+    color: '#94A3B8',
   },
   variantPriceTextOutOfStock: {
-    color: '#6B7280',
+    color: '#94A3B8',
   },
   soldOutBadge: {
-    backgroundColor: '#FEE2E2',
-    borderRadius: theme.radius.xs,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 0.8,
+    borderColor: '#E2E8F0',
+    borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   soldOutBadgeText: {
-    color: '#DC2626',
+    color: '#64748B',
     fontSize: 9.5,
-    fontWeight: theme.typography.weights.bold,
+    fontWeight: '800',
     letterSpacing: 0.2,
   },
   restockNoticeCard: {
