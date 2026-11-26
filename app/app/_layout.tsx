@@ -31,7 +31,7 @@ const queryClient = new QueryClient({
 });
 
 function NavigationGate() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, pendingPreferences } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -39,13 +39,20 @@ function NavigationGate() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === 'auth';
+    const isPreferencesScreen = (segments as any).includes('preferences');
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/auth/login');
-    } else if (isAuthenticated && inAuthGroup) {
-      router.replace('/(tabs)');
+    } else if (isAuthenticated) {
+      if (pendingPreferences) {
+        if (!isPreferencesScreen) {
+          router.replace('/auth/preferences');
+        }
+      } else if (inAuthGroup && !isPreferencesScreen) {
+        router.replace('/(tabs)');
+      }
     }
-  }, [isAuthenticated, isLoading, segments]);
+  }, [isAuthenticated, isLoading, segments, pendingPreferences]);
 
   // Handle push notification tap / deep linking (cold start & foreground/background)
   useEffect(() => {

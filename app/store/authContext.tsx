@@ -70,13 +70,29 @@ interface AuthContextType {
   }) => Promise<User>;
   setCoinsBalance: (coins: number) => void;
   setPreferredBlend: (blend: string) => void;
+  pendingPreferences: boolean;
+  setPendingPreferences: (pending: boolean) => void;
 }
+
+const PENDING_PREFS_KEY = 'vardhamrit_pending_preferences';
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [pendingPreferences, setPendingPreferencesState] = useState<boolean>(() => {
+    return storage.getItemSync(PENDING_PREFS_KEY) === '1';
+  });
+
+  const setPendingPreferences = (pending: boolean) => {
+    setPendingPreferencesState(pending);
+    if (pending) {
+      storage.setItem(PENDING_PREFS_KEY, '1');
+    } else {
+      storage.removeItem(PENDING_PREFS_KEY);
+    }
+  };
 
   const registerPushToken = async () => {
     if (Platform.OS === 'web') return;
@@ -417,6 +433,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateUserProfile,
         setCoinsBalance,
         setPreferredBlend,
+        pendingPreferences,
+        setPendingPreferences,
       }}
     >
       {children}

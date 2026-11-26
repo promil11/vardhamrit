@@ -30,6 +30,7 @@ export default function RegisterScreen() {
     sendPhoneOtp,
     loginWithPhone,
     loginWithFirebasePhone,
+    setPendingPreferences,
   } = useAuth();
 
   // Registration Form Fields
@@ -225,6 +226,7 @@ export default function RegisterScreen() {
 
     setErrorMessage(null);
     setLoading(true);
+    setPendingPreferences(true);
 
     try {
       if (authMethod === 'email') {
@@ -272,6 +274,7 @@ export default function RegisterScreen() {
 
     setErrorMessage(null);
     setLoading(true);
+    setPendingPreferences(true);
 
     try {
       // Upload avatar if selected
@@ -317,6 +320,7 @@ export default function RegisterScreen() {
       // Smoothly navigate to the dedicated tea taste preference screen
       router.replace('/auth/preferences');
     } catch (err: any) {
+      setPendingPreferences(false);
       const msg =
         err.response?.data?.error ||
         err.message ||

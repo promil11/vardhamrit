@@ -73,7 +73,7 @@ const TEA_BLEND_OPTIONS: BlendOption[] = [
 
 export default function PreferencesScreen() {
   const router = useRouter();
-  const { user, updateUserProfile } = useAuth();
+  const { user, updateUserProfile, setPendingPreferences } = useAuth();
   const [selectedBlend, setSelectedBlend] = useState<string>('Normal Chai');
   const [saving, setSaving] = useState(false);
 
@@ -123,6 +123,7 @@ export default function PreferencesScreen() {
       console.warn('Preference save notice:', e);
     } finally {
       setSaving(false);
+      setPendingPreferences(false);
       // Navigate to Home Feed where the App Tour Guide starts!
       router.replace('/(tabs)');
     }
@@ -231,7 +232,10 @@ export default function PreferencesScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => router.replace('/(tabs)')}
+            onPress={() => {
+              setPendingPreferences(false);
+              router.replace('/(tabs)');
+            }}
             style={styles.skipBtn}
           >
             <Text style={styles.skipBtnText}>I will choose later • Skip to Home</Text>
