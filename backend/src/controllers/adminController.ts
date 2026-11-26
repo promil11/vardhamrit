@@ -7,6 +7,7 @@ import {
   sendOrderPushNotification,
   createInAppNotification,
   dispatchRestockNotificationsForVariant,
+  dispatchRestockNotificationForSingleSubscription,
   dispatchOrderWhatsAppNotification,
 } from '../services/notificationService';
 import { recalculateProductRating } from '../services/reviewService';
@@ -1307,51 +1308,30 @@ export async function getAdminStockSubscriptions(req: Request, res: Response, ne
 }
 
 /**
- * Manually trigger stock notification for a single subscription
+ * Manually trigger stock notification for a single subscription (handles "Alert" & "Re-send")
  */
 export async function triggerAdminManualStockNotify(req: Request, res: Response, next: NextFunction) {
   try {
     const subId = Number(req.params.id);
 
-    const [rows]: any = await pool.query(
-      `SELECT s.*, p.name as product_name, pv.label as variant_label
-       FROM stock_subscriptions s
-       JOIN products p ON s.product_id = p.id
-       JOIN product_variants pv ON s.variant_id = pv.id
-       WHERE s.id = ?`,
-      [subId]
+    const result = await dispatchRestockNotificationForSingleSubscription(subId);
+
+    if (!result.success) {
+      return sendError(res, result.message || 'Subscription not found', 404);
+    }
+
+    const channels: string[] = [];
+    if (result.email) channels.push(`Email (${result.email})`);
+    if (result.phone) channels.push(`WhatsApp (${result.phone})`);
+    if (result.notifiedDetails?.inAppSent) channels.push('In-App');
+
+    const channelStr = channels.length > 0 ? channels.join(' & ') : 'customer notification';
+
+    return sendSuccess(
+      res,
+      result,
+      `Restock notification re-sent successfully via ${channelStr}!`
     );
-
-    if (rows.length === 0) {
-      return sendError(res, 'Subscription not found', 404);
-    }
-
-    const sub = rows[0];
-
-    if (sub.user_id) {
-      await createInAppNotification({
-        userId: sub.user_id,
-        title: `Back in Stock: ${sub.product_name} (${sub.variant_label}) 🍃`,
-        body: `Fresh garden harvest has arrived for ${sub.product_name} (${sub.variant_label}). Order now before inventory sells out!`,
-        type: 'FLASH_SALE',
-        actionRoute: `/product/${sub.product_id}`,
-        ctaText: 'Buy Now',
-      });
-    }
-
-    await pool.query(
-      `UPDATE stock_subscriptions SET is_notified = TRUE, notified_at = NOW() WHERE id = ?`,
-      [subId]
-    );
-
-    // Emit real-time stock alert notification events
-    io.emit('stock_alert.updated', { subId, variantId: sub.variant_id, productId: sub.product_id, isNotified: true });
-    io.emit('stock_alert.notified', { subId, variantId: sub.variant_id, productId: sub.product_id });
-    if (sub.user_id) {
-      io.emit(`stock_alert.user_updated:${sub.user_id}`, { subId, variantId: sub.variant_id, isNotified: true });
-    }
-
-    return sendSuccess(res, { success: true }, 'Notification alert sent to customer successfully.');
   } catch (err) {
     return next(err);
   }
@@ -1446,15 +1426,10 @@ export async function triggerAdminBulkStockNotify(req: Request, res: Response, n
       return sendError(res, 'Array of subscriptionIds is required', 400);
     }
 
-    const [subs]: any = await pool.query(
-      `SELECT DISTINCT variant_id FROM stock_subscriptions WHERE id IN (?)`,
-      [subscriptionIds]
-    );
-
     let totalNotified = 0;
-    for (const row of subs) {
-      const resV = await dispatchRestockNotificationsForVariant(row.variant_id);
-      totalNotified += resV.notifiedCount;
+    for (const subId of subscriptionIds) {
+      const resSingle = await dispatchRestockNotificationForSingleSubscription(Number(subId));
+      if (resSingle.success) totalNotified++;
     }
 
     return sendSuccess(

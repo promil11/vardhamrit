@@ -636,7 +636,7 @@ export const StockAlerts: React.FC = () => {
                                     <td className="py-3 px-4 text-slate-600">
                                       <span className="font-medium">{contactValue}</span>
                                       <span className="text-[10px] text-slate-400 block uppercase">
-                                        Via {sub.contact_type || 'PUSH'}
+                                        Via {contactValue.includes('@') ? 'EMAIL' : /^\+?[0-9]{10,14}$/.test(contactValue) ? 'PHONE / WHATSAPP' : (sub.contact_type || 'PUSH')}
                                       </span>
                                     </td>
                                     <td className="py-3 px-4 text-slate-600">
@@ -659,11 +659,19 @@ export const StockAlerts: React.FC = () => {
                                       <button
                                         onClick={() => notifySingleMutation.mutate(sub.id)}
                                         disabled={notifySingleMutation.isPending}
-                                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-200 hover:bg-emerald-50 hover:text-emerald-800 transition-colors inline-flex items-center gap-1"
+                                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-200 hover:bg-emerald-50 hover:text-emerald-800 transition-colors inline-flex items-center gap-1 disabled:opacity-50"
                                         title="Alert this individual customer only"
                                       >
-                                        <Send className="w-2.5 h-2.5 text-emerald-600" />
-                                        <span>{isSubNotified ? 'Re-send' : 'Alert'}</span>
+                                        {notifySingleMutation.isPending && (notifySingleMutation.variables as any) === sub.id ? (
+                                          <RefreshCw className="w-2.5 h-2.5 text-emerald-600 animate-spin" />
+                                        ) : (
+                                          <Send className="w-2.5 h-2.5 text-emerald-600" />
+                                        )}
+                                        <span>
+                                          {notifySingleMutation.isPending && (notifySingleMutation.variables as any) === sub.id
+                                            ? 'Sending...'
+                                            : (isSubNotified ? 'Re-send' : 'Alert')}
+                                        </span>
                                       </button>
                                     </td>
                                   </tr>
@@ -812,7 +820,7 @@ export const StockAlerts: React.FC = () => {
                                     {contactValue}
                                   </p>
                                   <span className="inline-block text-[9.5px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
-                                    Via {row.contact_type || 'PUSH'}
+                                    Via {contactValue.includes('@') ? 'EMAIL' : /^\+?[0-9]{10,14}$/.test(contactValue) ? 'PHONE / WHATSAPP' : (row.contact_type || 'PUSH')}
                                   </span>
                                 </div>
                               </div>
@@ -928,14 +936,22 @@ export const StockAlerts: React.FC = () => {
                                   <button
                                     onClick={() => notifySingleMutation.mutate(row.id)}
                                     disabled={notifySingleMutation.isPending}
-                                    className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 ${isFulfilled
+                                    className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 disabled:opacity-60 ${isFulfilled
                                       ? 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'
                                       : 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs'
                                       }`}
                                     title={isFulfilled ? 'Send another restock alert' : 'Dispatch restock push alert now'}
                                   >
-                                    <Send className="w-3 h-3" />
-                                    <span>{isFulfilled ? 'Re-send' : 'Alert Now'}</span>
+                                    {notifySingleMutation.isPending && (notifySingleMutation.variables as any) === row.id ? (
+                                      <RefreshCw className="w-3 h-3 animate-spin text-emerald-600" />
+                                    ) : (
+                                      <Send className="w-3 h-3" />
+                                    )}
+                                    <span>
+                                      {notifySingleMutation.isPending && (notifySingleMutation.variables as any) === row.id
+                                        ? 'Sending...'
+                                        : (isFulfilled ? 'Re-send' : 'Alert Now')}
+                                    </span>
                                   </button>
                                 )}
                               </div>

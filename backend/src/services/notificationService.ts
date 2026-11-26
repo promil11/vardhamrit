@@ -714,6 +714,184 @@ export async function dispatchRestockNotificationsForVariant(
 }
 
 /**
+ * Dispatches a multichannel Restock Alert (WhatsApp + Email + In-App + Socket.io)
+ * to a SINGLE subscriber (used when Admin clicks "Re-send" or "Alert" for an individual row).
+ */
+export async function dispatchRestockNotificationForSingleSubscription(
+  subscriptionId: number
+): Promise<{ success: boolean; message?: string; email?: string | null; phone?: string | null; notifiedDetails?: any }> {
+  try {
+    const [rows]: any = await pool.query(
+      `SELECT 
+        s.id as subscription_id,
+        s.user_id,
+        s.contact_value,
+        s.contact_type,
+        s.is_notified,
+        p.id as product_id,
+        p.name as product_name,
+        p.slug as product_slug,
+        pv.id as variant_id,
+        pv.label as variant_label,
+        pv.price,
+        pv.stock_quantity,
+        u.name as user_name,
+        u.email as user_email,
+        u.phone as user_phone,
+        COALESCE(
+          (SELECT image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.sort_order ASC LIMIT 1),
+          'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&q=80&w=800'
+        ) as product_image
+      FROM stock_subscriptions s
+      JOIN products p ON s.product_id = p.id
+      JOIN product_variants pv ON s.variant_id = pv.id
+      LEFT JOIN users u ON s.user_id = u.id
+      WHERE s.id = ?`,
+      [subscriptionId]
+    );
+
+    if (!rows || rows.length === 0) {
+      return { success: false, message: 'Subscription not found' };
+    }
+
+    const sub = rows[0];
+    const recipientName = sub.user_name || 'Tea Connoisseur';
+
+    // 1. Resolve WhatsApp / Phone
+    let phone: string | null = null;
+    if (sub.contact_value && /^\+?[0-9]{10,14}$/.test(sub.contact_value.trim())) {
+      phone = sub.contact_value.trim();
+    } else if (sub.contact_type === 'whatsapp' || sub.contact_type === 'phone') {
+      if (sub.contact_value && !sub.contact_value.includes('@')) {
+        phone = sub.contact_value.trim();
+      }
+    }
+    if (!phone && sub.user_phone) {
+      phone = sub.user_phone.trim();
+    }
+
+    // 2. Resolve Email
+    let email: string | null = null;
+    if (sub.contact_value && sub.contact_value.includes('@')) {
+      email = sub.contact_value.trim();
+    } else if (sub.contact_type === 'email' && sub.contact_value) {
+      email = sub.contact_value.trim();
+    }
+    if (!email && sub.user_email) {
+      email = sub.user_email.trim();
+    }
+
+    let emailSent = false;
+    let whatsappSent = false;
+    let inAppSent = false;
+
+    // Send WhatsApp Alert
+    if (phone) {
+      try {
+        await sendWhatsAppRestockAlert({
+          phone,
+          userName: recipientName,
+          productName: sub.product_name,
+          variantLabel: sub.variant_label,
+          price: Number(sub.price),
+          productSlug: sub.product_slug,
+          productId: sub.product_id,
+        });
+        whatsappSent = true;
+      } catch (waErr: any) {
+        console.warn(`[NotificationService] WhatsApp restock dispatch warning for sub #${subscriptionId}:`, waErr.message);
+      }
+    }
+
+    // Send Email Alert
+    if (email) {
+      try {
+        await sendRestockAlertEmail({
+          to: email,
+          userName: recipientName,
+          productName: sub.product_name,
+          variantLabel: sub.variant_label,
+          price: Number(sub.price),
+          productId: sub.product_id,
+          productSlug: sub.product_slug,
+          imageUrl: sub.product_image,
+        });
+        emailSent = true;
+      } catch (emailErr: any) {
+        console.warn(`[NotificationService] Email restock dispatch warning for sub #${subscriptionId}:`, emailErr.message);
+      }
+    }
+
+    // Send In-App Notification (if customer has an account)
+    if (sub.user_id) {
+      try {
+        await createInAppNotification({
+          userId: sub.user_id,
+          title: `Back in Stock: ${sub.product_name} (${sub.variant_label}) 🍃`,
+          body: `Great news! Fresh inventory is now in stock for ${sub.product_name} (${sub.variant_label}). Tap to order before it sells out!`,
+          type: 'FLASH_SALE',
+          actionRoute: `/product/${sub.product_id}`,
+          ctaText: 'Order Now',
+        });
+        io?.emit(`stock_alert.user_updated:${sub.user_id}`, {
+          variantId: sub.variant_id,
+          productId: sub.product_id,
+          status: 'in_stock',
+        });
+        inAppSent = true;
+      } catch (inAppErr: any) {
+        console.warn(`[NotificationService] In-App restock dispatch warning for sub #${subscriptionId}:`, inAppErr.message);
+      }
+    }
+
+    // Mark subscription as notified in database
+    await pool.query(
+      `UPDATE stock_subscriptions SET is_notified = TRUE, notified_at = NOW() WHERE id = ?`,
+      [subscriptionId]
+    );
+
+    // Emit real-time Socket.io events
+    if (io) {
+      io.emit('stock_alert.updated', {
+        subId: subscriptionId,
+        variantId: sub.variant_id,
+        productId: sub.product_id,
+        isNotified: true,
+      });
+      io.emit('stock_alert.notified', {
+        subId: subscriptionId,
+        variantId: sub.variant_id,
+        productId: sub.product_id,
+      });
+      if (sub.user_id) {
+        io.emit(`stock_alert.user_updated:${sub.user_id}`, {
+          subId: subscriptionId,
+          variantId: sub.variant_id,
+          isNotified: true,
+        });
+      }
+    }
+
+    console.log(`[NotificationService] ✅ Restock notification sent for sub #${subscriptionId} (Email: ${email}, WhatsApp: ${phone})`);
+
+    return {
+      success: true,
+      email,
+      phone,
+      notifiedDetails: {
+        emailSent,
+        whatsappSent,
+        inAppSent,
+        recipient: email || phone || recipientName,
+      },
+    };
+  } catch (err: any) {
+    console.error(`[NotificationService] ❌ Failed to dispatch restock notification for sub #${subscriptionId}:`, err);
+    return { success: false, message: err.message };
+  }
+}
+
+/**
  * Automatically dispatches WhatsApp Order Notifications to the customer
  */
 export async function dispatchOrderWhatsAppNotification(
