@@ -129,20 +129,6 @@ app.get('/health', async (_req, res) => {
 // API v1 Primary Router (Production Standard)
 app.use('/api/v1', v1Router);
 
-// Backward Compatibility Direct Endpoints
-app.use('/auth', authRoutes);
-app.use('/categories', categoriesRoutes);
-app.use('/content', contentRoutes);
-app.use('/products', productRoutes);
-app.use('/cart', cartRoutes);
-app.use('/addresses', addressRoutes);
-app.use('/coupons', couponRoutes);
-app.use('/orders', orderRoutes);
-app.use('/payments', paymentRoutes);
-app.use('/reviews', reviewRoutes);
-app.use('/wishlist', wishlistRoutes);
-app.use('/user', userRoutes);
-app.use('/notifications', notificationRoutes);
 // Helper to locate static builds for Admin and Visitor App
 function findDistDir(folder: string): string | null {
   const possiblePaths = [
@@ -187,8 +173,65 @@ if (adminDist) {
   app.use('/admin', adminRoutes);
 }
 
-// 2. Visitor Storefront UI (Catch-all for all customer routes)
-// Convenient redirect for email & WhatsApp notification links
+// 2. Visitor Storefront Static Assets
+if (appDist) {
+  app.use(express.static(appDist));
+}
+
+// 3. SPA Page Navigation Guard:
+// When a browser visits or refreshes ANY customer page (e.g. /categories, /products, /cart, /orders, /notifications),
+// always serve the frontend index.html so the Single Page Application router loads cleanly instead of dumping API JSON.
+app.use((req, res, next) => {
+  if (
+    req.path.startsWith('/api') ||
+    req.path.startsWith('/health') ||
+    req.path.startsWith('/uploads') ||
+    req.path.startsWith('/invoices') ||
+    req.path.startsWith('/socket.io') ||
+    req.path.startsWith('/admin')
+  ) {
+    return next();
+  }
+
+  const accept = req.headers.accept || '';
+  const isBrowserHtmlRequest =
+    req.method === 'GET' &&
+    accept.includes('text/html') &&
+    !accept.includes('application/json') &&
+    !req.headers['x-requested-with'] &&
+    !req.headers.authorization;
+
+  if (isBrowserHtmlRequest && appDist) {
+    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    return res.sendFile(path.join(appDist, 'index.html'));
+  }
+
+  next();
+});
+
+// 4. Backward Compatibility Direct Endpoints (for non-browser API callers only)
+const legacyApiOnly = (router: express.Router) => (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (req.method === 'GET' && req.headers.accept?.includes('text/html')) {
+    return next();
+  }
+  return router(req, res, next);
+};
+
+app.use('/auth', legacyApiOnly(authRoutes));
+app.use('/categories', legacyApiOnly(categoriesRoutes));
+app.use('/content', legacyApiOnly(contentRoutes));
+app.use('/products', legacyApiOnly(productRoutes));
+app.use('/cart', legacyApiOnly(cartRoutes));
+app.use('/addresses', legacyApiOnly(addressRoutes));
+app.use('/coupons', legacyApiOnly(couponRoutes));
+app.use('/orders', legacyApiOnly(orderRoutes));
+app.use('/payments', legacyApiOnly(paymentRoutes));
+app.use('/reviews', legacyApiOnly(reviewRoutes));
+app.use('/wishlist', legacyApiOnly(wishlistRoutes));
+app.use('/user', legacyApiOnly(userRoutes));
+app.use('/notifications', legacyApiOnly(notificationRoutes));
+
+// 5. Visitor Storefront UI Catch-All (SPA fallback for all remaining customer routes)
 app.get(['/r/product/:id', '/product/:id'], (req, res, next) => {
   const productId = req.params.id;
   const storeUrl = process.env.STORE_FRONTEND_URL || 'http://localhost:8081';
@@ -199,7 +242,6 @@ app.get(['/r/product/:id', '/product/:id'], (req, res, next) => {
 });
 
 if (appDist) {
-  app.use(express.static(appDist));
   app.get('*', (req, res, next) => {
     if (
       req.path.startsWith('/api') ||
@@ -211,6 +253,7 @@ if (appDist) {
     ) {
       return next();
     }
+    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     res.sendFile(path.join(appDist, 'index.html'));
   });
 } else {
