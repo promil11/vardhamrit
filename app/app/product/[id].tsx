@@ -764,7 +764,7 @@ export default function ProductDetailScreen() {
 
                   <View style={styles.asmrCardThumbWrapper}>
                     <Image
-                      source={{ uri: matchingReel.posterUrl }}
+                      source={{ uri: getFullImageUrl(matchingReel.posterUrl) }}
                       style={styles.asmrCardThumb}
                     />
                     <View style={styles.asmrDurationChip}>

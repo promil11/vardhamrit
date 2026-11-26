@@ -265,7 +265,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
                 key={currentReel.id}
                 ref={videoRef}
                 src={videoUri}
-                poster={currentReel.posterUrl}
+                poster={getFullImageUrl(currentReel.posterUrl)}
                 autoPlay
                 playsInline
                 loop
@@ -280,7 +280,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
             </div>
           ) : (
             <Image
-              source={{ uri: currentReel.posterUrl }}
+              source={{ uri: getFullImageUrl(currentReel.posterUrl) }}
               style={StyleSheet.absoluteFillObject}
               resizeMode="cover"
             />
@@ -467,7 +467,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
                 activeOpacity={0.8}
               >
                 <Image
-                  source={{ uri: currentReel.productImageUrl }}
+                  source={{ uri: getFullImageUrl(currentReel.productImageUrl) }}
                   style={styles.productThumb}
                 />
               </TouchableOpacity>

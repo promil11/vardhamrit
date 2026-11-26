@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Icon } from '../common/Icon';
 import { CHAI_REELS, ChaiReel } from '../../constants/chaiReels';
+import { getFullImageUrl } from '../../utils/imageUtils';
 import { useResponsive } from '../../utils/responsive';
 
 interface ChaiAsmrReelsRowProps {
@@ -103,7 +104,7 @@ export const ChaiAsmrReelsRow: React.FC<ChaiAsmrReelsRowProps> = ({ onSelectReel
               <View style={styles.storyCardInner}>
                 {/* Poster Background */}
                 <Image
-                  source={{ uri: reel.posterUrl }}
+                  source={{ uri: getFullImageUrl(reel.posterUrl) }}
                   style={styles.storyPoster}
                   resizeMode="cover"
                 />
@@ -129,13 +130,13 @@ export const ChaiAsmrReelsRow: React.FC<ChaiAsmrReelsRowProps> = ({ onSelectReel
                   </View>
                 </View>
 
-                {/* Bottom Title & Estate */}
+                {/* Bottom Title & Flavor Detail */}
                 <View style={styles.bottomMeta}>
-                  <Text style={styles.storyTitle} numberOfLines={2}>
+                  <Text style={styles.storyTitle} numberOfLines={1}>
                     {reel.title}
                   </Text>
                   <Text style={styles.storyEstate} numberOfLines={1}>
-                    {reel.badgeText}
+                    {reel.flavorDetail}
                   </Text>
                 </View>
               </View>
