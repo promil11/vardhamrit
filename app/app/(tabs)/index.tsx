@@ -1412,6 +1412,7 @@ export default function HomeScreen() {
       <ChaiReelsViewerModal
         visible={reelModalVisible}
         initialReelId={selectedReel?.id}
+        showProductRate={false}
         onClose={() => setReelModalVisible(false)}
       />
     </View >

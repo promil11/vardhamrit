@@ -18,6 +18,9 @@ export interface ChaiReel {
   productName: string;
   productPrice: number;
   productWeight: string;
+  productPrice1Kg: number;
+  productMrp1Kg: number;
+  productWeight1Kg: string;
   productImageUrl: string;
   accentColor: string;
   badgeText: string;
@@ -44,6 +47,9 @@ export const CHAI_REELS: ChaiReel[] = [
     productName: 'Vardhamrit Normal Chai (Classic Kadak)',
     productPrice: 149,
     productWeight: '200 g',
+    productPrice1Kg: 519,
+    productMrp1Kg: 650,
+    productWeight1Kg: '1 kg',
     productImageUrl: '/uploads/products/classic_200g.png',
     accentColor: '#16A34A',
     badgeText: 'NORMAL CHAI',
@@ -68,6 +74,9 @@ export const CHAI_REELS: ChaiReel[] = [
     productName: 'Vardhamrit Grand Masala Chai',
     productPrice: 169,
     productWeight: '200 g',
+    productPrice1Kg: 699,
+    productMrp1Kg: 950,
+    productWeight1Kg: '1 kg',
     productImageUrl: '/uploads/products/masala_200g.png',
     accentColor: '#D97706',
     badgeText: 'MASALA CHAI',
@@ -92,6 +101,9 @@ export const CHAI_REELS: ChaiReel[] = [
     productName: 'Vardhamrit Royal Keser Saffron Chai',
     productPrice: 219,
     productWeight: '200 g',
+    productPrice1Kg: 1199,
+    productMrp1Kg: 1550,
+    productWeight1Kg: '1 kg',
     productImageUrl: '/uploads/products/kesar_200g.png',
     accentColor: '#B45309',
     badgeText: 'KESER CHAI',
@@ -116,6 +128,9 @@ export const CHAI_REELS: ChaiReel[] = [
     productName: 'Vardhamrit Artisan Chocolate Chai',
     productPrice: 189,
     productWeight: '200 g',
+    productPrice1Kg: 799,
+    productMrp1Kg: 1050,
+    productWeight1Kg: '1 kg',
     productImageUrl: '/uploads/products/chocolate_200g.png',
     accentColor: '#78350F',
     badgeText: 'CHOCOLATE CHAI',

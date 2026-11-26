@@ -387,6 +387,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <ChaiReelsViewerModal
           visible={reelsModalVisible}
           initialReelId={matchingReel.id}
+          product={product}
+          showProductRate={true}
           onClose={() => setReelsModalVisible(false)}
         />
       )}

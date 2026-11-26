@@ -1030,6 +1030,8 @@ export default function ProductDetailScreen() {
           <ChaiReelsViewerModal
             visible={reelsModalVisible}
             initialReelId={matchingReel.id}
+            product={product}
+            showProductRate={true}
             onClose={() => setReelsModalVisible(false)}
           />
         )}

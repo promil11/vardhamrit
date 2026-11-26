@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Modal,
   View,
@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from './Icon';
+import { Product } from '../../types';
 import { CHAI_REELS, ChaiReel } from '../../constants/chaiReels';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import { asmrAudio } from '../../utils/asmrAudio';
@@ -25,6 +26,8 @@ import { useResponsive } from '../../utils/responsive';
 interface ChaiReelsViewerModalProps {
   visible: boolean;
   initialReelId?: string;
+  product?: Product | null;
+  showProductRate?: boolean;
   onClose: () => void;
   onSelectReel?: (reel: ChaiReel) => void;
 }
@@ -34,6 +37,8 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
   visible,
   initialReelId,
+  product,
+  showProductRate = false,
   onClose,
 }) => {
   const router = useRouter();
@@ -66,6 +71,48 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
   }, [visible, initialReelId]);
 
   const currentReel = CHAI_REELS[currentIndex] || CHAI_REELS[0];
+
+  // Resolve 1 kg rate for the product
+  const rateInfo = useMemo(() => {
+    const targetProduct = product;
+    if (targetProduct && targetProduct.variants && targetProduct.variants.length > 0) {
+      // Find 1 kg variant
+      const oneKg = targetProduct.variants.find((v: any) => {
+        const lbl = (v.label || '').toLowerCase();
+        return lbl.includes('1 kg') || lbl.includes('1kg') || v.weightGrams === 1000;
+      });
+
+      if (oneKg) {
+        return {
+          price: oneKg.price,
+          mrp: oneKg.mrp || Math.round(oneKg.price * 1.25),
+          weight: '1 kg',
+          variant: oneKg,
+          name: targetProduct.name,
+          image: targetProduct.images?.[0] || currentReel.productImageUrl,
+        };
+      }
+
+      // If no 1kg variant in product list, fallback to defined 1kg price
+      return {
+        price: currentReel.productPrice1Kg || 519,
+        mrp: currentReel.productMrp1Kg || 650,
+        weight: '1 kg',
+        variant: targetProduct.variants[targetProduct.variants.length - 1],
+        name: targetProduct.name,
+        image: targetProduct.images?.[0] || currentReel.productImageUrl,
+      };
+    }
+
+    return {
+      price: currentReel.productPrice1Kg || 519,
+      mrp: currentReel.productMrp1Kg || 650,
+      weight: '1 kg',
+      variant: null,
+      name: currentReel.productName,
+      image: currentReel.productImageUrl,
+    };
+  }, [product, currentReel]);
 
   // Start ASMR audio when visible & not muted
   useEffect(() => {
@@ -103,7 +150,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
     }
   }, [visible, currentIndex, isMuted]);
 
-  // Handle 10-second reel progress animation
+  // Handle 10-second reel progress animation (loops current flavour only, without sequence skipping)
   useEffect(() => {
     if (!visible) {
       progressAnim.setValue(0);
@@ -115,42 +162,28 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
       return;
     }
 
-    progressAnim.setValue(0);
-    const animation = Animated.timing(progressAnim, {
-      toValue: 1,
-      duration: 10000,
-      easing: Easing.linear,
-      useNativeDriver: false,
-    });
-
-    animation.start(({ finished }) => {
-      if (finished) {
-        handleNext();
-      }
-    });
+    let isCancelled = false;
+    const runLoop = () => {
+      if (isCancelled) return;
+      progressAnim.setValue(0);
+      Animated.timing(progressAnim, {
+        toValue: 1,
+        duration: 10000,
+        easing: Easing.linear,
+        useNativeDriver: false,
+      }).start(({ finished }) => {
+        if (finished && !isCancelled) {
+          runLoop();
+        }
+      });
+    };
+    runLoop();
 
     return () => {
+      isCancelled = true;
       progressAnim.stopAnimation();
     };
   }, [visible, currentIndex, isPaused]);
-
-  const handleNext = useCallback(() => {
-    if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch {}
-    }
-    setCurrentIndex((prev) => (prev + 1) % CHAI_REELS.length);
-  }, []);
-
-  const handlePrev = useCallback(() => {
-    if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch {}
-    }
-    setCurrentIndex((prev) => (prev === 0 ? CHAI_REELS.length - 1 : prev - 1));
-  }, []);
 
   const toggleMute = () => {
     if (Platform.OS !== 'web') {
@@ -210,27 +243,31 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
       } catch {}
     }
 
-    const mockProduct: any = {
-      id: currentReel.productId,
-      name: currentReel.productName,
-      slug: currentReel.id,
-      images: [currentReel.productImageUrl],
-      category_id: 1,
-      is_active: true,
-      is_featured: true,
-      variants: [
-        {
-          id: currentReel.productId * 10 + 1,
-          label: currentReel.productWeight,
-          price: currentReel.productPrice,
-          mrp: Math.round(currentReel.productPrice * 1.25),
-          stock: 50,
-          weightGrams: 250,
-        },
-      ],
-    };
+    if (product && rateInfo.variant) {
+      useCartStore.getState().addItem(product, rateInfo.variant);
+    } else {
+      const mockProduct: any = {
+        id: currentReel.productId,
+        name: rateInfo.name,
+        slug: currentReel.id,
+        images: [rateInfo.image],
+        category_id: 1,
+        is_active: true,
+        is_featured: true,
+        variants: [
+          {
+            id: currentReel.productId * 10 + 4,
+            label: '1 kg',
+            price: rateInfo.price,
+            mrp: rateInfo.mrp,
+            stock: 50,
+            weightGrams: 1000,
+          },
+        ],
+      };
 
-    useCartStore.getState().addItem(mockProduct, mockProduct.variants[0]);
+      useCartStore.getState().addItem(mockProduct, mockProduct.variants[0]);
+    }
 
     setAddedToCartToast(true);
     Animated.sequence([
@@ -324,62 +361,30 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
             pointerEvents="none"
           />
 
-          {/* Interactive Tap Zones: Left (Prev) & Right (Next) */}
+          {/* Interactive Tap Zone (Pause / Resume for this single flavour) */}
           <View style={styles.touchOverlay} pointerEvents="box-none">
             <TouchableOpacity
-              style={styles.touchLeft}
-              activeOpacity={1}
-              onPress={handlePrev}
-            />
-            <TouchableOpacity
-              style={styles.touchCenter}
+              style={styles.touchFull}
               activeOpacity={1}
               onPress={togglePause}
             />
-            <TouchableOpacity
-              style={styles.touchRight}
-              activeOpacity={1}
-              onPress={handleNext}
-            />
           </View>
 
-          {/* Top Segmented Story Progress Bar */}
+          {/* Top Single Flavour Story Progress Bar */}
           <View style={styles.progressBarRow}>
-            {CHAI_REELS.map((reel, idx) => {
-              let segmentProgress: any = 0;
-              if (idx < currentIndex) {
-                segmentProgress = 1;
-              } else if (idx === currentIndex) {
-                segmentProgress = progressAnim;
-              } else {
-                segmentProgress = 0;
-              }
-
-              return (
-                <View key={reel.id} style={styles.progressBarTrack}>
-                  {idx === currentIndex ? (
-                    <Animated.View
-                      style={[
-                        styles.progressBarFill,
-                        {
-                          width: progressAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: ['0%', '100%'],
-                          }),
-                        },
-                      ]}
-                    />
-                  ) : (
-                    <View
-                      style={[
-                        styles.progressBarFill,
-                        { width: segmentProgress === 1 ? '100%' : '0%' },
-                      ]}
-                    />
-                  )}
-                </View>
-              );
-            })}
+            <View style={styles.progressBarTrack}>
+              <Animated.View
+                style={[
+                  styles.progressBarFill,
+                  {
+                    width: progressAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0%', '100%'],
+                    }),
+                  },
+                ]}
+              />
+            </View>
           </View>
 
           {/* Top Header Controls */}
@@ -485,49 +490,51 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
               ))}
             </View>
 
-            {/* Floating Glassmorphic Product Buy Bar */}
-            <View style={styles.productBuyCard}>
-              <TouchableOpacity
-                style={styles.productThumbWrapper}
-                onPress={handleViewBlendDetails}
-                activeOpacity={0.8}
-              >
-                <Image
-                  source={{ uri: getFullImageUrl(currentReel.productImageUrl) }}
-                  style={styles.productThumb}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.productInfoCol}
-                onPress={handleViewBlendDetails}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.productBuyName} numberOfLines={1}>
-                  {currentReel.productName}
-                </Text>
-                <View style={styles.productPriceRow}>
-                  <Text style={styles.productBuyPrice}>₹{currentReel.productPrice}</Text>
-                  <Text style={styles.productBuyWeight}>/ {currentReel.productWeight}</Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.addToCartBtn}
-                onPress={handleAddToCart}
-                activeOpacity={0.85}
-              >
-                <LinearGradient
-                  colors={['#059669', '#047857']}
-                  style={styles.addToCartGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+            {/* Floating Glassmorphic Product Buy Bar (ONLY shown when opened from a product card) */}
+            {showProductRate ? (
+              <View style={styles.productBuyCard}>
+                <TouchableOpacity
+                  style={styles.productThumbWrapper}
+                  onPress={handleViewBlendDetails}
+                  activeOpacity={0.8}
                 >
-                  <Icon name="shopping-bag" size={15} color="#FFFFFF" />
-                  <Text style={styles.addToCartBtnText}>Add</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
+                  <Image
+                    source={{ uri: getFullImageUrl(rateInfo.image) }}
+                    style={styles.productThumb}
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.productInfoCol}
+                  onPress={handleViewBlendDetails}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.productBuyName} numberOfLines={1}>
+                    {rateInfo.name}
+                  </Text>
+                  <View style={styles.productPriceRow}>
+                    <Text style={styles.productBuyPrice}>₹{rateInfo.price}</Text>
+                    <Text style={styles.productBuyWeight}>/ 1 kg</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.addToCartBtn}
+                  onPress={handleAddToCart}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={['#059669', '#047857']}
+                    style={styles.addToCartGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Icon name="shopping-bag" size={15} color="#FFFFFF" />
+                    <Text style={styles.addToCartBtnText}>Add</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </View>
 
           {/* Quick Success Toast when Item Added to Cart */}
@@ -601,13 +608,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     zIndex: 3,
   },
-  touchLeft: {
-    flex: 1,
-  },
-  touchCenter: {
-    flex: 1,
-  },
-  touchRight: {
+  touchFull: {
     flex: 1,
   },
   progressBarRow: {
