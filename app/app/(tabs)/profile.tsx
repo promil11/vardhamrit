@@ -25,6 +25,8 @@ import { fetchUserOrders } from '../../services/orderClientService';
 import { AddAddressModal } from '../../components/checkout/AddAddressModal';
 import { DeleteAddressModal } from '../../components/address/DeleteAddressModal';
 import { EditProfileModal } from '../../components/profile/EditProfileModal';
+import { AppTourGuideModal } from '../../components/common/AppTourGuideModal';
+import { useTourStore, registerTargetRef } from '../../store/useTourStore';
 import { useScratchCardStore } from '../../store/useScratchCardStore';
 import { useStockAlertStore } from '../../store/useStockAlertStore';
 import { Icon } from '../../components/common/Icon';
@@ -84,7 +86,8 @@ export function normalizeMorningCup(val?: string | null): string {
 export default function ProfileScreen() {
   const router = useRouter();
   const { isTablet } = useResponsive();
-  const { user, logout, setPreferredBlend: setPreferredBlendStore, updateUserProfile } = useAuth();
+  const { user, logout, setPreferredBlend: setPreferredBlendStore, updateUserProfile, completeTour } = useAuth();
+  const { startTour } = useTourStore();
   const { wishlistIds } = useWishlistStore();
   const wishlistCount = wishlistIds.length;
   const {
@@ -998,36 +1001,42 @@ export default function ProfileScreen() {
             <View style={styles.menuDivider} />
 
             {/* My Scratch Cards & Rewards */}
-            <TouchableOpacity
-              style={styles.menuRow}
-              onPress={() => router.push('/rewards')}
+            <View
+              nativeID="tour-target-scratch_cards_rewards"
+              ref={(node) => registerTargetRef('scratch_cards_rewards', node)}
+              collapsable={false}
             >
-              <View style={[styles.menuIconContainer, { backgroundColor: '#FEF3C7' }]}>
-                <Icon name="gift" size={16} color="#B45309" />
-                {unclaimedScratchCards.length > 0 && (
-                  <View style={styles.menuIconNoticeDot} />
-                )}
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={styles.menuText}>My Scratch Cards & Rewards</Text>
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={() => router.push('/rewards')}
+              >
+                <View style={[styles.menuIconContainer, { backgroundColor: '#FEF3C7' }]}>
+                  <Icon name="gift" size={16} color="#B45309" />
+                  {unclaimedScratchCards.length > 0 && (
+                    <View style={styles.menuIconNoticeDot} />
+                  )}
                 </View>
-                <Text style={styles.menuSubtext}>
-                  {unclaimedScratchCards.length > 0
-                    ? `${unclaimedScratchCards.length} scratch card${unclaimedScratchCards.length > 1 ? 's' : ''} waiting to be revealed`
-                    : 'View all reward history & perks'}
-                </Text>
-              </View>
-              {unclaimedScratchCards.length > 0 ? (
-                <View style={styles.unclaimedBadgePill}>
-                  <Text style={styles.unclaimedBadgeText}>
-                    {unclaimedScratchCards.length} New
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={styles.menuText}>My Scratch Cards & Rewards</Text>
+                  </View>
+                  <Text style={styles.menuSubtext}>
+                    {unclaimedScratchCards.length > 0
+                      ? `${unclaimedScratchCards.length} scratch card${unclaimedScratchCards.length > 1 ? 's' : ''} waiting to be revealed`
+                      : 'View all reward history & perks'}
                   </Text>
                 </View>
-              ) : (
-                <Icon name="chevron-right" size={14} color="#9CA3AF" />
-              )}
-            </TouchableOpacity>
+                {unclaimedScratchCards.length > 0 ? (
+                  <View style={styles.unclaimedBadgePill}>
+                    <Text style={styles.unclaimedBadgeText}>
+                      {unclaimedScratchCards.length} New
+                    </Text>
+                  </View>
+                ) : (
+                  <Icon name="chevron-right" size={14} color="#9CA3AF" />
+                )}
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.menuDivider} />
 
@@ -1045,37 +1054,43 @@ export default function ProfileScreen() {
             <View style={styles.menuDivider} />
 
             {/* My Stock & Restock Alerts */}
-            <TouchableOpacity
-              style={styles.menuRow}
-              onPress={() => router.push('/stock-alerts')}
-              activeOpacity={0.7}
+            <View
+              nativeID="tour-target-stock_alerts"
+              ref={(node) => registerTargetRef('stock_alerts', node)}
+              collapsable={false}
             >
-              <View style={[styles.menuIconContainer, { backgroundColor: '#FEF3C7' }]}>
-                <Icon name="bell" size={16} color="#B45309" />
-                {hasUnreadRestock && (
-                  <View style={styles.menuIconNoticeDot} />
-                )}
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={styles.menuText}>Restock & Stock Alerts</Text>
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={() => router.push('/stock-alerts')}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuIconContainer, { backgroundColor: '#FEF3C7' }]}>
+                  <Icon name="bell" size={16} color="#B45309" />
+                  {hasUnreadRestock && (
+                    <View style={styles.menuIconNoticeDot} />
+                  )}
                 </View>
-                <Text style={styles.menuSubtext}>
-                  {hasUnreadRestock
-                    ? `${unreadRestockCount} package size${unreadRestockCount > 1 ? 's' : ''} now in stock or alerted!`
-                    : 'View package sizes awaiting garden harvest'}
-                </Text>
-              </View>
-              {hasUnreadRestock ? (
-                <View style={[styles.unclaimedBadgePill, { backgroundColor: '#059669' }]}>
-                  <Text style={styles.unclaimedBadgeText}>
-                    {unreadRestockCount} Restocked
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={styles.menuText}>Restock & Stock Alerts</Text>
+                  </View>
+                  <Text style={styles.menuSubtext}>
+                    {hasUnreadRestock
+                      ? `${unreadRestockCount} package size${unreadRestockCount > 1 ? 's' : ''} now in stock or alerted!`
+                      : 'View package sizes awaiting garden harvest'}
                   </Text>
                 </View>
-              ) : (
-                <Icon name="chevron-right" size={14} color="#9CA3AF" />
-              )}
-            </TouchableOpacity>
+                {hasUnreadRestock ? (
+                  <View style={[styles.unclaimedBadgePill, { backgroundColor: '#059669' }]}>
+                    <Text style={styles.unclaimedBadgeText}>
+                      {unreadRestockCount} Restocked
+                    </Text>
+                  </View>
+                ) : (
+                  <Icon name="chevron-right" size={14} color="#9CA3AF" />
+                )}
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.menuDivider} />
 
@@ -1114,7 +1129,19 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* 8. SIGN OUT BUTTON */}
+          {/* 8. TOUR GUIDE & SIGN OUT */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => {
+              startTour();
+              router.replace('/(tabs)');
+            }}
+            style={styles.tourGuideBtn}
+          >
+            <Icon name="sparkles" size={15} color="#059669" />
+            <Text style={styles.tourGuideBtnText}>Explore App Tour Guide</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={handleSignOut}
@@ -1212,6 +1239,11 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+      {/* App Tour Guide Modal */}
+      <AppTourGuideModal
+        currentScreen="profile"
+        onComplete={completeTour}
+      />
     </View>
   );
 }
@@ -2021,6 +2053,28 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#F3F4F6',
     marginLeft: 56,
+  },
+  tourGuideBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: 12,
+    paddingVertical: 12,
+    gap: 6,
+    marginBottom: 10,
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  tourGuideBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#065F46',
   },
   signOutBtn: {
     flexDirection: 'row',

@@ -15,6 +15,7 @@ import { Address } from '../../types';
 import { useWishlistStore } from '../../store/useWishlistStore';
 import { useAddressStore } from '../../store/useAddressStore';
 import { useNotificationStore } from '../../store/useNotificationStore';
+import { registerTargetRef } from '../../store/useTourStore';
 import { Icon } from '../common/Icon';
 import { useResponsive } from '../../utils/responsive';
 import { formatHeaderAddress } from '../../services/locationService';
@@ -125,7 +126,11 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
             onPress={() => router.push('/notifications')}
             style={styles.headerIconBtn}
           >
-            <View style={[styles.headerIconCircle, isTablet && styles.headerIconCircleTablet]}>
+            <View
+              nativeID="tour-target-notifications"
+              ref={(node) => registerTargetRef('notifications', node)}
+              style={[styles.headerIconCircle, isTablet && styles.headerIconCircleTablet]}
+            >
               <Icon name="bell" size={isTablet ? 20 : 17} color={theme.colors.textInverse} />
               {unreadCount > 0 ? (
                 <View style={[styles.headerBadgeDot, { backgroundColor: '#EF4444' }]}>
@@ -142,7 +147,11 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
             onPress={() => router.push('/wishlist')}
             style={styles.headerIconBtn}
           >
-            <View style={[styles.headerIconCircle, isTablet && styles.headerIconCircleTablet]}>
+            <View
+              nativeID="tour-target-wishlist"
+              ref={(node) => registerTargetRef('wishlist', node)}
+              style={[styles.headerIconCircle, isTablet && styles.headerIconCircleTablet]}
+            >
               <Icon name="heart" size={isTablet ? 20 : 17} color={theme.colors.textInverse} />
               {wishlistCount > 0 ? (
                 <View style={styles.headerBadgeDot}>
@@ -167,7 +176,11 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
       </View>
 
       {/* Rounded White Search Bar with Rotating Placeholder */}
-      <View style={styles.searchSection}>
+      <View
+        nativeID="tour-target-search_bar"
+        ref={(node) => registerTargetRef('search_bar', node)}
+        style={styles.searchSection}
+      >
         <View style={[styles.searchBar, isTablet && styles.searchBarTablet]}>
           <Icon name="search" size={isTablet ? 21 : 18} color={theme.colors.textSecondary} style={styles.searchIcon} />
           <TextInput

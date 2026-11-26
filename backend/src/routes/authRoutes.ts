@@ -19,6 +19,7 @@ import {
   sendEmailOtpSchema,
   verifyEmailOtpSchema,
   firebasePhoneLogin,
+  completeTour,
 } from '../controllers/authController';
 import { validate } from '../middleware/validate';
 import { authenticate, optionalAuthenticate } from '../middleware/auth';
@@ -38,6 +39,7 @@ router.post('/avatar', optionalAuthenticate, avatarUploadMiddleware, uploadAvata
 router.post('/login', validate({ body: loginSchema }), login);
 router.post('/refresh', validate({ body: refreshSchema }), refresh);
 router.get('/me', authenticate, getMe);
+router.post('/complete-tour', authenticate, completeTour);
 router.put('/profile', authenticate, updateUserProfile);
 router.patch('/profile', authenticate, updateUserProfile);
 router.patch('/push-token', authenticate, validate({ body: pushTokenSchema }), updatePushToken);

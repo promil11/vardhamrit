@@ -21,6 +21,7 @@ export interface User {
   referred_by?: number | null;
   preferred_blend?: string;
   favorite_morning_cup?: string;
+  has_completed_tour?: boolean;
 }
 
 interface AuthContextType {
@@ -44,6 +45,7 @@ interface AuthContextType {
   ) => Promise<{ inviteBonusAwarded?: boolean; user?: User; message?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  completeTour: () => Promise<void>;
   updateUserProfile: (data: {
     name?: string;
     email?: string;
@@ -332,6 +334,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     throw new Error(res.data?.error || 'Failed to update profile');
   };
 
+  const completeTour = async () => {
+    try {
+      if (user?.id) {
+        await storage.setItem(`@vardhamrit_tour_done_${user.id}`, 'true');
+      }
+      await api.post('/auth/complete-tour');
+    } catch (err) {
+      console.warn('Could not mark tour complete on backend:', err);
+    } finally {
+      setUser((prev) => (prev ? { ...prev, has_completed_tour: true } : null));
+      if (user) {
+        const updatedUser = { ...user, has_completed_tour: true };
+        await storage.setUser(updatedUser);
+      }
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -348,6 +367,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         refreshUser,
+        completeTour,
         updateUserProfile,
         setCoinsBalance,
         setPreferredBlend,

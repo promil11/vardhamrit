@@ -29,6 +29,8 @@ import { AddAddressModal } from '../../components/checkout/AddAddressModal';
 import { BannerCarousel, BannerItem } from '../../components/home/BannerCarousel';
 import { ChaiAsmrReelsRow } from '../../components/home/ChaiAsmrReelsRow';
 import { ChaiReelsViewerModal } from '../../components/common/ChaiReelsViewerModal';
+import { AppTourGuideModal } from '../../components/common/AppTourGuideModal';
+import { useTourStore, registerTargetRef } from '../../store/useTourStore';
 import { ChaiReel } from '../../constants/chaiReels';
 import { CategoryTile, CategoryItem } from '../../components/home/CategoryTile';
 import { SectionHeader } from '../../components/home/SectionHeader';
@@ -41,6 +43,7 @@ import { useNotificationStore } from '../../store/useNotificationStore';
 import { Icon } from '../../components/common/Icon';
 import { useCartStore } from '../../store/useCartStore';
 import { useAuth } from '../../store/authContext';
+import { storage } from '../../services/storage';
 import { fetchUserOrders } from '../../services/orderClientService';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import { useResponsive } from '../../utils/responsive';
@@ -88,7 +91,32 @@ export default function HomeScreen() {
   const router = useRouter();
   const { isTablet, isLargeTablet, gridItemWidth, scaleFont, scaleSize } = useResponsive();
   const { addItem } = useCartStore();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, completeTour } = useAuth();
+  const { isActive: isTourActive, startTour } = useTourStore();
+
+  // Check if first-time user needs the Animated Tour Guide
+  useEffect(() => {
+    let isMounted = true;
+    const checkTour = async () => {
+      if (isAuthenticated && user) {
+        if (user.has_completed_tour === false) {
+          const locallyDone = await storage.getItem(`@vardhamrit_tour_done_${user.id}`);
+          if (!locallyDone && isMounted && !isTourActive) {
+            const timer = setTimeout(() => {
+              if (isMounted) {
+                startTour();
+              }
+            }, 600);
+            return () => clearTimeout(timer);
+          }
+        }
+      }
+    };
+    checkTour();
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, user?.id, user?.has_completed_tour, isTourActive]);
 
   const {
     addresses,
@@ -934,12 +962,18 @@ export default function HomeScreen() {
               </View>
 
               {/* 2.5 Chai ASMR & Mini Garden Reels (10s Micro-Videos) */}
-              <ChaiAsmrReelsRow
-                onSelectReel={(reel) => {
-                  setSelectedReel(reel);
-                  setReelModalVisible(true);
-                }}
-              />
+              <View
+                nativeID="tour-target-reels_asmr"
+                ref={(node) => registerTargetRef('reels_asmr', node)}
+                collapsable={false}
+              >
+                <ChaiAsmrReelsRow
+                  onSelectReel={(reel) => {
+                    setSelectedReel(reel);
+                    setReelModalVisible(true);
+                  }}
+                />
+              </View>
 
               {/* 3. Horizontal Scrollable Category Explorer */}
               {/* <View style={styles.categorySection}>
@@ -1265,7 +1299,12 @@ export default function HomeScreen() {
               </View>
 
               {/* 8. Horizontal Rail: Fresh Stock 2026 */}
-              <View style={styles.railSection}>
+              <View
+                nativeID="tour-target-fresh_packs"
+                ref={(node) => registerTargetRef('fresh_packs', node)}
+                collapsable={false}
+                style={styles.railSection}
+              >
                 <SectionHeader
                   title="Fresh Stock 2026"
                   subtitle="Packed within 48 hours of garden harvest"
@@ -1414,6 +1453,12 @@ export default function HomeScreen() {
         initialReelId={selectedReel?.id}
         showProductRate={false}
         onClose={() => setReelModalVisible(false)}
+      />
+
+      {/* First-Time User Interactive Animated Tour Guide */}
+      <AppTourGuideModal
+        currentScreen="home"
+        onComplete={completeTour}
       />
     </View >
   );

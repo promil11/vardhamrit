@@ -264,6 +264,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
           referred_by: referrer ? referrer.id : null,
           preferred_blend: morningCup,
           favorite_morning_cup: morningCup,
+          has_completed_tour: false,
         },
         accessToken,
         refreshToken,
@@ -388,7 +389,7 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
 
     // Check if user exists
     const [users]: any = await connection.query(
-      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, status FROM users WHERE email = ? LIMIT 1',
+      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, has_completed_tour, status FROM users WHERE email = ? LIMIT 1',
       [email]
     );
 
@@ -397,6 +398,7 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
 
     if (users.length > 0) {
       user = users[0];
+      user.has_completed_tour = Boolean(user.has_completed_tour);
       if (user.status === 'suspended') {
         return sendError(res, 'Your account has been suspended. Please contact support.', 403);
       }
@@ -416,7 +418,7 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
       const referralCode = await generateUniqueReferralCode(formattedName, connection);
 
       const [insertResult]: any = await connection.query(
-        'INSERT INTO users (name, email, role, status, coins_balance, referral_code, preferred_blend) VALUES (?, ?, "customer", "active", 25, ?, ?)',
+        'INSERT INTO users (name, email, role, status, coins_balance, referral_code, preferred_blend, has_completed_tour) VALUES (?, ?, "customer", "active", 25, ?, ?, 0)',
         [formattedName, email, referralCode, preferredBlend]
       );
 
@@ -439,6 +441,7 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
         preferred_blend: preferredBlend,
         avatar_url: null,
         push_token: null,
+        has_completed_tour: false,
       };
     }
 
@@ -468,6 +471,7 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
           preferred_blend: user.preferred_blend || 'Normal Chai',
           favorite_morning_cup: user.preferred_blend || 'Normal Chai',
           pushToken: user.push_token,
+          has_completed_tour: Boolean(user.has_completed_tour),
         },
         accessToken,
         refreshToken,
@@ -571,7 +575,7 @@ export async function verifyOtp(req: Request, res: Response, next: NextFunction)
     const variants = getPhoneVariants(phone || rawTarget);
 
     const [users]: any = await pool.query(
-      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, avatar_url, status FROM users WHERE phone IN (?, ?, ?, ?) LIMIT 1',
+      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, avatar_url, has_completed_tour, status FROM users WHERE phone IN (?, ?, ?, ?) LIMIT 1',
       variants
     );
 
@@ -584,6 +588,7 @@ export async function verifyOtp(req: Request, res: Response, next: NextFunction)
     }
 
     const user = users[0];
+    user.has_completed_tour = Boolean(user.has_completed_tour);
     if (user.status === 'suspended') {
       return sendError(res, 'Your account has been suspended. Please contact support.', 403);
     }
@@ -631,6 +636,7 @@ export async function verifyOtp(req: Request, res: Response, next: NextFunction)
           preferred_blend: user.preferred_blend || 'Normal Chai',
           favorite_morning_cup: user.preferred_blend || 'Normal Chai',
           pushToken: user.push_token,
+          has_completed_tour: Boolean(user.has_completed_tour),
         },
         accessToken,
         refreshToken,
@@ -651,7 +657,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
     // Query by email OR phone
     const [users]: any = await pool.query(
-      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, status FROM users WHERE email = ? OR phone IN (?, ?, ?, ?) LIMIT 1',
+      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, has_completed_tour, status FROM users WHERE email = ? OR phone IN (?, ?, ?, ?) LIMIT 1',
       [identifier, ...phoneVariants]
     );
 
@@ -664,6 +670,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     }
 
     const user = users[0];
+    user.has_completed_tour = Boolean(user.has_completed_tour);
 
     if (user.status === 'suspended') {
       return sendError(res, 'Your account has been suspended. Please contact support.', 403);
@@ -713,6 +720,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
           preferred_blend: user.preferred_blend || 'Normal Chai',
           favorite_morning_cup: user.preferred_blend || 'Normal Chai',
           pushToken: user.push_token,
+          has_completed_tour: Boolean(user.has_completed_tour),
         },
         accessToken,
         refreshToken,
@@ -775,7 +783,7 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
     }
 
     const [users]: any = await pool.query(
-      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, created_at FROM users WHERE id = ? LIMIT 1',
+      'SELECT id, name, email, phone, role, push_token, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, has_completed_tour, created_at FROM users WHERE id = ? LIMIT 1',
       [req.user.userId]
     );
 
@@ -785,8 +793,24 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
 
     const userData = users[0];
     userData.favorite_morning_cup = userData.preferred_blend || 'Normal Chai';
+    userData.has_completed_tour = Boolean(userData.has_completed_tour);
 
     return sendSuccess(res, userData, 'Profile retrieved successfully');
+  } catch (err) {
+    return next(err);
+  }
+}
+
+export async function completeTour(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      return sendError(res, 'Unauthorized', 401);
+    }
+
+    await pool.query('UPDATE users SET has_completed_tour = 1 WHERE id = ?', [userId]);
+
+    return sendSuccess(res, { has_completed_tour: true }, 'Tour guide marked as completed in database');
   } catch (err) {
     return next(err);
   }
@@ -821,7 +845,7 @@ export async function firebasePhoneLogin(req: Request, res: Response, next: Next
 
     const variants = getPhoneVariants(cleanPhone);
     const [users]: any = await pool.query(
-      'SELECT id, name, email, phone, role, status, coins_balance, referral_code, preferred_blend, avatar_url FROM users WHERE phone IN (?, ?, ?, ?) LIMIT 1',
+      'SELECT id, name, email, phone, role, status, coins_balance, referral_code, preferred_blend, avatar_url, has_completed_tour FROM users WHERE phone IN (?, ?, ?, ?) LIMIT 1',
       variants
     );
 
@@ -830,6 +854,7 @@ export async function firebasePhoneLogin(req: Request, res: Response, next: Next
 
     if (users.length > 0) {
       user = users[0];
+      user.has_completed_tour = Boolean(user.has_completed_tour);
       if (user.status === 'suspended') {
         return sendError(res, 'Your account has been suspended. Please contact support.', 403);
       }
@@ -840,7 +865,7 @@ export async function firebasePhoneLogin(req: Request, res: Response, next: Next
       const referralCode = await generateUniqueReferralCode(formattedName, pool);
 
       const [insertResult]: any = await pool.query(
-        'INSERT INTO users (name, phone, role, status, coins_balance, referral_code, preferred_blend) VALUES (?, ?, "customer", "active", 25, ?, ?)',
+        'INSERT INTO users (name, phone, role, status, coins_balance, referral_code, preferred_blend, has_completed_tour) VALUES (?, ?, "customer", "active", 25, ?, ?, 0)',
         [formattedName, `+91${cleanPhone}`, referralCode, favoriteMorningCup || 'Normal Chai']
       );
 
@@ -861,6 +886,7 @@ export async function firebasePhoneLogin(req: Request, res: Response, next: Next
         referral_code: referralCode,
         preferred_blend: favoriteMorningCup || 'Normal Chai',
         avatar_url: null,
+        has_completed_tour: false,
       };
     }
 

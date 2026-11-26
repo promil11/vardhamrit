@@ -7,6 +7,7 @@ import { useCartStore } from '../../store/useCartStore';
 import { useScratchCardStore } from '../../store/useScratchCardStore';
 import { useStockAlertStore } from '../../store/useStockAlertStore';
 import { useAuth } from '../../store/authContext';
+import { registerTargetRef } from '../../store/useTourStore';
 import { Icon } from '../../components/common/Icon';
 import { useResponsive } from '../../utils/responsive';
 
@@ -119,6 +120,8 @@ export default function TabLayout() {
           ),
           tabBarIcon: ({ focused, color }) => (
             <View
+              nativeID="tour-target-orders_tab"
+              ref={(node) => registerTargetRef('orders_tab', node)}
               style={[
                 styles.iconWrapper,
                 isTablet && styles.iconWrapperTablet,
