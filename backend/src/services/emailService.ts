@@ -252,13 +252,27 @@ export async function sendOtpEmail({ to, otp, userName, purpose = 'Login' }: Sen
 </html>
 `;
 
-  const isCustomDomain = Boolean(process.env.RESEND_FROM && !process.env.RESEND_FROM.includes('resend.dev'));
-  const isOwnerEmail = to.trim().toLowerCase() === 'promiljain11@gmail.com';
+  // 1. Direct SMTP transporter (Gmail App Password fallback for any recipient)
+  // Sends pristine raw emails with direct untracked links (no third-party click wrapping)
+  const isRenderWithoutCustomSmtp = Boolean(process.env.RENDER && !process.env.SMTP_HOST && !process.env.GMAIL_APP_PASSWORD);
+  const activeTransporter = isRenderWithoutCustomSmtp ? null : getTransporter();
 
-  // 1. If recipient is owner or a custom domain is verified in Resend, use Resend API:
-  if ((isCustomDomain || isOwnerEmail) && getResendApiKey()) {
-    const sent = await sendViaResendHttp(to, subject, htmlContent, plainText, fromName);
-    if (sent) return { sent: true };
+  if (activeTransporter) {
+    try {
+      const senderEmail = (process.env.GMAIL_USER || 'promiljain11@gmail.com').trim();
+      const info = await activeTransporter.sendMail({
+        from: `"${fromName}" <${senderEmail}>`,
+        to,
+        subject,
+        text: plainText,
+        html: htmlContent,
+      });
+
+      console.log(`[EmailService] ✅ Email OTP sent directly via SMTP to ${to} (Message ID: ${info.messageId})`);
+      return { sent: true, messageId: info.messageId };
+    } catch (err: any) {
+      console.warn('[EmailService] ⚠️ SMTP OTP delivery failed, attempting HTTP APIs:', err.message);
+    }
   }
 
   // 2. Try SendGrid HTTP API (Port 443 - works on Render to ANY recipient without custom domain)
@@ -273,32 +287,15 @@ export async function sendOtpEmail({ to, otp, userName, purpose = 'Login' }: Sen
     if (sent) return { sent: true };
   }
 
-  // 4. Direct SMTP transporter (Gmail App Password fallback for any recipient)
-  // Note: Render blocks ports 25, 465, 587 by default. Only attempt SMTP if not on Render or if explicit SMTP_HOST is set.
-  const isRenderWithoutCustomSmtp = Boolean(process.env.RENDER && !process.env.SMTP_HOST);
-  const activeTransporter = isRenderWithoutCustomSmtp ? null : getTransporter();
+  // 4. Try Resend HTTP API as fallback
+  const isCustomDomain = Boolean(process.env.RESEND_FROM && !process.env.RESEND_FROM.includes('resend.dev'));
+  const isOwnerEmail = to.trim().toLowerCase() === 'promiljain11@gmail.com';
 
-  if (activeTransporter) {
-    try {
-      const senderEmail = (process.env.GMAIL_USER || 'promiljain11@gmail.com').trim();
-      const info = await activeTransporter.sendMail({
-        from: `"${fromName}" <${senderEmail}>`,
-        to,
-        subject,
-        text: plainText,
-        html: htmlContent,
-      });
-
-      console.log(`[EmailService] ✅ Email OTP sent via SMTP to ${to} (Message ID: ${info.messageId})`);
-      return { sent: true, messageId: info.messageId };
-    } catch (err: any) {
-      console.error('[EmailService] ❌ Failed to send email via SMTP transporter:', err.message);
-    }
-  } else if (isRenderWithoutCustomSmtp) {
-    console.log('[EmailService] ℹ️ Render environment blocks direct SMTP ports (465/587). Using HTTP API delivery services.');
+  if ((isCustomDomain || isOwnerEmail) && getResendApiKey()) {
+    const sent = await sendViaResendHttp(to, subject, htmlContent, plainText, fromName);
+    if (sent) return { sent: true };
   }
 
-  // 3. Fallback to Resend HTTP API if SMTP didn't send:
   if (!isCustomDomain && !isOwnerEmail && getResendApiKey()) {
     const sent = await sendViaResendHttp(to, subject, htmlContent, plainText, fromName);
     if (sent) return { sent: true };
@@ -334,25 +331,9 @@ export async function sendRawEmail({
   const fromName = process.env.EMAIL_FROM_NAME || process.env.SMTP_FROM_NAME || 'Vardhamrit Tea';
   const fromEmail = process.env.GMAIL_USER || process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@vardhamrit.com';
 
-  const isCustomDomain = Boolean(process.env.RESEND_FROM && !process.env.RESEND_FROM.includes('resend.dev'));
-  const isOwnerEmail = to.trim().toLowerCase() === 'promiljain11@gmail.com';
-
-  if ((isCustomDomain || isOwnerEmail) && getResendApiKey()) {
-    const sent = await sendViaResendHttp(to, subject, html, plainText, fromName);
-    if (sent) return { sent: true };
-  }
-
-  if (process.env.SENDGRID_API_KEY) {
-    const sent = await sendViaSendGridHttp(to, subject, html, plainText, fromName, fromEmail);
-    if (sent) return { sent: true };
-  }
-
-  if (process.env.BREVO_API_KEY) {
-    const sent = await sendViaBrevoHttp(to, subject, html, plainText, fromName, fromEmail);
-    if (sent) return { sent: true };
-  }
-
-  const isRenderWithoutCustomSmtp = Boolean(process.env.RENDER && !process.env.SMTP_HOST);
+  // 1. Prioritize Direct SMTP transporter (Gmail App Password or configured SMTP)
+  // Direct SMTP sends pure, untracked emails with untouched direct URLs (never rewritten to third-party tracking domains)
+  const isRenderWithoutCustomSmtp = Boolean(process.env.RENDER && !process.env.SMTP_HOST && !process.env.GMAIL_APP_PASSWORD);
   const activeTransporter = isRenderWithoutCustomSmtp ? null : getTransporter();
 
   if (activeTransporter) {
@@ -365,11 +346,32 @@ export async function sendRawEmail({
         text: plainText,
         html,
       });
-      console.log(`[EmailService] ✅ Email sent via SMTP to ${to} (Message ID: ${info.messageId})`);
+      console.log(`[EmailService] ✅ Email sent directly via SMTP to ${to} (Message ID: ${info.messageId}) - Direct untouched link`);
       return { sent: true, messageId: info.messageId };
     } catch (err: any) {
-      console.error('[EmailService] ❌ Failed to send email via SMTP transporter:', err.message);
+      console.warn('[EmailService] ⚠️ SMTP delivery failed, falling back to HTTP APIs:', err.message);
     }
+  }
+
+  // 2. Try SendGrid HTTP API
+  if (process.env.SENDGRID_API_KEY) {
+    const sent = await sendViaSendGridHttp(to, subject, html, plainText, fromName, fromEmail);
+    if (sent) return { sent: true };
+  }
+
+  // 3. Try Brevo HTTP API
+  if (process.env.BREVO_API_KEY) {
+    const sent = await sendViaBrevoHttp(to, subject, html, plainText, fromName, fromEmail);
+    if (sent) return { sent: true };
+  }
+
+  // 4. Resend HTTP API as fallback
+  const isCustomDomain = Boolean(process.env.RESEND_FROM && !process.env.RESEND_FROM.includes('resend.dev'));
+  const isOwnerEmail = to.trim().toLowerCase() === 'promiljain11@gmail.com';
+
+  if ((isCustomDomain || isOwnerEmail) && getResendApiKey()) {
+    const sent = await sendViaResendHttp(to, subject, html, plainText, fromName);
+    if (sent) return { sent: true };
   }
 
   if (!isCustomDomain && !isOwnerEmail && getResendApiKey()) {
@@ -411,18 +413,19 @@ export async function sendRestockAlertEmail({
   productSlug,
   imageUrl,
 }: SendRestockEmailOptions): Promise<{ sent: boolean; messageId?: string }> {
-  const storeUrl =
+  const storeUrl = (
     process.env.STORE_FRONTEND_URL ||
-    (process.env.NODE_ENV === 'production' ? 'https://vardhamrit.com' : 'http://localhost:8081');
+    'https://vardhamrit.onrender.com'
+  ).replace(/\/+$/, '');
 
-  // Use numeric productId first because Expo Router's dynamic route is /product/[id]
+  // Expo Router dynamic route: /product/[id] or catalog /product/
   const targetRoute = productId
     ? `/product/${productId}`
     : productSlug
     ? `/product/${productSlug}`
-    : '/(tabs)/categories';
+    : '/product/';
 
-  const productLink = `${storeUrl.replace(/\/+$/, '')}${targetRoute}`;
+  const productLink = `${storeUrl}${targetRoute}`;
 
   const subject = `🍃 Back in Stock: ${productName} (${variantLabel}) is ready for you!`;
   const greeting = userName ? `Dear ${userName},` : 'Dear Tea Connoisseur,';
@@ -461,10 +464,15 @@ export async function sendRestockAlertEmail({
             </table>
           </div>
 
-          <div style="text-align: center; margin: 28px 0 12px 0;">
+          <div style="text-align: center; margin: 28px 0 10px 0;">
             <a href="${productLink}" style="display: inline-block; background-color: #0F5132; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 30px; font-size: 14px; font-weight: bold; letter-spacing: 0.3px; box-shadow: 0 4px 10px rgba(15,81,50,0.3);">
               Order Now Before It Sells Out &rarr;
             </a>
+          </div>
+
+          <div style="text-align: center; margin-bottom: 20px;">
+            <span style="font-size: 12px; color: #64748b;">Direct link: </span>
+            <a href="${productLink}" style="font-size: 12px; color: #0F5132; font-weight: 600; text-decoration: underline; word-break: break-all;">${productLink}</a>
           </div>
 
           <p style="color: #94a3b8; font-size: 11.5px; text-align: center; margin-top: 24px;">
