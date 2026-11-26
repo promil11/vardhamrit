@@ -466,15 +466,55 @@ export async function subscribeStockNotification(req: Request, res: Response, ne
       return sendSuccess(res, { alreadySubscribed: true }, "You're already on the priority notification list for this blend!");
     }
 
-    await pool.query(
+    const [insertResult]: any = await pool.query(
       `INSERT INTO stock_subscriptions (user_id, product_id, variant_id, contact_type, contact_value)
        VALUES (?, ?, ?, ?, ?)`,
       [userId, productId, variantId, finalContactType, contactVal]
     );
 
+    // Fetch product, variant, and user metadata for real-time notification to admin panel
+    const [metaRows]: any = await pool.query(
+      `SELECT p.name as product_name, pv.label as variant_label, u.name as user_name
+       FROM products p
+       JOIN product_variants pv ON pv.id = ?
+       LEFT JOIN users u ON u.id = ?
+       WHERE p.id = ?`,
+      [variantId, userId, productId]
+    );
+
+    const productName = metaRows[0]?.product_name || 'Tea blend';
+    const variantLabel = metaRows[0]?.variant_label || '';
+    const customerName = metaRows[0]?.user_name || contactVal || 'A customer';
+
+    const alertPayload = {
+      id: insertResult.insertId,
+      userId,
+      productId,
+      variantId,
+      productName,
+      variantLabel,
+      customerName,
+      contactType: finalContactType,
+      contactValue: contactVal,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Broadcast instant real-time events to admin dashboard and connected clients
+    if (io) {
+      io.emit('stock_alert.created', alertPayload);
+      io.emit('stock_alert.updated', { ...alertPayload, action: 'created' });
+      if (userId) {
+        io.emit(`stock_alert.user_updated:${userId}`, {
+          variantId,
+          productId,
+          isSubscribed: true,
+        });
+      }
+    }
+
     return sendSuccess(
       res,
-      { subscribed: true },
+      { subscribed: true, id: insertResult.insertId },
       "We'll notify you via push notification as soon as fresh garden inventory arrives! 🍃"
     );
   } catch (err) {

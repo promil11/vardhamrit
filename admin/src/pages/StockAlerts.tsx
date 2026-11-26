@@ -152,6 +152,7 @@ export const StockAlerts: React.FC = () => {
       refetch();
     };
 
+    socket.on('stock_alert.created', handleRefetch);
     socket.on('stock_alert.updated', handleRefetch);
     socket.on('stock_alert.notified', handleRefetch);
     socket.on('stock_alert.restocked', handleRefetch);
@@ -159,6 +160,7 @@ export const StockAlerts: React.FC = () => {
     socket.on('catalog.updated', handleRefetch);
 
     return () => {
+      socket.off('stock_alert.created', handleRefetch);
       socket.off('stock_alert.updated', handleRefetch);
       socket.off('stock_alert.notified', handleRefetch);
       socket.off('stock_alert.restocked', handleRefetch);

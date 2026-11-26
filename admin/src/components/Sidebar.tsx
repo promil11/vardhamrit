@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { io, Socket } from 'socket.io-client';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -18,11 +19,12 @@ import {
   Flame,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../services/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, SOCKET_URL } from '../services/api';
 
 export const Sidebar: React.FC = () => {
   const { logout, admin } = useAuth();
+  const queryClient = useQueryClient();
 
   // Fetch quick metrics for badges in sidebar
   const { data: dashboardData } = useQuery({
@@ -43,6 +45,43 @@ export const Sidebar: React.FC = () => {
     refetchInterval: 30000,
   });
 
+  // Real-time socket events for instantaneous sidebar badge updates
+  useEffect(() => {
+    const socket: Socket = io(SOCKET_URL, {
+      transports: ['websocket', 'polling'],
+    });
+
+    const refreshStockBadge = () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-sidebar-stock-alerts-count'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-sidebar-metrics'] });
+    };
+
+    socket.on('stock_alert.created', () => {
+      queryClient.setQueryData(['admin-sidebar-stock-alerts-count'], (old: number = 0) => old + 1);
+      refreshStockBadge();
+    });
+
+    socket.on('stock_alert.removed', () => {
+      queryClient.setQueryData(['admin-sidebar-stock-alerts-count'], (old: number = 1) => Math.max(0, old - 1));
+      refreshStockBadge();
+    });
+
+    socket.on('stock_alert.updated', refreshStockBadge);
+    socket.on('stock_alert.notified', refreshStockBadge);
+
+    socket.on('order.created', () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-sidebar-metrics'] });
+    });
+
+    socket.on('order.status_updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-sidebar-metrics'] });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [queryClient]);
+
   const pendingOrders = Number(
     dashboardData?.orderCounts?.PLACED ||
     dashboardData?.orderCounts?.CONFIRMED ||
@@ -57,26 +96,30 @@ export const Sidebar: React.FC = () => {
       to: '/orders',
       label: 'Orders & Fulfillment',
       icon: ShoppingBag,
-      badge: pendingOrders > 0 ? { text: `${pendingOrders}`, color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' } : null,
+      badge: pendingOrders > 0 ? { text: `${pendingOrders}`, hasDot: true, color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' } : null,
     },
     {
       to: '/products',
       label: 'Tea Catalog & Stock',
       icon: PackageCheck,
-      badge: lowStockCount > 0 ? { text: `! ${lowStockCount}`, color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' } : null,
+      badge: lowStockCount > 0 ? { text: `! ${lowStockCount}`, hasDot: false, color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' } : null,
     },
     {
       to: '/stock-alerts',
       label: 'Out of Stock Alerts',
       icon: BellRing,
-      badge: stockAlertsCount > 0 ? { text: `${stockAlertsCount} Wait`, color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' } : null,
+      badge: stockAlertsCount > 0 ? {
+        text: `${stockAlertsCount} Wait`,
+        hasDot: true,
+        color: 'bg-amber-500/25 text-amber-300 border-amber-400/50 shadow-xs'
+      } : null,
     },
     { to: '/coupons', label: 'Coupons & Promos', icon: TicketPercent, badge: null },
     {
       to: '/deals',
       label: 'Deal of the Day',
       icon: Flame,
-      badge: { text: 'HOT', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
+      badge: { text: 'HOT', hasDot: false, color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
     },
     {
       to: '/notifications',
@@ -140,9 +183,15 @@ export const Sidebar: React.FC = () => {
                 <span className="flex-1">{item.label}</span>
                 {item.badge && (
                   <span
-                    className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md border ${item.badge.color}`}
+                    className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md border flex items-center gap-1 ${item.badge.color}`}
                   >
-                    {item.badge.text}
+                    {item.badge.hasDot && (
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-400" />
+                      </span>
+                    )}
+                    <span>{item.badge.text}</span>
                   </span>
                 )}
                 {isActive && (
