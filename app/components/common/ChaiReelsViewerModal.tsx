@@ -39,7 +39,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
   const router = useRouter();
   const { isTablet } = useResponsive();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [likes, setLikes] = useState<Record<string, number>>({
     'misty-assam-harvest': 1240,
@@ -78,6 +78,30 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
       asmrAudio.stop();
     };
   }, [visible, currentIndex, isMuted, isPaused, currentReel.asmrType]);
+
+  // Robust mobile video autoplay & playback synchronization
+  useEffect(() => {
+    if (visible && videoRef.current) {
+      try {
+        videoRef.current.muted = isMuted;
+        videoRef.current.defaultMuted = isMuted;
+        videoRef.current.playsInline = true;
+        videoRef.current.setAttribute?.('playsinline', 'true');
+        videoRef.current.setAttribute?.('webkit-playsinline', 'true');
+        
+        const playPromise = videoRef.current.play?.();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch((err: any) => {
+            // Autoplay with sound restricted by mobile browser policy; retry muted
+            if (videoRef.current) {
+              videoRef.current.muted = true;
+              videoRef.current.play?.().catch(() => {});
+            }
+          });
+        }
+      } catch {}
+    }
+  }, [visible, currentIndex, isMuted]);
 
   // Handle 10-second reel progress animation
   useEffect(() => {
@@ -270,6 +294,8 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
                 playsInline
                 loop
                 muted={isMuted}
+                preload="auto"
+                controls={false}
                 style={{
                   width: '100%',
                   height: '100%',

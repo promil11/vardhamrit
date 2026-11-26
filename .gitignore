@@ -22,6 +22,8 @@ build/
 backend/uploads/*
 !backend/uploads/products/
 !backend/uploads/categories/
+!backend/uploads/videos/
+!backend/uploads/videos/*
 !backend/uploads/avatars/
 !backend/uploads/avatars/.gitkeep
 !backend/uploads/.gitkeep
