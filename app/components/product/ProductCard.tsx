@@ -19,7 +19,7 @@ import { BottomSheetWrapper } from '../common/BottomSheetWrapper';
 import { Icon } from '../common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import { useResponsive } from '../../utils/responsive';
-import { CHAI_REELS } from '../../constants/chaiReels';
+import { CHAI_REELS, getReelForProduct } from '../../constants/chaiReels';
 import { ChaiReelsViewerModal } from '../common/ChaiReelsViewerModal';
 
 interface ProductCardProps {
@@ -56,8 +56,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const isFavorite = isInWishlist(product.id);
 
   const matchingReel = useMemo(() => {
-    return CHAI_REELS.find((r) => r.productId === product.id) || null;
-  }, [product.id]);
+    return getReelForProduct(product);
+  }, [product]);
 
   const discount =
     selectedVariant.mrp > selectedVariant.price

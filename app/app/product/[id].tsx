@@ -38,7 +38,7 @@ import { Icon } from '../../components/common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import { useResponsive } from '../../utils/responsive';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CHAI_REELS } from '../../constants/chaiReels';
+import { CHAI_REELS, getReelForProduct } from '../../constants/chaiReels';
 import { ChaiReelsViewerModal } from '../../components/common/ChaiReelsViewerModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -107,8 +107,7 @@ export default function ProductDetailScreen() {
   const [reelsModalVisible, setReelsModalVisible] = useState(false);
 
   const matchingReel = React.useMemo(() => {
-    if (!product) return CHAI_REELS[0];
-    return CHAI_REELS.find((r) => r.productId === product.id) || CHAI_REELS[0];
+    return getReelForProduct(product);
   }, [product]);
 
   useEffect(() => {

@@ -134,7 +134,16 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       } catch {}
     }
-    setIsMuted((prev) => !prev);
+    setIsMuted((prev) => {
+      const nextMuted = !prev;
+      if (videoRef.current) {
+        videoRef.current.muted = nextMuted;
+        if (!nextMuted) {
+          videoRef.current.play?.().catch(() => {});
+        }
+      }
+      return nextMuted;
+    });
   };
 
   const togglePause = () => {
