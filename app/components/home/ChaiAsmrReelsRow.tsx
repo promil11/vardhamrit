@@ -47,7 +47,7 @@ export const ChaiAsmrReelsRow: React.FC<ChaiAsmrReelsRowProps> = ({ onSelectReel
     if (Platform.OS !== 'web') {
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch {}
+      } catch { }
     }
     onSelectReel(reel);
   };
@@ -77,7 +77,7 @@ export const ChaiAsmrReelsRow: React.FC<ChaiAsmrReelsRowProps> = ({ onSelectReel
 
         <View style={styles.headphonesChip}>
           <Icon name="headphones" size={13} color="#D97706" />
-          <Text style={styles.headphonesChipText}>Wear 🎧</Text>
+          <Text style={styles.headphonesChipText}>Wear</Text>
         </View>
       </View>
 

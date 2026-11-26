@@ -731,47 +731,65 @@ export default function ProductDetailScreen() {
             ) : null}
           </View>
 
-          {/* Chai ASMR & Mini Garden Reel Showcase Card */}
+          {/* Chai Story & Mini Garden Reel Showcase Card */}
           {matchingReel && (
             <View style={styles.asmrCardContainer}>
               <TouchableOpacity
-                activeOpacity={0.88}
+                activeOpacity={0.9}
                 onPress={() => setReelsModalVisible(true)}
                 style={styles.asmrCardTouchable}
               >
-                <LinearGradient
-                  colors={['#0F172A', '#1E293B']}
-                  style={styles.asmrCardGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
+                <View style={styles.asmrCardInner}>
+                  {/* Left Column: Story details & action */}
                   <View style={styles.asmrCardLeftCol}>
                     <View style={styles.asmrCardBadgeRow}>
-                      <View style={styles.asmrLiveDot} />
-                      <Text style={styles.asmrCardBadgeText}>10s CHAI ASMR REEL</Text>
+                      <View style={styles.asmrReelBadge}>
+                        <Icon name="play" size={9} color="#059669" fill="#059669" />
+                        <Text style={styles.asmrReelBadgeText}>10s CHAI STORY</Text>
+                      </View>
+                      <View style={styles.asmrSoundBadge}>
+                        <Icon name="headphones" size={10} color="#B45309" />
+                        <Text style={styles.asmrSoundBadgeText}>ASMR</Text>
+                      </View>
                     </View>
-                    <Text style={styles.asmrCardHeading}>{matchingReel.title}</Text>
-                    <Text style={styles.asmrCardSubtext}>
+
+                    <Text style={styles.asmrCardHeading} numberOfLines={1}>
+                      {matchingReel.title}
+                    </Text>
+                    <Text style={styles.asmrCardSubtext} numberOfLines={2}>
                       {matchingReel.tagline}
                     </Text>
-                    <View style={styles.asmrPlayCtaRow}>
-                      <View style={styles.asmrMiniPlayBtn}>
-                        <Icon name="play" size={11} color="#FFFFFF" />
+
+                    <View style={styles.asmrPlayButton}>
+                      <View style={styles.asmrPlayIconCircle}>
+                        <Icon name="play" size={10} color="#FFFFFF" fill="#FFFFFF" style={{ marginLeft: 1 }} />
                       </View>
-                      <Text style={styles.asmrPlayCtaText}>Experience Sound & Brew</Text>
+                      <Text style={styles.asmrPlayButtonText}>Experience Brew</Text>
                     </View>
                   </View>
 
+                  {/* Right Column: Thumbnail with frosted glass play button */}
                   <View style={styles.asmrCardThumbWrapper}>
                     <Image
                       source={{ uri: getFullImageUrl(matchingReel.posterUrl) }}
                       style={styles.asmrCardThumb}
+                      resizeMode="cover"
                     />
+                    {/* Dark gradient vignette over thumbnail for contrast */}
+                    <LinearGradient
+                      colors={['transparent', 'rgba(0,0,0,0.45)']}
+                      style={StyleSheet.absoluteFillObject}
+                    />
+                    {/* Centered glassmorphic play button */}
+                    <View style={styles.thumbCenterPlay}>
+                      <Icon name="play" size={14} color="#FFFFFF" fill="#FFFFFF" style={{ marginLeft: 2 }} />
+                    </View>
+                    {/* Bottom duration chip */}
                     <View style={styles.asmrDurationChip}>
                       <Text style={styles.asmrDurationText}>0:10</Text>
                     </View>
                   </View>
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             </View>
           )}
@@ -1046,89 +1064,145 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.base,
   },
   asmrCardTouchable: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#F1E8D9',
+    shadowColor: '#1A3826',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+    overflow: 'hidden',
   },
-  asmrCardGradient: {
+  asmrCardInner: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    gap: 14,
+    backgroundColor: '#FFFFFF',
   },
   asmrCardLeftCol: {
     flex: 1,
-    paddingRight: 12,
+    justifyContent: 'center',
   },
   asmrCardBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  asmrLiveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#EF4444',
+  asmrReelBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
   },
-  asmrCardBadgeText: {
-    color: '#34D399',
-    fontSize: 10,
+  asmrReelBadgeText: {
+    color: '#065F46',
+    fontSize: 9.5,
     fontWeight: '800',
-    letterSpacing: 0.6,
+    letterSpacing: 0.4,
+  },
+  asmrSoundBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3.5,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  asmrSoundBadgeText: {
+    color: '#92400E',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   asmrCardHeading: {
-    color: '#FFFFFF',
-    fontSize: 14.5,
+    color: '#0F172A',
+    fontSize: 15.5,
     fontWeight: '800',
-    lineHeight: 18,
-    marginBottom: 4,
+    lineHeight: 20,
+    marginBottom: 3,
+    letterSpacing: -0.2,
   },
   asmrCardSubtext: {
-    color: '#94A3B8',
-    fontSize: 11.5,
-    lineHeight: 15,
-    marginBottom: 8,
+    color: '#64748B',
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 10,
+    fontWeight: '500',
   },
-  asmrPlayCtaRow: {
+  asmrPlayButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    backgroundColor: '#0F5132',
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    shadowColor: '#0F5132',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  asmrMiniPlayBtn: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#059669',
+  asmrPlayIconCircle: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingLeft: 1.5,
   },
-  asmrPlayCtaText: {
-    color: '#E2E8F0',
-    fontSize: 11,
+  asmrPlayButtonText: {
+    color: '#FFFFFF',
+    fontSize: 11.5,
     fontWeight: '700',
+    letterSpacing: 0.2,
   },
   asmrCardThumbWrapper: {
-    width: 82,
-    height: 106,
-    borderRadius: 12,
+    width: 86,
+    height: 108,
+    borderRadius: 14,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#000',
-    borderWidth: 1.5,
-    borderColor: '#F59E0B',
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
   },
   asmrCardThumb: {
     width: '100%',
     height: '100%',
+  },
+  thumbCenterPlay: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -15,
+    marginLeft: -15,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.7)',
   },
   asmrDurationChip: {
     position: 'absolute',
@@ -1136,13 +1210,14 @@ const styles = StyleSheet.create({
     right: 5,
     backgroundColor: 'rgba(0,0,0,0.7)',
     paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingVertical: 1.5,
+    borderRadius: 5,
   },
   asmrDurationText: {
     color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '700',
+    letterSpacing: 0.2,
   },
   container: {
     flex: 1,
