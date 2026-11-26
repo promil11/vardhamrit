@@ -27,6 +27,9 @@ import { HomeHeader } from '../../components/home/HomeHeader';
 import { AddressBottomSheet } from '../../components/home/AddressBottomSheet';
 import { AddAddressModal } from '../../components/checkout/AddAddressModal';
 import { BannerCarousel, BannerItem } from '../../components/home/BannerCarousel';
+import { ChaiAsmrReelsRow } from '../../components/home/ChaiAsmrReelsRow';
+import { ChaiReelsViewerModal } from '../../components/common/ChaiReelsViewerModal';
+import { ChaiReel } from '../../constants/chaiReels';
 import { CategoryTile, CategoryItem } from '../../components/home/CategoryTile';
 import { SectionHeader } from '../../components/home/SectionHeader';
 import { ProductCard } from '../../components/product/ProductCard';
@@ -102,6 +105,8 @@ export default function HomeScreen() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedReel, setSelectedReel] = useState<ChaiReel | null>(null);
+  const [reelModalVisible, setReelModalVisible] = useState(false);
 
   // Blinkit-style Collapsible Header State & Animation
   const [headerHeight, setHeaderHeight] = useState(Platform.OS === 'ios' ? 180 : 160);
@@ -928,6 +933,14 @@ export default function HomeScreen() {
                 </View>
               </View>
 
+              {/* 2.5 Chai ASMR & Mini Garden Reels (10s Micro-Videos) */}
+              <ChaiAsmrReelsRow
+                onSelectReel={(reel) => {
+                  setSelectedReel(reel);
+                  setReelModalVisible(true);
+                }}
+              />
+
               {/* 3. Horizontal Scrollable Category Explorer */}
               {/* <View style={styles.categorySection}>
               <View style={styles.categoryHeaderRow}>
@@ -1393,6 +1406,13 @@ export default function HomeScreen() {
           setEditingAddress(null);
         }}
         onSaveAddress={handleSaveAddress}
+      />
+
+      {/* Full-Screen Vertical Chai ASMR & Mini Garden Reels Viewer Modal */}
+      <ChaiReelsViewerModal
+        visible={reelModalVisible}
+        initialReelId={selectedReel?.id}
+        onClose={() => setReelModalVisible(false)}
       />
     </View >
   );

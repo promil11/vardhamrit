@@ -96,6 +96,12 @@ const authLimiter = rateLimit({
 app.use('/auth', authLimiter);
 
 // Static uploads & invoices
+const uploadsDir = path.join(__dirname, '../uploads');
+const uploadsVideosDir = path.join(uploadsDir, 'videos');
+if (!fs.existsSync(uploadsVideosDir)) {
+  fs.mkdirSync(uploadsVideosDir, { recursive: true });
+}
+
 app.use(
   '/uploads',
   (_req, res, next) => {
@@ -103,7 +109,7 @@ app.use(
     res.setHeader('Access-Control-Allow-Origin', '*');
     next();
   },
-  express.static(path.join(__dirname, '../uploads'))
+  express.static(uploadsDir)
 );
 app.use(
   '/invoices',

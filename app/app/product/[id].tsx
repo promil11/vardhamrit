@@ -37,6 +37,9 @@ import { BottomSheetWrapper } from '../../components/common/BottomSheetWrapper';
 import { Icon } from '../../components/common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import { useResponsive } from '../../utils/responsive';
+import { LinearGradient } from 'expo-linear-gradient';
+import { CHAI_REELS } from '../../constants/chaiReels';
+import { ChaiReelsViewerModal } from '../../components/common/ChaiReelsViewerModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -101,6 +104,12 @@ export default function ProductDetailScreen() {
   const [aboutExpanded, setAboutExpanded] = useState(true);
   const [brewingExpanded, setBrewingExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [reelsModalVisible, setReelsModalVisible] = useState(false);
+
+  const matchingReel = React.useMemo(() => {
+    if (!product) return CHAI_REELS[0];
+    return CHAI_REELS.find((r) => r.productId === product.id) || CHAI_REELS[0];
+  }, [product]);
 
   useEffect(() => {
     if (id) {
@@ -723,6 +732,51 @@ export default function ProductDetailScreen() {
             ) : null}
           </View>
 
+          {/* Chai ASMR & Mini Garden Reel Showcase Card */}
+          {matchingReel && (
+            <View style={styles.asmrCardContainer}>
+              <TouchableOpacity
+                activeOpacity={0.88}
+                onPress={() => setReelsModalVisible(true)}
+                style={styles.asmrCardTouchable}
+              >
+                <LinearGradient
+                  colors={['#0F172A', '#1E293B']}
+                  style={styles.asmrCardGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <View style={styles.asmrCardLeftCol}>
+                    <View style={styles.asmrCardBadgeRow}>
+                      <View style={styles.asmrLiveDot} />
+                      <Text style={styles.asmrCardBadgeText}>10s CHAI ASMR REEL</Text>
+                    </View>
+                    <Text style={styles.asmrCardHeading}>{matchingReel.title}</Text>
+                    <Text style={styles.asmrCardSubtext}>
+                      {matchingReel.tagline}
+                    </Text>
+                    <View style={styles.asmrPlayCtaRow}>
+                      <View style={styles.asmrMiniPlayBtn}>
+                        <Icon name="play" size={11} color="#FFFFFF" />
+                      </View>
+                      <Text style={styles.asmrPlayCtaText}>Experience Sound & Brew</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.asmrCardThumbWrapper}>
+                    <Image
+                      source={{ uri: matchingReel.posterUrl }}
+                      style={styles.asmrCardThumb}
+                    />
+                    <View style={styles.asmrDurationChip}>
+                      <Text style={styles.asmrDurationText}>0:10</Text>
+                    </View>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* 6. Collapsible Section: Master Brewer's Guide */}
           <View style={styles.sectionCard}>
             <TouchableOpacity
@@ -972,12 +1026,123 @@ export default function ProductDetailScreen() {
             </TouchableOpacity>
           </View>
         </BottomSheetWrapper>
+
+        {matchingReel && (
+          <ChaiReelsViewerModal
+            visible={reelsModalVisible}
+            initialReelId={matchingReel.id}
+            onClose={() => setReelsModalVisible(false)}
+          />
+        )}
       </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  asmrCardContainer: {
+    marginHorizontal: theme.spacing.base,
+    marginBottom: theme.spacing.base,
+  },
+  asmrCardTouchable: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  asmrCardGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  asmrCardLeftCol: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  asmrCardBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  asmrLiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#EF4444',
+  },
+  asmrCardBadgeText: {
+    color: '#34D399',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  asmrCardHeading: {
+    color: '#FFFFFF',
+    fontSize: 14.5,
+    fontWeight: '800',
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  asmrCardSubtext: {
+    color: '#94A3B8',
+    fontSize: 11.5,
+    lineHeight: 15,
+    marginBottom: 8,
+  },
+  asmrPlayCtaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  asmrMiniPlayBtn: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#059669',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingLeft: 1.5,
+  },
+  asmrPlayCtaText: {
+    color: '#E2E8F0',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  asmrCardThumbWrapper: {
+    width: 82,
+    height: 106,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#000',
+    borderWidth: 1.5,
+    borderColor: '#F59E0B',
+  },
+  asmrCardThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  asmrDurationChip: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  asmrDurationText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
+  },
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

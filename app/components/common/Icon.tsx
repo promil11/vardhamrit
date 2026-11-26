@@ -71,6 +71,11 @@ import {
   Mail,
   Camera,
   UploadCloud,
+  Play,
+  Volume2,
+  VolumeX,
+  Headphones,
+  CheckCircle,
   LucideProps,
 } from 'lucide-react-native';
 import { theme } from '../../theme';
@@ -151,7 +156,12 @@ export type IconName =
   | 'camera'
   | 'upload-cloud'
   | 'trash-2'
-  | 'whatsapp';
+  | 'whatsapp'
+  | 'play'
+  | 'volume-2'
+  | 'volume-x'
+  | 'headphones'
+  | 'check-circle';
 
 interface IconProps extends Omit<LucideProps, 'ref'> {
   name: IconName;
@@ -325,6 +335,16 @@ export const Icon: React.FC<IconProps> = ({
       return <Coins {...commonProps} />;
     case 'mail':
       return <Mail {...commonProps} />;
+    case 'play':
+      return <Play {...commonProps} />;
+    case 'volume-2':
+      return <Volume2 {...commonProps} />;
+    case 'volume-x':
+      return <VolumeX {...commonProps} />;
+    case 'headphones':
+      return <Headphones {...commonProps} />;
+    case 'check-circle':
+      return <CheckCircle {...commonProps} />;
     case 'whatsapp':
       return (
         <Svg width={scaledSize} height={scaledSize} viewBox="0 0 24 24" fill="none">

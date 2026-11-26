@@ -19,6 +19,8 @@ import { BottomSheetWrapper } from '../common/BottomSheetWrapper';
 import { Icon } from '../common/Icon';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import { useResponsive } from '../../utils/responsive';
+import { CHAI_REELS } from '../../constants/chaiReels';
+import { ChaiReelsViewerModal } from '../common/ChaiReelsViewerModal';
 
 interface ProductCardProps {
   product: Product;
@@ -49,8 +51,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   }, [product.variants, selectedVariantId]);
 
   const [variantSheetVisible, setVariantSheetVisible] = useState(false);
+  const [reelsModalVisible, setReelsModalVisible] = useState(false);
   const { isInWishlist, toggleWishlist } = useWishlistStore();
   const isFavorite = isInWishlist(product.id);
+
+  const matchingReel = useMemo(() => {
+    return CHAI_REELS.find((r) => r.productId === product.id) || null;
+  }, [product.id]);
 
   const discount =
     selectedVariant.mrp > selectedVariant.price
@@ -132,20 +139,39 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </LinearGradient>
           ) : null}
 
-          {/* Top-Right: Quick Wishlist / Save Heart */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={toggleFavorite}
-            style={[styles.favoriteButton, isTablet && styles.favoriteButtonTablet]}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Icon
-              name="heart"
-              size={isTablet ? 22 : 19}
-              color={isFavorite ? '#DC2626' : '#6B7280'}
-              fill={isFavorite ? '#DC2626' : 'transparent'}
-            />
-          </TouchableOpacity>
+          {/* Top-Right: Quick Wishlist / Save Heart & ASMR Reel */}
+          <View style={[styles.topRightControls, isTablet && styles.topRightControlsTablet]}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={toggleFavorite}
+              style={[styles.favoriteButton, isTablet && styles.favoriteButtonTablet]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Icon
+                name="heart"
+                size={isTablet ? 22 : 19}
+                color={isFavorite ? '#DC2626' : '#6B7280'}
+                fill={isFavorite ? '#DC2626' : 'transparent'}
+              />
+            </TouchableOpacity>
+
+            {matchingReel ? (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setReelsModalVisible(true);
+                }}
+                style={[styles.asmrQuickChip, isTablet && styles.asmrQuickChipTablet]}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                <Icon name="headphones" size={isTablet ? 11 : 9} color="#D97706" />
+                <Text style={[styles.asmrQuickChipText, isTablet && { fontSize: 9.5 }]}>
+                  ASMR
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
 
           {/* Bottom of Image: Status Micro-Ribbon */}
           {product.isBestSeller ? (
@@ -356,6 +382,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           })}
         </View>
       </BottomSheetWrapper>
+
+      {matchingReel && (
+        <ChaiReelsViewerModal
+          visible={reelsModalVisible}
+          initialReelId={matchingReel.id}
+          onClose={() => setReelsModalVisible(false)}
+        />
+      )}
     </>
   );
 };
@@ -440,11 +474,20 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.extraBold,
     letterSpacing: 0.4,
   },
-  favoriteButton: {
+  topRightControls: {
     position: 'absolute',
     top: 6,
     right: 6,
     zIndex: 2,
+    alignItems: 'center',
+    gap: 5,
+  },
+  topRightControlsTablet: {
+    top: 8,
+    right: 8,
+    gap: 6,
+  },
+  favoriteButton: {
     width: 26,
     height: 26,
     borderRadius: 13,
@@ -461,6 +504,33 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
+  },
+  asmrQuickChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 5,
+    paddingVertical: 2.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  asmrQuickChipTablet: {
+    paddingHorizontal: 7,
+    paddingVertical: 3.5,
+    borderRadius: 10,
+  },
+  asmrQuickChipText: {
+    color: '#92400E',
+    fontSize: 8.5,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   imageBottomBannerGold: {
     position: 'absolute',
