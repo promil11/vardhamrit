@@ -162,13 +162,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   e.stopPropagation();
                   setReelsModalVisible(true);
                 }}
-                style={[styles.asmrQuickChip, isTablet && styles.asmrQuickChipTablet]}
+                style={[styles.videoPlayButton, isTablet && styles.videoPlayButtonTablet]}
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                accessibilityLabel="Watch Chai Story Video"
               >
-                <Icon name="headphones" size={isTablet ? 11 : 9} color="#D97706" />
-                <Text style={[styles.asmrQuickChipText, isTablet && { fontSize: 9.5 }]}>
-                  ASMR
-                </Text>
+                <Icon
+                  name="play"
+                  size={isTablet ? 13 : 11}
+                  color="#059669"
+                  fill="#059669"
+                  style={{ marginLeft: 1.5 }}
+                />
               </TouchableOpacity>
             ) : null}
           </View>
@@ -507,32 +511,25 @@ const styles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
   },
-  asmrQuickChip: {
-    flexDirection: 'row',
+  videoPlayButton: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 5,
-    paddingVertical: 2.5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.12,
     shadowRadius: 2,
-    elevation: 1,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(5, 150, 105, 0.25)',
   },
-  asmrQuickChipTablet: {
-    paddingHorizontal: 7,
-    paddingVertical: 3.5,
-    borderRadius: 10,
-  },
-  asmrQuickChipText: {
-    color: '#92400E',
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.3,
+  videoPlayButtonTablet: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
   imageBottomBannerGold: {
     position: 'absolute',

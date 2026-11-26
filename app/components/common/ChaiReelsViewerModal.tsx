@@ -60,7 +60,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
   const toastAnim = useRef(new Animated.Value(0)).current;
   const videoRef = useRef<any>(null);
 
-  // Set initial reel index on open
+  // Set initial reel index on open & ensure fresh playback state
   useEffect(() => {
     if (visible && initialReelId) {
       const idx = CHAI_REELS.findIndex((r) => r.id === initialReelId);
@@ -68,7 +68,27 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
         setCurrentIndex(idx);
       }
     }
+    if (visible) {
+      setIsMuted(true);
+      setIsPaused(false);
+    }
   }, [visible, initialReelId]);
+
+  // Clean up and reset audio/video whenever modal is closed
+  useEffect(() => {
+    if (!visible) {
+      setIsMuted(true);
+      setIsPaused(false);
+      asmrAudio.stop();
+      if (videoRef.current) {
+        try {
+          videoRef.current.pause?.();
+          videoRef.current.currentTime = 0;
+          videoRef.current.muted = true;
+        } catch { }
+      }
+    }
+  }, [visible]);
 
   const currentReel = CHAI_REELS[currentIndex] || CHAI_REELS[0];
 
@@ -135,18 +155,19 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
         videoRef.current.playsInline = true;
         videoRef.current.setAttribute?.('playsinline', 'true');
         videoRef.current.setAttribute?.('webkit-playsinline', 'true');
-        
+
         const playPromise = videoRef.current.play?.();
         if (playPromise && typeof playPromise.catch === 'function') {
           playPromise.catch((err: any) => {
-            // Autoplay with sound restricted by mobile browser policy; retry muted
+            // Autoplay with sound restricted by mobile browser policy; retry muted & synchronize state
             if (videoRef.current) {
               videoRef.current.muted = true;
-              videoRef.current.play?.().catch(() => {});
+              videoRef.current.play?.().catch(() => { });
             }
+            setIsMuted(true);
           });
         }
-      } catch {}
+      } catch { }
     }
   }, [visible, currentIndex, isMuted]);
 
@@ -189,18 +210,47 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
     if (Platform.OS !== 'web') {
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      } catch {}
+      } catch { }
     }
-    setIsMuted((prev) => {
-      const nextMuted = !prev;
-      if (videoRef.current) {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+
+    if (videoRef.current) {
+      try {
         videoRef.current.muted = nextMuted;
         if (!nextMuted) {
-          videoRef.current.play?.().catch(() => {});
+          const playPromise = videoRef.current.play?.();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {
+              if (videoRef.current) {
+                videoRef.current.muted = true;
+              }
+              setIsMuted(true);
+            });
+          }
         }
-      }
-      return nextMuted;
-    });
+      } catch { }
+    }
+
+    if (!nextMuted && !isPaused) {
+      asmrAudio.start(currentReel.asmrType);
+    } else {
+      asmrAudio.stop();
+    }
+  };
+
+  const handleClose = () => {
+    setIsMuted(true);
+    setIsPaused(false);
+    asmrAudio.stop();
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause?.();
+        videoRef.current.currentTime = 0;
+        videoRef.current.muted = true;
+      } catch { }
+    }
+    onClose();
   };
 
   const togglePause = () => {
@@ -211,7 +261,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
     if (Platform.OS !== 'web') {
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      } catch {}
+      } catch { }
     }
 
     Animated.sequence([
@@ -240,7 +290,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
     if (Platform.OS !== 'web') {
       try {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch {}
+      } catch { }
     }
 
     if (product && rateInfo.variant) {
@@ -286,7 +336,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
   };
 
   const handleViewBlendDetails = () => {
-    onClose();
+    handleClose();
     router.push({
       pathname: '/product/[id]',
       params: { id: String(currentReel.productId) },
@@ -304,7 +354,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
       transparent
       animationType="fade"
       statusBarTranslucent
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <View style={styles.backdrop}>
@@ -416,45 +466,11 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
               {/* Close Button */}
               <TouchableOpacity
                 style={styles.iconButton}
-                onPress={onClose}
+                onPress={handleClose}
                 activeOpacity={0.8}
               >
                 <Icon name="x" size={20} color="#FFFFFF" />
               </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Floating Right Action Rail */}
-          <View style={styles.rightActionRail}>
-            {/* Like Reel */}
-            <TouchableOpacity
-              style={styles.railActionBtn}
-              onPress={handleToggleLike}
-              activeOpacity={0.7}
-            >
-              <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-                <Icon
-                  name="heart"
-                  size={24}
-                  color={hasLiked[currentReel.id] ? '#EF4444' : '#FFFFFF'}
-                />
-              </Animated.View>
-              <Text style={styles.railActionLabel}>
-                {likes[currentReel.id] || 1200}
-              </Text>
-            </TouchableOpacity>
-
-            {/* ASMR Indicator Wave */}
-            <View style={styles.asmrIndicatorContainer}>
-              <View
-                style={[
-                  styles.soundWavePill,
-                  !isMuted && !isPaused && styles.soundWavePillActive,
-                ]}
-              >
-                <Icon name="headphones" size={14} color="#F59E0B" />
-                <Text style={styles.asmrIndicatorText}>ASMR</Text>
-              </View>
             </View>
           </View>
 
