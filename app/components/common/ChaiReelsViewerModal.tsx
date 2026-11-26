@@ -22,6 +22,7 @@ import { getFullImageUrl } from '../../utils/imageUtils';
 import { asmrAudio } from '../../utils/asmrAudio';
 import { useCartStore } from '../../store/useCartStore';
 import { useResponsive } from '../../utils/responsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ChaiReelsViewerModalProps {
   visible: boolean;
@@ -345,8 +346,9 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
 
   const videoUri = getFullImageUrl(currentReel.videoUrl);
 
-  const containerWidth = isTablet ? 480 : Math.min(SCREEN_WIDTH, 520);
-  const containerHeight = isTablet ? 820 : SCREEN_HEIGHT;
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom + 14, 24);
+  const topInset = Math.max(insets.top + 8, Platform.OS === 'ios' ? 54 : 36);
 
   return (
     <Modal
@@ -358,7 +360,14 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
     >
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <View style={styles.backdrop}>
-        <View style={[styles.reelContainer, { width: containerWidth, height: containerHeight }]}>
+        <View
+          style={[
+            styles.reelContainer,
+            isTablet
+              ? { width: 480, height: 820, borderRadius: 24, overflow: 'hidden' }
+              : { width: '100%', height: '100%', flex: 1 },
+          ]}
+        >
           {/* Background Video Player / Fallback Poster */}
           {Platform.OS === 'web' ? (
             <div
@@ -438,7 +447,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
           </View>
 
           {/* Top Header Controls */}
-          <View style={styles.headerRow}>
+          <View style={[styles.headerRow, { top: topInset }]}>
             <View style={styles.estateBadge}>
               <Icon name="sprout" size={13} color="#10B981" />
               <View style={styles.estateBadgeTexts}>
@@ -475,7 +484,7 @@ export const ChaiReelsViewerModal: React.FC<ChaiReelsViewerModalProps> = ({
           </View>
 
           {/* Bottom Card / Product Drawer Overlay */}
-          <View style={styles.bottomOverlay}>
+          <View style={[styles.bottomOverlay, { bottom: bottomInset }]}>
             {/* Category / ASMR Badge */}
             <View style={styles.metaRow}>
               <View

@@ -44,19 +44,30 @@ export default function Root({ children }: PropsWithChildren) {
               *:focus,
               *:focus-visible,
               input:focus,
+              input:focus-visible,
               textarea:focus,
+              textarea:focus-visible,
               select:focus,
               button:focus,
               [tabindex]:focus,
-              [role="button"]:focus {
+              [role="button"]:focus,
+              [contenteditable]:focus,
+              [data-focusable="true"]:focus,
+              .css-textinput-11aywtz:focus,
+              .css-11aywtz:focus {
                 outline: none !important;
                 outline-style: none !important;
                 outline-width: 0 !important;
+                outline-color: transparent !important;
                 box-shadow: none !important;
+                border-color: inherit !important;
                 -webkit-tap-highlight-color: transparent !important;
               }
-              input, textarea {
+              input, textarea, [contenteditable], [data-focusable="true"] {
                 outline: none !important;
+                outline-style: none !important;
+                outline-width: 0 !important;
+                outline-color: transparent !important;
                 -webkit-appearance: none;
               }
 

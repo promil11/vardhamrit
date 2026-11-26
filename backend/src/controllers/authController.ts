@@ -47,13 +47,18 @@ export const verifyEmailOtpSchema = z.object({
   otp: z.string().min(4, 'OTP must be at least 4 digits').max(8),
   purpose: z.string().optional().default('login'),
   name: z.string().optional(),
+  phone: z.string().optional(),
+  inviteCode: z.string().optional(),
+  avatarUrl: z.string().optional(),
   preferredBlend: z.string().optional(),
+  favoriteMorningCup: z.string().optional(),
 });
 
 export const sendOtpSchema = z.object({
   phone: z.string().optional(),
   email: z.string().optional(),
   identifier: z.string().optional(),
+  purpose: z.string().optional().default('login'),
 }).refine((data) => data.phone || data.email || data.identifier, {
   message: 'Mobile number or email address is required',
 });
@@ -63,8 +68,12 @@ export const verifyOtpSchema = z.object({
   email: z.string().optional(),
   identifier: z.string().optional(),
   otp: z.string().min(4, 'OTP must be at least 4 digits').max(8),
+  purpose: z.string().optional().default('login'),
   name: z.string().optional(),
+  inviteCode: z.string().optional(),
+  avatarUrl: z.string().optional(),
   preferredBlend: z.string().optional(),
+  favoriteMorningCup: z.string().optional(),
 }).refine((data) => data.phone || data.email || data.identifier, {
   message: 'Mobile number or email address is required',
 });
@@ -306,6 +315,14 @@ export async function sendEmailOtp(req: Request, res: Response, next: NextFuncti
       });
     }
 
+    if (purpose === 'register' && users.length > 0) {
+      return res.status(409).json({
+        success: false,
+        code: 'USER_EXISTS',
+        error: `An account with ${email} already exists. Please log in instead.`,
+      });
+    }
+
     let userName: string | undefined;
     if (users.length > 0) {
       const user = users[0];
@@ -417,9 +434,27 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
       const formattedName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
       const referralCode = await generateUniqueReferralCode(formattedName, connection);
 
+      const rawPhone = req.body.phone ? String(req.body.phone).replace(/[^0-9]/g, '') : null;
+      const cleanPhone = rawPhone && rawPhone.length === 10 ? `+91${rawPhone}` : null;
+      const avatarUrl = req.body.avatarUrl ? String(req.body.avatarUrl).trim() : null;
+      const inviteCode = req.body.inviteCode ? String(req.body.inviteCode).trim().toUpperCase() : null;
+
+      let referrer: any = null;
+      if (inviteCode) {
+        const [refUsers]: any = await connection.query(
+          'SELECT id, name, coins_balance FROM users WHERE referral_code = ? LIMIT 1',
+          [inviteCode]
+        );
+        if (refUsers.length > 0) {
+          referrer = refUsers[0];
+        }
+      }
+
+      const initialCoins = referrer ? 50 : 25;
+
       const [insertResult]: any = await connection.query(
-        'INSERT INTO users (name, email, role, status, coins_balance, referral_code, preferred_blend, has_completed_tour) VALUES (?, ?, "customer", "active", 25, ?, ?, 0)',
-        [formattedName, email, referralCode, preferredBlend]
+        'INSERT INTO users (name, email, phone, role, status, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, has_completed_tour) VALUES (?, ?, ?, "customer", "active", ?, ?, ?, ?, ?, 0)',
+        [formattedName, email, cleanPhone, initialCoins, referralCode, referrer ? referrer.id : null, preferredBlend, avatarUrl]
       );
 
       const newUserId = insertResult.insertId;
@@ -429,17 +464,32 @@ export async function verifyEmailOtp(req: Request, res: Response, next: NextFunc
         [newUserId]
       );
 
+      if (referrer) {
+        await connection.query(
+          'INSERT INTO coin_transactions (user_id, amount, balance_after, transaction_type, description) VALUES (?, 25, 50, "INVITE_BONUS", "Bonus Coins for joining via Referral Code")',
+          [newUserId]
+        );
+        await connection.query(
+          'UPDATE users SET coins_balance = coins_balance + 25 WHERE id = ?',
+          [referrer.id]
+        );
+        await connection.query(
+          'INSERT INTO coin_transactions (user_id, amount, balance_after, transaction_type, description) VALUES (?, 25, ?, "REFERRAL_BONUS", ?)',
+          [referrer.id, Number(referrer.coins_balance) + 25, `Referral reward: ${formattedName} joined using your code`]
+        );
+      }
+
       user = {
         id: newUserId,
         name: formattedName,
         email,
-        phone: null,
+        phone: cleanPhone,
         role: 'customer',
-        coins_balance: 25,
+        coins_balance: initialCoins,
         referral_code: referralCode,
-        referred_by: null,
+        referred_by: referrer ? referrer.id : null,
         preferred_blend: preferredBlend,
-        avatar_url: null,
+        avatar_url: avatarUrl,
         push_token: null,
         has_completed_tour: false,
       };
@@ -495,6 +545,7 @@ export async function sendOtp(req: Request, res: Response, next: NextFunction) {
     }
 
     const { phone } = req.body;
+    const purpose = String(req.body.purpose || 'login');
     const cleanPhone = normalizeIndianPhone(phone || rawTarget);
     const variants = getPhoneVariants(phone || rawTarget);
 
@@ -503,7 +554,7 @@ export async function sendOtp(req: Request, res: Response, next: NextFunction) {
       variants
     );
 
-    if (users.length === 0) {
+    if (purpose !== 'register' && users.length === 0) {
       return res.status(404).json({
         success: false,
         code: 'USER_NOT_FOUND',
@@ -511,8 +562,16 @@ export async function sendOtp(req: Request, res: Response, next: NextFunction) {
       });
     }
 
+    if (purpose === 'register' && users.length > 0) {
+      return res.status(409).json({
+        success: false,
+        code: 'USER_EXISTS',
+        error: `An account with +91 ${cleanPhone} already exists. Please log in instead.`,
+      });
+    }
+
     const user = users[0];
-    if (user.status === 'suspended') {
+    if (user && user.status === 'suspended') {
       return sendError(res, 'Your account has been suspended. Please contact support.', 403);
     }
 
@@ -523,21 +582,21 @@ export async function sendOtp(req: Request, res: Response, next: NextFunction) {
     // Invalidate all previous unverified OTPs for this phone
     await pool.query(
       'UPDATE phone_otps SET verified = 1 WHERE (phone = ? OR phone = ? OR phone = ?) AND verified = 0',
-      [cleanPhone, user.phone, `+91${cleanPhone}`]
+      [cleanPhone, user ? user.phone : cleanPhone, `+91${cleanPhone}`]
     );
 
     // Store in phone_otps table
     await pool.query(
-      'INSERT INTO phone_otps (phone, otp, purpose, expires_at) VALUES (?, ?, "login", ?)',
-      [cleanPhone, otp, expiresAt]
+      'INSERT INTO phone_otps (phone, otp, purpose, expires_at) VALUES (?, ?, ?, ?)',
+      [cleanPhone, otp, purpose, expiresAt]
     );
 
     // Send real WhatsApp OTP via Meta Cloud API
     const waResult = await sendSmsOtp({
       phone: cleanPhone,
       otp,
-      userName: user.name,
-      purpose: 'Login',
+      userName: user ? user.name : 'Friend',
+      purpose: purpose === 'register' ? 'Registration' : 'Login',
     });
 
     const isDev = process.env.NODE_ENV !== 'production';
@@ -548,10 +607,10 @@ export async function sendOtp(req: Request, res: Response, next: NextFunction) {
     return sendSuccess(
       res,
       {
-        phone: user.phone || cleanPhone,
-        name: user.name,
+        phone: user ? (user.phone || cleanPhone) : cleanPhone,
+        name: user ? user.name : null,
         expiresIn: 600,
-        registered: true,
+        registered: users.length > 0,
         smsSent: waResult.sent,
         smsNotice: !waResult.sent ? waResult.message : undefined,
         debugOtp: isDev ? otp : undefined,
@@ -572,6 +631,8 @@ export async function verifyOtp(req: Request, res: Response, next: NextFunction)
     }
 
     const { phone, otp } = req.body;
+    const purpose = String(req.body.purpose || 'login');
+    const cleanPhone = normalizeIndianPhone(phone || rawTarget);
     const variants = getPhoneVariants(phone || rawTarget);
 
     const [users]: any = await pool.query(
@@ -579,34 +640,115 @@ export async function verifyOtp(req: Request, res: Response, next: NextFunction)
       variants
     );
 
+    let user: any;
+    let isNewUser = false;
+
     if (users.length === 0) {
-      return res.status(404).json({
-        success: false,
-        code: 'USER_NOT_FOUND',
-        error: 'No account found with this mobile number. Please create an account to get started.',
-      });
-    }
+      if (purpose !== 'register') {
+        return res.status(404).json({
+          success: false,
+          code: 'USER_NOT_FOUND',
+          error: 'No account found with this mobile number. Please create an account to get started.',
+        });
+      }
 
-    const user = users[0];
-    user.has_completed_tour = Boolean(user.has_completed_tour);
-    if (user.status === 'suspended') {
-      return sendError(res, 'Your account has been suspended. Please contact support.', 403);
-    }
+      // Check OTP in phone_otps table
+      const [otpRecords]: any = await pool.query(
+        `SELECT id, otp, expires_at FROM phone_otps 
+         WHERE (phone = ? OR phone = ?) AND otp = ? AND expires_at > NOW() AND verified = 0 
+         ORDER BY id DESC LIMIT 1`,
+        [cleanPhone, `+91${cleanPhone}`, String(otp).trim()]
+      );
 
-    // Check OTP in phone_otps table
-    const cleanPhone = normalizeIndianPhone(phone || rawTarget);
-    const [otpRecords]: any = await pool.query(
-      `SELECT id, otp, expires_at FROM phone_otps 
-       WHERE (phone = ? OR phone = ? OR phone = ?) AND otp = ? AND expires_at > NOW() AND verified = 0 
-       ORDER BY id DESC LIMIT 1`,
-      [cleanPhone, user.phone, `+91${cleanPhone}`, String(otp).trim()]
-    );
+      if (otpRecords.length === 0) {
+        return sendError(res, 'Invalid or expired verification code. Please check and try again.', 400);
+      }
 
-    if (otpRecords.length === 0) {
-      return sendError(res, 'Invalid or expired verification code. Please check and try again.', 400);
-    }
+      await pool.query('UPDATE phone_otps SET verified = 1 WHERE id = ?', [otpRecords[0].id]);
 
-    if (otpRecords.length > 0) {
+      // Auto-register new phone user with welcome coins
+      isNewUser = true;
+      const providedName = req.body.name ? String(req.body.name).trim() : '';
+      const formattedName = providedName || `User ${cleanPhone.slice(-4)}`;
+      const referralCode = await generateUniqueReferralCode(formattedName, pool);
+      const cleanEmail = req.body.email ? String(req.body.email).trim().toLowerCase() : null;
+      const avatarUrl = req.body.avatarUrl ? String(req.body.avatarUrl).trim() : null;
+      const inviteCode = req.body.inviteCode ? String(req.body.inviteCode).trim().toUpperCase() : null;
+      const preferredBlend = req.body.preferredBlend || req.body.favoriteMorningCup || 'Upper Assam Kadak';
+
+      let referrer: any = null;
+      if (inviteCode) {
+        const [refUsers]: any = await pool.query(
+          'SELECT id, name, coins_balance FROM users WHERE referral_code = ? LIMIT 1',
+          [inviteCode]
+        );
+        if (refUsers.length > 0) {
+          referrer = refUsers[0];
+        }
+      }
+
+      const initialCoins = referrer ? 50 : 25;
+
+      const [insertResult]: any = await pool.query(
+        'INSERT INTO users (name, email, phone, role, status, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, has_completed_tour) VALUES (?, ?, ?, "customer", "active", ?, ?, ?, ?, ?, 0)',
+        [formattedName, cleanEmail, `+91${cleanPhone}`, initialCoins, referralCode, referrer ? referrer.id : null, preferredBlend, avatarUrl]
+      );
+
+      const newUserId = insertResult.insertId;
+
+      await pool.query(
+        'INSERT INTO coin_transactions (user_id, amount, balance_after, transaction_type, description) VALUES (?, 25, 25, "WELCOME_BONUS", "Welcome Bonus Coins for joining Vardhamrit")',
+        [newUserId]
+      );
+
+      if (referrer) {
+        await pool.query(
+          'INSERT INTO coin_transactions (user_id, amount, balance_after, transaction_type, description) VALUES (?, 25, 50, "INVITE_BONUS", "Bonus Coins for joining via Referral Code")',
+          [newUserId]
+        );
+        await pool.query(
+          'UPDATE users SET coins_balance = coins_balance + 25 WHERE id = ?',
+          [referrer.id]
+        );
+        await pool.query(
+          'INSERT INTO coin_transactions (user_id, amount, balance_after, transaction_type, description) VALUES (?, 25, ?, "REFERRAL_BONUS", ?)',
+          [referrer.id, Number(referrer.coins_balance) + 25, `Referral reward: ${formattedName} joined using your code`]
+        );
+      }
+
+      user = {
+        id: newUserId,
+        name: formattedName,
+        email: cleanEmail,
+        phone: `+91${cleanPhone}`,
+        role: 'customer',
+        coins_balance: initialCoins,
+        referral_code: referralCode,
+        referred_by: referrer ? referrer.id : null,
+        preferred_blend: preferredBlend,
+        avatar_url: avatarUrl,
+        push_token: null,
+        has_completed_tour: false,
+      };
+    } else {
+      user = users[0];
+      user.has_completed_tour = Boolean(user.has_completed_tour);
+      if (user.status === 'suspended') {
+        return sendError(res, 'Your account has been suspended. Please contact support.', 403);
+      }
+
+      // Check OTP in phone_otps table
+      const [otpRecords]: any = await pool.query(
+        `SELECT id, otp, expires_at FROM phone_otps 
+         WHERE (phone = ? OR phone = ? OR phone = ?) AND otp = ? AND expires_at > NOW() AND verified = 0 
+         ORDER BY id DESC LIMIT 1`,
+        [cleanPhone, user.phone, `+91${cleanPhone}`, String(otp).trim()]
+      );
+
+      if (otpRecords.length === 0) {
+        return sendError(res, 'Invalid or expired verification code. Please check and try again.', 400);
+      }
+
       await pool.query('UPDATE phone_otps SET verified = 1 WHERE id = ?', [otpRecords[0].id]);
     }
 
@@ -837,7 +979,7 @@ export async function updatePushToken(req: Request, res: Response, next: NextFun
 
 export async function firebasePhoneLogin(req: Request, res: Response, next: NextFunction) {
   try {
-    const { phone, idToken, name, favoriteMorningCup } = req.body;
+    const { phone, idToken, name, favoriteMorningCup, email, inviteCode, avatarUrl } = req.body;
     const cleanPhone = normalizeIndianPhone(phone);
     if (!cleanPhone || cleanPhone.length !== 10) {
       return sendError(res, 'Valid 10-digit mobile number required', 400);
@@ -851,6 +993,7 @@ export async function firebasePhoneLogin(req: Request, res: Response, next: Next
 
     let user: any;
     let isNewUser = false;
+    let referrer: any = null;
 
     if (users.length > 0) {
       user = users[0];
@@ -863,10 +1006,25 @@ export async function firebasePhoneLogin(req: Request, res: Response, next: Next
       isNewUser = true;
       const formattedName = name?.trim() || `User ${cleanPhone.slice(-4)}`;
       const referralCode = await generateUniqueReferralCode(formattedName, pool);
+      const cleanEmail = email ? String(email).trim().toLowerCase() : null;
+      const cleanAvatar = avatarUrl ? String(avatarUrl).trim() : null;
+      const cleanInvite = inviteCode ? String(inviteCode).trim().toUpperCase() : null;
+
+      if (cleanInvite) {
+        const [refUsers]: any = await pool.query(
+          'SELECT id, name, coins_balance FROM users WHERE referral_code = ? LIMIT 1',
+          [cleanInvite]
+        );
+        if (refUsers.length > 0) {
+          referrer = refUsers[0];
+        }
+      }
+
+      const initialCoins = referrer ? 50 : 25;
 
       const [insertResult]: any = await pool.query(
-        'INSERT INTO users (name, phone, role, status, coins_balance, referral_code, preferred_blend, has_completed_tour) VALUES (?, ?, "customer", "active", 25, ?, ?, 0)',
-        [formattedName, `+91${cleanPhone}`, referralCode, favoriteMorningCup || 'Normal Chai']
+        'INSERT INTO users (name, email, phone, role, status, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, has_completed_tour) VALUES (?, ?, ?, "customer", "active", ?, ?, ?, ?, ?, 0)',
+        [formattedName, cleanEmail, `+91${cleanPhone}`, initialCoins, referralCode, referrer ? referrer.id : null, favoriteMorningCup || 'Normal Chai', cleanAvatar]
       );
 
       const newUserId = insertResult.insertId;
@@ -876,16 +1034,32 @@ export async function firebasePhoneLogin(req: Request, res: Response, next: Next
         [newUserId]
       );
 
+      if (referrer) {
+        await pool.query(
+          'INSERT INTO coin_transactions (user_id, amount, balance_after, transaction_type, description) VALUES (?, 25, 50, "INVITE_BONUS", "Bonus Coins for joining via Referral Code")',
+          [newUserId]
+        );
+        await pool.query(
+          'UPDATE users SET coins_balance = coins_balance + 25 WHERE id = ?',
+          [referrer.id]
+        );
+        await pool.query(
+          'INSERT INTO coin_transactions (user_id, amount, balance_after, transaction_type, description) VALUES (?, 25, ?, "REFERRAL_BONUS", ?)',
+          [referrer.id, Number(referrer.coins_balance) + 25, `Referral reward: ${formattedName} joined using your code`]
+        );
+      }
+
       user = {
         id: newUserId,
         name: formattedName,
-        email: null,
+        email: cleanEmail,
         phone: `+91${cleanPhone}`,
         role: 'customer',
-        coins_balance: 25,
+        coins_balance: initialCoins,
         referral_code: referralCode,
+        referred_by: referrer ? referrer.id : null,
         preferred_blend: favoriteMorningCup || 'Normal Chai',
-        avatar_url: null,
+        avatar_url: cleanAvatar,
         has_completed_tour: false,
       };
     }

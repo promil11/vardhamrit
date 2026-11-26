@@ -1,3 +1,31 @@
+/* 100% PREVENT BROWSER DEFAULT BLACK OUTLINE / BORDER ON FOCUS */
+  input,
+  textarea,
+  select,
+  [contenteditable],
+  [data-focusable="true"],
+  .css-textinput-11aywtz,
+  .css-11aywtz {
+    outline: none !important;
+    outline-style: none !important;
+    outline-width: 0 !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+  input:focus,
+  textarea:focus,
+  select:focus,
+  [contenteditable]:focus,
+  [data-focusable="true"]:focus,
+  .css-textinput-11aywtz:focus,
+  .css-11aywtz:focus {
+    outline: none !important;
+    outline-style: none !important;
+    outline-width: 0 !important;
+    box-shadow: none !important;
+    border-color: inherit !important;
+  }
+
 /* 100% PREVENT AUTO-ZOOM ON INPUT FOCUS ACROSS ALL MOBILE BROWSERS */
   input,
   textarea,

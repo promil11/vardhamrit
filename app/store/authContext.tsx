@@ -29,11 +29,24 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (identifier: string, password: string) => Promise<void>;
-  sendPhoneOtp: (phone: string) => Promise<any>;
-  loginWithPhone: (phone: string, otp: string) => Promise<any>;
-  loginWithFirebasePhone: (phone: string, idToken?: string, name?: string) => Promise<any>;
+  sendPhoneOtp: (phone: string, purpose?: string) => Promise<any>;
+  loginWithPhone: (
+    phone: string,
+    otp: string,
+    extra?: { name?: string; email?: string; inviteCode?: string; avatarUrl?: string; purpose?: string }
+  ) => Promise<any>;
+  loginWithFirebasePhone: (
+    phone: string,
+    idToken?: string,
+    name?: string,
+    extra?: { email?: string; inviteCode?: string; avatarUrl?: string }
+  ) => Promise<any>;
   sendEmailOtp: (email: string, purpose?: string) => Promise<any>;
-  loginWithEmailOtp: (email: string, otp: string, name?: string) => Promise<any>;
+  loginWithEmailOtp: (
+    email: string,
+    otp: string,
+    extra?: { name?: string; phone?: string; inviteCode?: string; avatarUrl?: string; purpose?: string } | string
+  ) => Promise<any>;
   loginAsGuest: () => Promise<void>;
   register: (
     name: string,
@@ -146,57 +159,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const sendPhoneOtp = async (phone: string) => {
-    const res = await api.post('/auth/send-otp', { phone });
+  const sendPhoneOtp = async (phone: string, purpose: string = 'login') => {
+    const res = await api.post('/auth/send-otp', { phone, purpose });
     return res.data;
   };
 
-  const loginWithPhone = async (phone: string, otp: string) => {
-    const res = await api.post('/auth/verify-otp', { phone, otp });
-    if (res.data?.success) {
-      const { user: userData, accessToken, refreshToken } = res.data.data;
-      await storage.setTokens(accessToken, refreshToken);
-      await storage.setUser(userData);
-      setUser(userData);
-      useCartStore.getState().setCurrentUser(userData.id);
-      useScratchCardStore.getState().setCurrentUser(userData.id);
-      useWishlistStore.getState().loadWishlist();
-      useAddressStore.getState().clearAddresses();
-      useAddressStore.getState().loadAddresses();
-      registerPushToken();
-      return userData;
-    }
-    throw new Error(res.data?.error || 'Verification failed');
-  };
-
-  const loginWithFirebasePhone = async (phone: string, idToken?: string, name?: string) => {
-    const res = await api.post('/auth/firebase-login', { phone, idToken, name });
-    if (res.data?.success) {
-      const { user: userData, accessToken, refreshToken } = res.data.data;
-      await storage.setTokens(accessToken, refreshToken);
-      await storage.setUser(userData);
-      setUser(userData);
-      useCartStore.getState().setCurrentUser(userData.id);
-      useScratchCardStore.getState().setCurrentUser(userData.id);
-      useWishlistStore.getState().loadWishlist();
-      useAddressStore.getState().clearAddresses();
-      useAddressStore.getState().loadAddresses();
-      registerPushToken();
-      return userData;
-    }
-    throw new Error(res.data?.error || 'Firebase phone verification failed');
-  };
-
-  const sendEmailOtp = async (email: string, purpose: string = 'login') => {
-    const res = await api.post('/auth/send-email-otp', { email: email.trim().toLowerCase(), purpose });
-    return res.data;
-  };
-
-  const loginWithEmailOtp = async (email: string, otp: string, name?: string) => {
-    const res = await api.post('/auth/verify-email-otp', {
-      email: email.trim().toLowerCase(),
-      otp: otp.trim(),
-      name,
+  const loginWithPhone = async (
+    phone: string,
+    otp: string,
+    extra?: { name?: string; email?: string; inviteCode?: string; avatarUrl?: string; purpose?: string }
+  ) => {
+    const res = await api.post('/auth/verify-otp', {
+      phone,
+      otp,
+      purpose: extra?.purpose || 'login',
+      name: extra?.name,
+      email: extra?.email,
+      inviteCode: extra?.inviteCode,
+      avatarUrl: extra?.avatarUrl,
     });
     if (res.data?.success) {
       const { user: userData, accessToken, refreshToken } = res.data.data;
@@ -209,7 +189,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       useAddressStore.getState().clearAddresses();
       useAddressStore.getState().loadAddresses();
       registerPushToken();
-      return userData;
+      return res.data.data;
+    }
+    throw new Error(res.data?.error || 'Verification failed');
+  };
+
+  const loginWithFirebasePhone = async (
+    phone: string,
+    idToken?: string,
+    name?: string,
+    extra?: { email?: string; inviteCode?: string; avatarUrl?: string }
+  ) => {
+    const res = await api.post('/auth/firebase-login', {
+      phone,
+      idToken,
+      name,
+      email: extra?.email,
+      inviteCode: extra?.inviteCode,
+      avatarUrl: extra?.avatarUrl,
+    });
+    if (res.data?.success) {
+      const { user: userData, accessToken, refreshToken } = res.data.data;
+      await storage.setTokens(accessToken, refreshToken);
+      await storage.setUser(userData);
+      setUser(userData);
+      useCartStore.getState().setCurrentUser(userData.id);
+      useScratchCardStore.getState().setCurrentUser(userData.id);
+      useWishlistStore.getState().loadWishlist();
+      useAddressStore.getState().clearAddresses();
+      useAddressStore.getState().loadAddresses();
+      registerPushToken();
+      return res.data.data;
+    }
+    throw new Error(res.data?.error || 'Firebase phone verification failed');
+  };
+
+  const sendEmailOtp = async (email: string, purpose: string = 'login') => {
+    const res = await api.post('/auth/send-email-otp', { email: email.trim().toLowerCase(), purpose });
+    return res.data;
+  };
+
+  const loginWithEmailOtp = async (
+    email: string,
+    otp: string,
+    extra?: { name?: string; phone?: string; inviteCode?: string; avatarUrl?: string; purpose?: string } | string
+  ) => {
+    const extraObj = typeof extra === 'string' ? { name: extra } : extra;
+    const res = await api.post('/auth/verify-email-otp', {
+      email: email.trim().toLowerCase(),
+      otp: otp.trim(),
+      purpose: extraObj?.purpose || 'login',
+      name: extraObj?.name,
+      phone: extraObj?.phone,
+      inviteCode: extraObj?.inviteCode,
+      avatarUrl: extraObj?.avatarUrl,
+    });
+    if (res.data?.success) {
+      const { user: userData, accessToken, refreshToken } = res.data.data;
+      await storage.setTokens(accessToken, refreshToken);
+      await storage.setUser(userData);
+      setUser(userData);
+      useCartStore.getState().setCurrentUser(userData.id);
+      useScratchCardStore.getState().setCurrentUser(userData.id);
+      useWishlistStore.getState().loadWishlist();
+      useAddressStore.getState().clearAddresses();
+      useAddressStore.getState().loadAddresses();
+      registerPushToken();
+      return res.data.data;
     }
     throw new Error(res.data?.error || 'Email OTP verification failed');
   };

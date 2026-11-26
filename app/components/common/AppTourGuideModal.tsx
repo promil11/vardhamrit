@@ -200,10 +200,10 @@ export const AppTourGuideModal: React.FC<AppTourGuideModalProps> = ({
 
   return (
     <Modal visible={true} transparent animationType="fade" statusBarTranslucent>
-      <StatusBar barStyle="light-content" backgroundColor="rgba(0,0,0,0.85)" />
+      <StatusBar barStyle="light-content" backgroundColor="rgba(0,0,0,0.58)" />
 
       <View style={styles.container}>
-        {/* Fullscreen Dimmed Backdrop with Transparent Cutout Hole */}
+        {/* Fullscreen Softly Dimmed Backdrop with Transparent Cutout Hole */}
         <Svg
           width={SCREEN_WIDTH}
           height={SCREEN_HEIGHT}
@@ -212,7 +212,7 @@ export const AppTourGuideModal: React.FC<AppTourGuideModalProps> = ({
         >
           <Path
             d={cutoutPath}
-            fill="rgba(0, 0, 0, 0.82)"
+            fill="rgba(0, 0, 0, 0.58)"
             fillRule="evenodd"
           />
         </Svg>
