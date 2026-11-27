@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { sendFirebasePhoneOtp, ConfirmationResult } from '../../lib/firebase';
 export default function RegisterScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ invite?: string; code?: string; phone?: string; email?: string }>();
+  const otpInputRef = useRef<TextInput>(null);
   const {
     sendEmailOtp,
     loginWithEmailOtp,
@@ -739,33 +740,63 @@ export default function RegisterScreen() {
                 <View style={styles.otpBadgePill}>
                   <Icon
                     name={authMethod === 'email' ? 'mail' : 'phone'}
-                    size={13}
-                    color={theme.colors.primary}
+                    size={14}
+                    color="#B45309"
                   />
                   <Text style={styles.otpBadgePillText}>
-                    Sent to {authMethod === 'email' ? email : `+91 ${phone}`}
+                    Code sent to {authMethod === 'email' ? email : `+91 ${phone}`}
                   </Text>
                 </View>
               </View>
 
-              <Text style={styles.otpInstructionTitle}>Enter 6-Digit Code</Text>
+              <Text style={styles.otpInstructionTitle}>Enter Verification Code</Text>
               <Text style={styles.otpInstructionSub}>
-                Check your {authMethod === 'email' ? 'inbox or spam folder' : 'SMS / WhatsApp'} for the one-time code.
+                We've sent a 6-digit code to verify your {authMethod === 'email' ? 'email address' : 'mobile number'}.
               </Text>
 
-              <View
-                style={[
-                  styles.otpInputBox,
-                  focusedField === 'otp' && styles.otpInputBoxFocused,
-                ]}
-              >
+              {/* Luxury 6-Digit Segmented OTP Input */}
+              <View style={styles.otpBoxesWrapper}>
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={() => otpInputRef.current?.focus()}
+                  style={styles.otpBoxesRow}
+                >
+                  {[0, 1, 2, 3, 4, 5].map((index) => {
+                    const digit = otp[index] || '';
+                    const isCurrentFocus =
+                      focusedField === 'otp' && (otp.length === index || (index === 5 && otp.length === 6));
+                    const isFilled = digit.length > 0;
+
+                    return (
+                      <View
+                        key={index}
+                        style={[
+                          styles.otpDigitCell,
+                          isFilled && styles.otpDigitCellFilled,
+                          isCurrentFocus && styles.otpDigitCellFocused,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.otpDigitText,
+                            isFilled && styles.otpDigitTextFilled,
+                            isCurrentFocus && styles.otpDigitTextFocused,
+                          ]}
+                        >
+                          {digit ? digit : isCurrentFocus ? '|' : '•'}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </TouchableOpacity>
+
                 <TextInput
-                  style={[styles.otpInputField, webInputNoOutline]}
-                  placeholder="• • • • • •"
-                  placeholderTextColor="#CBD5E1"
+                  ref={otpInputRef}
+                  style={styles.hiddenOtpInput}
                   value={otp}
                   onChangeText={(t) => {
-                    setOtp(t.replace(/[^0-9]/g, ''));
+                    const clean = t.replace(/[^0-9]/g, '').slice(0, 6);
+                    setOtp(clean);
                     if (errorMessage) setErrorMessage(null);
                   }}
                   onFocus={() => setFocusedField('otp')}
@@ -773,17 +804,30 @@ export default function RegisterScreen() {
                   keyboardType="number-pad"
                   maxLength={6}
                   autoFocus
+                  textContentType="oneTimeCode"
+                  autoComplete="one-time-code"
                   underlineColorAndroid="transparent"
                 />
               </View>
 
-              {/* Resend & Switch Methods */}
-              <View style={styles.resendRow}>
+              {/* Resend & Switch Methods Action Row */}
+              <View style={styles.otpMetaActionsRow}>
                 {timer > 0 ? (
-                  <Text style={styles.timerText}>Resend code in {timer}s</Text>
+                  <View style={styles.timerBadge}>
+                    <Icon name="clock" size={13} color="#EA580C" />
+                    <Text style={styles.timerBadgeText}>
+                      Resend in <Text style={{ fontWeight: '800' }}>{timer}s</Text>
+                    </Text>
+                  </View>
                 ) : (
-                  <TouchableOpacity onPress={handleSendOtp} disabled={loading}>
-                    <Text style={styles.resendBtnText}>Resend Code</Text>
+                  <TouchableOpacity
+                    onPress={handleSendOtp}
+                    disabled={loading}
+                    activeOpacity={0.7}
+                    style={styles.resendBtnActive}
+                  >
+                    <Icon name="refresh" size={13} color={theme.colors.primary} />
+                    <Text style={styles.resendBtnActiveText}>Resend Code</Text>
                   </TouchableOpacity>
                 )}
 
@@ -792,10 +836,16 @@ export default function RegisterScreen() {
                     setAuthMethod(authMethod === 'email' ? 'phone' : 'email');
                     setStep('form');
                   }}
-                  style={styles.switchMethodBtn}
+                  activeOpacity={0.7}
+                  style={styles.switchMethodPill}
                 >
-                  <Text style={styles.switchMethodBtnText}>
-                    Try {authMethod === 'email' ? 'Mobile OTP' : 'Email OTP'}
+                  <Icon
+                    name={authMethod === 'email' ? 'phone' : 'mail'}
+                    size={13}
+                    color="#047857"
+                  />
+                  <Text style={styles.switchMethodPillText}>
+                    Use {authMethod === 'email' ? 'Mobile OTP' : 'Email OTP'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -806,26 +856,38 @@ export default function RegisterScreen() {
                 onPress={handleVerifyOtp}
                 disabled={loading || otp.trim().length < 6}
                 style={[
-                  styles.primaryBtn,
-                  otp.trim().length < 6 && styles.primaryBtnDisabled,
+                  styles.verifyActionBtn,
+                  otp.trim().length === 6 ? styles.verifyActionBtnActive : styles.verifyActionBtnDisabled,
                 ]}
               >
                 {loading ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
                   <View style={styles.btnContentRow}>
-                    <Text style={styles.primaryBtnText}>Verify & Continue</Text>
-                    <Icon name="arrow-right" size={15} color="#FFFFFF" />
+                    <Text
+                      style={[
+                        styles.verifyActionBtnText,
+                        otp.trim().length === 6 ? styles.verifyActionBtnTextActive : styles.verifyActionBtnTextDisabled,
+                      ]}
+                    >
+                      Verify & Continue
+                    </Text>
+                    <Icon
+                      name="arrow-right"
+                      size={16}
+                      color={otp.trim().length === 6 ? '#FFFFFF' : '#94A3B8'}
+                    />
                   </View>
                 )}
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => setStep('form')}
-                style={styles.editDetailsBtn}
+                activeOpacity={0.75}
+                style={styles.changeDetailsRow}
               >
-                <Icon name="edit-2" size={13} color="#64748B" />
-                <Text style={styles.editDetailsBtnText}>Change Email or Mobile</Text>
+                <Icon name="arrow-left" size={13} color="#64748B" />
+                <Text style={styles.changeDetailsText}>Change {authMethod === 'email' ? 'Email Address' : 'Mobile Number'}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -1407,114 +1469,224 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   otpVerificationContainer: {
-    paddingVertical: 6,
+    paddingVertical: 8,
     alignItems: 'center',
+    width: '100%',
   },
   otpBadgeRow: {
-    marginBottom: 10,
+    marginBottom: 12,
   },
   otpBadgePill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+    backgroundColor: '#FEF3C7',
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(249, 115, 22, 0.25)',
+    borderColor: '#FDE68A',
   },
   otpBadgePillText: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: '#C2410C',
+    color: '#92400E',
   },
   otpInstructionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: theme.colors.textPrimary,
-    marginBottom: 4,
+    marginBottom: 6,
+    textAlign: 'center',
   },
   otpInstructionSub: {
-    fontSize: 12,
+    fontSize: 12.5,
     color: '#64748B',
     textAlign: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 12,
+    lineHeight: 18,
+    paddingHorizontal: 10,
+    marginBottom: 8,
   },
-  otpInputBox: {
+  otpBoxesWrapper: {
     width: '100%',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
+    position: 'relative',
+    marginVertical: 16,
   },
-  otpInputBoxFocused: {
-    borderColor: theme.colors.primary,
-    backgroundColor: '#FFFFFF',
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  otpInputField: {
-    width: '100%',
-    textAlign: 'center',
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: 10,
-    color: theme.colors.textPrimary,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    ...(Platform.OS === 'web' ? {
-      outlineStyle: 'none',
-      outlineWidth: 0,
-      outlineColor: 'transparent',
-      boxShadow: 'none',
-    } : {}),
-  },
-  resendRow: {
+  otpBoxesRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 18,
-    paddingHorizontal: 4,
+    gap: 8,
   },
-  timerText: {
-    fontSize: 12,
-    color: '#94A3B8',
+  otpDigitCell: {
+    flex: 1,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  otpDigitCellFilled: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#334155',
+    borderWidth: 1.8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  otpDigitCellFocused: {
+    backgroundColor: '#FFFFFF',
+    borderColor: theme.colors.primary,
+    borderWidth: 2,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  otpDigitText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#CBD5E1',
+    textAlign: 'center',
+  },
+  otpDigitTextFilled: {
+    color: '#0F172A',
+  },
+  otpDigitTextFocused: {
+    color: theme.colors.primary,
+  },
+  hiddenOtpInput: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    opacity: 0.001,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    ...(Platform.OS === 'web' ? {
+      outlineStyle: 'none' as any,
+      outlineWidth: 0 as any,
+      outlineColor: 'transparent' as any,
+      cursor: 'text',
+    } : {}),
+  },
+  otpMetaActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
+    gap: 8,
+  },
+  timerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+  },
+  timerBadgeText: {
+    fontSize: 11.5,
+    color: '#C2410C',
     fontWeight: '600',
   },
-  resendBtnText: {
-    fontSize: 12,
+  resendBtnActive: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+  },
+  resendBtnActiveText: {
+    fontSize: 11.5,
     fontWeight: '800',
     color: theme.colors.primary,
   },
-  switchMethodBtn: {
-    paddingVertical: 4,
-  },
-  switchMethodBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748B',
-    textDecorationLine: 'underline',
-  },
-  editDetailsBtn: {
+  switchMethodPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  switchMethodPillText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  verifyActionBtn: {
+    width: '100%',
+    height: 50,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  verifyActionBtnActive: {
+    backgroundColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  verifyActionBtnDisabled: {
+    backgroundColor: '#E2E8F0',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  verifyActionBtnText: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  verifyActionBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  verifyActionBtnTextDisabled: {
+    color: '#94A3B8',
+  },
+  changeDetailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     paddingVertical: 8,
-    marginTop: 2,
+    paddingHorizontal: 14,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignSelf: 'center',
+    marginBottom: 4,
   },
-  editDetailsBtnText: {
+  changeDetailsText: {
     fontSize: 12,
-    color: '#64748B',
+    color: '#475569',
     fontWeight: '700',
   },
   footerRow: {
