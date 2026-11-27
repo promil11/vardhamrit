@@ -1129,19 +1129,6 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* 8. TOUR GUIDE & SIGN OUT */}
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => {
-              startTour();
-              router.replace('/(tabs)');
-            }}
-            style={styles.tourGuideBtn}
-          >
-            <Icon name="sparkles" size={15} color="#059669" />
-            <Text style={styles.tourGuideBtnText}>Explore App Tour Guide</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={handleSignOut}

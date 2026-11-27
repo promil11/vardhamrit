@@ -24,7 +24,6 @@ interface BlendOption {
   tag: string;
   tagColor: string;
   tagBg: string;
-  emoji: string;
   notes: string;
 }
 
@@ -36,7 +35,6 @@ const TEA_BLEND_OPTIONS: BlendOption[] = [
     tag: 'Strong & Bold',
     tagColor: '#B45309',
     tagBg: '#FEF3C7',
-    emoji: '☕',
     notes: 'Malty aroma, robust body, deep copper liquor',
   },
   {
@@ -46,7 +44,6 @@ const TEA_BLEND_OPTIONS: BlendOption[] = [
     tag: 'Spiced & Kadak',
     tagColor: '#C2410C',
     tagBg: '#FFEDD5',
-    emoji: '🌶️',
     notes: 'Green cardamom, crushed ginger, cinnamon & clove',
   },
   {
@@ -56,7 +53,6 @@ const TEA_BLEND_OPTIONS: BlendOption[] = [
     tag: 'Royal Saffron',
     tagColor: '#7C3AED',
     tagBg: '#EDE9FE',
-    emoji: '👑',
     notes: 'Golden saffron strands, floral sweetness, luxury finish',
   },
   {
@@ -66,7 +62,6 @@ const TEA_BLEND_OPTIONS: BlendOption[] = [
     tag: 'Royal Cocoa',
     tagColor: '#92400E',
     tagBg: '#FEF3C7',
-    emoji: '🍫',
     notes: 'Artisan dark cocoa nibs with creamy morning richness',
   },
 ];
@@ -101,7 +96,7 @@ export default function PreferencesScreen() {
     if (Platform.OS !== 'web') {
       try {
         Haptics.selectionAsync();
-      } catch {}
+      } catch { }
     }
     setSelectedBlend(blendId);
   };
@@ -112,7 +107,7 @@ export default function PreferencesScreen() {
     if (Platform.OS !== 'web') {
       try {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch {}
+      } catch { }
     }
 
     setSaving(true);
@@ -186,10 +181,6 @@ export default function PreferencesScreen() {
                   ]}
                 >
                   <View style={styles.cardTopRow}>
-                    <View style={styles.emojiCircle}>
-                      <Text style={{ fontSize: 22 }}>{item.emoji}</Text>
-                    </View>
-
                     <View style={[styles.tagPill, { backgroundColor: item.tagBg }]}>
                       <Text style={[styles.tagPillText, { color: item.tagColor }]}>
                         {item.tag}
@@ -344,14 +335,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 8,
-  },
-  emojiCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   tagPill: {
     paddingHorizontal: 8,
