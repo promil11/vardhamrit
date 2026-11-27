@@ -136,7 +136,7 @@ export async function getUserProfile(req: Request, res: Response, next: NextFunc
     }
 
     const [users]: any = await pool.query(
-      `SELECT id, name, email, phone, role, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, created_at FROM users WHERE id = ?`,
+      `SELECT id, name, email, phone, role, coins_balance, referral_code, referred_by, preferred_blend, avatar_url, has_completed_tour, created_at FROM users WHERE id = ?`,
       [userId]
     );
 
@@ -194,6 +194,7 @@ export async function getUserProfile(req: Request, res: Response, next: NextFunc
         referred_by: user.referred_by,
         preferred_blend: user.preferred_blend || 'Normal Chai',
         favorite_morning_cup: user.preferred_blend || 'Normal Chai',
+        has_completed_tour: Boolean(user.has_completed_tour),
         member_since: user.created_at,
         tier: 'Tea Connoisseur',
         stats: {
@@ -442,7 +443,7 @@ export async function updateUserProfile(req: Request, res: Response, next: NextF
     const { name, email, phone, preferredBlend, favoriteMorningCup, avatarUrl, avatar_url } = req.body;
 
     const [currentUsers]: any = await pool.query(
-      'SELECT id, name, email, phone, role, coins_balance, referral_code, preferred_blend, avatar_url FROM users WHERE id = ?',
+      'SELECT id, name, email, phone, role, coins_balance, referral_code, preferred_blend, avatar_url, has_completed_tour FROM users WHERE id = ?',
       [userId]
     );
 
@@ -509,6 +510,7 @@ export async function updateUserProfile(req: Request, res: Response, next: NextF
       avatar_url: newAvatar || null,
       preferred_blend: newBlend || 'Normal Chai',
       favorite_morning_cup: newBlend || 'Normal Chai',
+      has_completed_tour: Boolean(currentUser.has_completed_tour),
     };
 
     return sendSuccess(res, { user: updatedUser }, 'Profile updated successfully');

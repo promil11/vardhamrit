@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
   Easing,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
@@ -93,30 +93,41 @@ export default function HomeScreen() {
   const { addItem } = useCartStore();
   const { user, isAuthenticated, completeTour } = useAuth();
   const { isActive: isTourActive, startTour } = useTourStore();
+  const params = useLocalSearchParams<{ start_tour?: string }>();
+  const tourStartedRef = useRef(false);
 
-  // Check if first-time user needs the Animated Tour Guide
-  useEffect(() => {
-    let isMounted = true;
-    const checkTour = async () => {
-      if (isAuthenticated && user) {
-        if (user.has_completed_tour === false) {
+  // Check if first-time user needs the Animated Tour Guide (runs on mount and on screen focus)
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+      let timer: NodeJS.Timeout | null = null;
+
+      const checkTour = async () => {
+        if (!isAuthenticated || !user) return;
+        const hasCompleted = Boolean(user.has_completed_tour);
+        const shouldForce = params?.start_tour === '1' && !tourStartedRef.current;
+
+        if (!hasCompleted || shouldForce) {
           const locallyDone = await storage.getItem(`@vardhamrit_tour_done_${user.id}`);
-          if (!locallyDone && isMounted && !isTourActive) {
-            const timer = setTimeout(() => {
+          if ((!locallyDone || shouldForce) && isMounted && !useTourStore.getState().isActive) {
+            timer = setTimeout(() => {
               if (isMounted) {
+                tourStartedRef.current = true;
                 startTour();
               }
             }, 600);
-            return () => clearTimeout(timer);
           }
         }
-      }
-    };
-    checkTour();
-    return () => {
-      isMounted = false;
-    };
-  }, [isAuthenticated, user?.id, user?.has_completed_tour, isTourActive]);
+      };
+
+      checkTour();
+
+      return () => {
+        isMounted = false;
+        if (timer) clearTimeout(timer);
+      };
+    }, [isAuthenticated, user?.id, user?.has_completed_tour, params?.start_tour, startTour])
+  );
 
   const {
     addresses,

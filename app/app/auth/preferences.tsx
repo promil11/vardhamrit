@@ -121,8 +121,8 @@ export default function PreferencesScreen() {
       console.warn('Preference save notice:', e);
     } finally {
       setSaving(false);
-      // Navigate cleanly to Home Feed in a single instant transition
-      router.replace('/(tabs)');
+      // Navigate cleanly to Home Feed in a single instant transition with tour guide trigger
+      router.replace({ pathname: '/(tabs)', params: { start_tour: '1' } });
     }
   };
 
@@ -227,7 +227,7 @@ export default function PreferencesScreen() {
           <TouchableOpacity
             onPress={() => {
               setPendingPreferences(false);
-              router.replace('/(tabs)');
+              router.replace({ pathname: '/(tabs)', params: { start_tour: '1' } });
             }}
             style={styles.skipBtn}
           >
