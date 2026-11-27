@@ -76,22 +76,29 @@ interface AuthContextType {
 
 const PENDING_PREFS_KEY = 'vardhamrit_pending_preferences';
 
+let pendingPreferencesSync = storage.getItemSync(PENDING_PREFS_KEY) === '1';
+
+export const isPendingPreferences = () => pendingPreferencesSync;
+
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [pendingPreferences, setPendingPreferencesState] = useState<boolean>(() => {
-    return storage.getItemSync(PENDING_PREFS_KEY) === '1';
+    return pendingPreferencesSync;
   });
 
   const setPendingPreferences = (pending: boolean) => {
-    setPendingPreferencesState(pending);
+    pendingPreferencesSync = pending;
     if (pending) {
+      storage.setItemSync(PENDING_PREFS_KEY, '1');
       storage.setItem(PENDING_PREFS_KEY, '1');
     } else {
+      storage.removeItemSync(PENDING_PREFS_KEY);
       storage.removeItem(PENDING_PREFS_KEY);
     }
+    setPendingPreferencesState(pending);
   };
 
   const registerPushToken = async () => {

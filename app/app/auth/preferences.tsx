@@ -68,7 +68,7 @@ const TEA_BLEND_OPTIONS: BlendOption[] = [
 
 export default function PreferencesScreen() {
   const router = useRouter();
-  const { user, updateUserProfile, setPendingPreferences } = useAuth();
+  const { user, updateUserProfile, setPendingPreferences, setPreferredBlend } = useAuth();
   const [selectedBlend, setSelectedBlend] = useState<string>('Normal Chai');
   const [saving, setSaving] = useState(false);
 
@@ -111,15 +111,17 @@ export default function PreferencesScreen() {
     }
 
     setSaving(true);
+    // Immediately clear pending preferences state & storage synchronously before navigating
+    setPendingPreferences(false);
+
     try {
+      setPreferredBlend(selectedBlend);
       await updateUserTasteProfile(selectedBlend);
-      await updateUserProfile({ preferredBlend: selectedBlend } as any);
     } catch (e) {
       console.warn('Preference save notice:', e);
     } finally {
       setSaving(false);
-      setPendingPreferences(false);
-      // Navigate to Home Feed where the App Tour Guide starts!
+      // Navigate cleanly to Home Feed in a single instant transition
       router.replace('/(tabs)');
     }
   };

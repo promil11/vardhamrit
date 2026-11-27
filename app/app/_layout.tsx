@@ -5,7 +5,7 @@ import * as Notifications from 'expo-notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { AuthProvider, useAuth } from '../store/authContext';
+import { AuthProvider, useAuth, isPendingPreferences } from '../store/authContext';
 import { CartProvider } from '../store/cartContext';
 import { Colors } from '../constants/colors';
 import { Icon } from '../components/common/Icon';
@@ -44,7 +44,7 @@ function NavigationGate() {
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/auth/login');
     } else if (isAuthenticated) {
-      if (pendingPreferences) {
+      if (pendingPreferences && isPendingPreferences()) {
         if (!isPreferencesScreen) {
           router.replace('/auth/preferences');
         }
